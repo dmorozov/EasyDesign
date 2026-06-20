@@ -16,6 +16,8 @@ build/
 *.whl
 
 # Testing / coverage
+coverage/
+*.lcov
 .pytest_cache/
 htmlcov/
 .coverage

@@ -1,17 +1,41 @@
 import { type ReactElement } from 'react';
 
-import { Badge, Button, Icon, Input, PanelSection } from '../design-system';
+import { Badge, Button, Icon, Input, PanelSection, SegmentedControl } from '../design-system';
+import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
 
 import { nodeAt } from './paths';
 import { useEditor } from './store';
 
-/** Edits the selected node's props (content for Text/Button) and deletes nodes.
- *  Rendered as the Inspector tab body in the right rail. */
+const DISTRIBUTE_OPTS = [
+  { value: 'fit', label: 'Fit' },
+  { value: 'fill', label: 'Fill' },
+];
+const JUSTIFY_OPTS = [
+  { value: 'start', label: 'Start' },
+  { value: 'center', label: 'Center' },
+  { value: 'end', label: 'End' },
+  { value: 'space-between', label: 'Between' },
+  { value: 'space-around', label: 'Around' },
+];
+const ALIGN_OPTS = [
+  { value: 'start', label: 'Start' },
+  { value: 'center', label: 'Center' },
+  { value: 'end', label: 'End' },
+  { value: 'stretch', label: 'Stretch' },
+];
+const WRAP_OPTS = [
+  { value: 'nowrap', label: 'No wrap' },
+  { value: 'wrap', label: 'Wrap' },
+];
+
+/** Edits the selected node: text content, container layout (distribute/justify/align/wrap),
+ *  and delete. Rendered as the Inspector tab body in the right rail. */
 export function Inspector(): ReactElement {
   const selectedFrameId = useEditor((s) => s.selectedFrameId);
   const selectedPath = useEditor((s) => s.selectedPath);
   const frames = useEditor((s) => s.frames);
   const updateText = useEditor((s) => s.updateText);
+  const setLayout = useEditor((s) => s.setLayout);
   const deleteNode = useEditor((s) => s.deleteNode);
 
   const frame = frames.find((f) => f.id === selectedFrameId);
@@ -32,6 +56,16 @@ export function Inspector(): ReactElement {
   }
 
   const editable = node.type === 'Text' || node.type === 'Button';
+  const container =
+    node.type === 'Stack' || node.type === 'Row' || node.type === 'Column' || node.type === 'Grid'
+      ? node
+      : null;
+
+  // A Row in 'fill' mode gives every child flex:1 (equal columns), so justify and
+  // wrap have no free space to act on — hide them to avoid a control that does nothing.
+  const rowDistribute = container?.type === 'Row' ? (container.props?.distribute ?? 'fit') : null;
+  const isFillRow = rowDistribute === 'fill';
+
   return (
     <div className="ed-inspector">
       <div className="ed-inspector-head">
@@ -48,6 +82,57 @@ export function Inspector(): ReactElement {
               updateText(selectedFrameId, selectedPath, e.target.value);
             }}
           />
+        </PanelSection>
+      )}
+
+      {container && (
+        <PanelSection title="Layout">
+          {container.type === 'Row' && (
+            <div className="ed-field">
+              <span className="eds-label">Distribute</span>
+              <SegmentedControl
+                options={DISTRIBUTE_OPTS}
+                value={rowDistribute ?? 'fit'}
+                onChange={(v) => {
+                  setLayout(selectedFrameId, selectedPath, { distribute: v as Distribute });
+                }}
+              />
+            </div>
+          )}
+          {!isFillRow && (
+            <div className="ed-field">
+              <span className="eds-label">Justify</span>
+              <SegmentedControl
+                options={JUSTIFY_OPTS}
+                value={container.props?.justify ?? 'start'}
+                onChange={(v) => {
+                  setLayout(selectedFrameId, selectedPath, { justify: v as Justify });
+                }}
+              />
+            </div>
+          )}
+          <div className="ed-field">
+            <span className="eds-label">Align</span>
+            <SegmentedControl
+              options={ALIGN_OPTS}
+              value={container.props?.align ?? 'stretch'}
+              onChange={(v) => {
+                setLayout(selectedFrameId, selectedPath, { align: v as Align });
+              }}
+            />
+          </div>
+          {container.type !== 'Grid' && !isFillRow && (
+            <div className="ed-field">
+              <span className="eds-label">Wrap</span>
+              <SegmentedControl
+                options={WRAP_OPTS}
+                value={container.props?.wrap ?? 'nowrap'}
+                onChange={(v) => {
+                  setLayout(selectedFrameId, selectedPath, { wrap: v as Wrap });
+                }}
+              />
+            </div>
+          )}
         </PanelSection>
       )}
 

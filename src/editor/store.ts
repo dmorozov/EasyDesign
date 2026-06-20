@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 
 import { sampleCard } from '../ir/sample';
-import { type Frame, type Node } from '../ir/types';
+import {
+  type Align,
+  type Distribute,
+  type Frame,
+  type Justify,
+  type Node,
+  type Wrap,
+} from '../ir/types';
 
 import { loadFromLocal, type EditorDocument, type EditorFrame } from './document';
 import { isPrefix, nodeAt, type NodePath } from './paths';
@@ -46,6 +53,11 @@ interface EditorState {
   moveNode: (frameId: string, fromPath: NodePath, parentPath: NodePath, index: number) => void;
   setDropTarget: (target: DropTarget | null) => void;
   updateText: (frameId: string, path: NodePath, content: string) => void;
+  setLayout: (
+    frameId: string,
+    path: NodePath,
+    patch: { justify?: Justify; align?: Align; wrap?: Wrap; distribute?: Distribute },
+  ) => void;
   deleteNode: (frameId: string, path: NodePath) => void;
   setFrameTarget: (frameId: string, target: Frame['target']) => void;
   setThemeOverride: (name: string, value: string) => void;
@@ -208,6 +220,29 @@ export const useEditor = create<EditorState>()((set) => ({
       if (!target || (target.type !== 'Text' && target.type !== 'Button')) return {};
       target.props.content = content;
       return commit(state, `text:${frameId}:${path.join('.')}`, {
+        frames: state.frames.map((f) => (f.id === frameId ? { ...f, root } : f)),
+      });
+    }),
+
+  // Set a container's layout properties (justify/align/wrap). Coalesced per node so
+  // a flurry of changes is one undo step; persisted like every document mutation (D4).
+  setLayout: (frameId, path, patch) =>
+    set((state) => {
+      const frame = state.frames.find((f) => f.id === frameId);
+      if (!frame) return {};
+      const root = structuredClone(frame.root);
+      const target = nodeAt(root, path);
+      if (!target || !('children' in target)) return {}; // only containers carry layout props
+      const next: Record<string, unknown> = {
+        ...(target.props as Record<string, unknown> | undefined),
+      };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete next[k];
+        else next[k] = v;
+      }
+      if (target.type === 'Grid') delete next.wrap; // Grid has no flex-wrap
+      (target as { props?: unknown }).props = next;
+      return commit(state, `layout:${frameId}:${path.join('.')}`, {
         frames: state.frames.map((f) => (f.id === frameId ? { ...f, root } : f)),
       });
     }),

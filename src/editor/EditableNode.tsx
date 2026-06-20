@@ -1,70 +1,26 @@
+// The editor's node tree, built on the shared Node Walk (src/ir/walk) — the seam's
+// hardest adapter. Per-NODE chrome (drop target + drag handle + selection + the
+// node's OWN before/after drop lines) is applied via the path context; Row's flex:1
+// comes from shape.wrapChildren; the empty-hint is just children.length === 0; β is
+// delegated to the component layer (ADR-0005). design-system (chrome) imports are
+// allowed here — but the walk + leaf-style never touch it (ADR-0007).
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { type CSSProperties, type MouseEvent, type ReactElement } from 'react';
+import { type CSSProperties, Fragment, type ReactElement, type ReactNode } from 'react';
 
 import { Button } from '../components/Button';
-import { Column, Grid, Row, Stack } from '../components/Layout';
+import { layoutElement } from '../components/layoutElement';
 import { Image, Text } from '../components/primitives';
 import { Icon } from '../design-system';
 import { type Node } from '../ir/types';
+import { type Emitter, walkNode } from '../ir/walk';
 
-import { samePath, type NodePath } from './paths';
+import { type NodePath, samePath } from './paths';
 import { useEditor } from './store';
-
-interface NodeViewProps {
-  frameId: string;
-  node: Node;
-  path: NodePath;
-}
 
 // Selection + drop indicators use CHROME tokens (NOT the user's --color-brand), so they stay
 // visible and on-brand for the editor regardless of what the user themes their design to.
-const selectedOutline: CSSProperties = {
-  outline: '2px solid var(--selection)',
-  outlineOffset: 1,
-};
+const selectedOutline: CSSProperties = { outline: '2px solid var(--selection)', outlineOffset: 1 };
 const insideOutline: CSSProperties = { outline: '2px dashed var(--accent)', outlineOffset: 1 };
-
-function useNodeSelection(frameId: string, path: NodePath) {
-  const selected = useEditor(
-    (s) => s.selectedFrameId === frameId && samePath(s.selectedPath, path),
-  );
-  const selectNode = useEditor((s) => s.selectNode);
-  const onClick = (event: MouseEvent) => {
-    event.stopPropagation();
-    selectNode(frameId, path);
-  };
-  return { selected, onClick };
-}
-
-/** A node in the editor: a drop target with before/after/inside indicators, a
- *  selection click, and (non-root) a drag handle for reordering/moving. */
-export function EditableNode({ frameId, node, path }: NodeViewProps): ReactElement {
-  const { selected, onClick } = useNodeSelection(frameId, path);
-  const { setNodeRef } = useDroppable({
-    id: `drop:${frameId}:${path.join('.')}`,
-    data: { frameId, path },
-  });
-  const mode = useEditor((s) =>
-    s.dropTarget?.frameId === frameId && samePath(s.dropTarget.path, path)
-      ? s.dropTarget.mode
-      : null,
-  );
-
-  const style: CSSProperties = {
-    position: 'relative',
-    cursor: 'pointer',
-    ...(selected ? selectedOutline : mode === 'inside' ? insideOutline : {}),
-  };
-
-  return (
-    <div ref={setNodeRef} className="ed-node" onClick={onClick} style={style}>
-      {path.length > 0 && <DragHandle frameId={frameId} path={path} />}
-      {mode === 'before' && <div className="ed-drop-line ed-drop-before" />}
-      <NodeInner frameId={frameId} node={node} path={path} />
-      {mode === 'after' && <div className="ed-drop-line ed-drop-after" />}
-    </div>
-  );
-}
 
 function DragHandle({ frameId, path }: { frameId: string; path: NodePath }): ReactElement {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -89,53 +45,113 @@ function DragHandle({ frameId, path }: { frameId: string; path: NodePath }): Rea
   );
 }
 
-// Pure render of a node's content; recurses through EditableNode for children.
-function NodeInner({ frameId, node, path }: NodeViewProps): ReactElement {
-  if ('children' in node) {
-    const childEls = node.children.map((child, i) => (
-      <EditableNode key={i} frameId={frameId} node={child} path={[...path, i]} />
-    ));
-    let body: ReactElement;
-    if (childEls.length === 0) {
-      body = <div className="ed-empty-hint">Drop into {node.type}…</div>;
-    } else if (node.type === 'Row') {
-      body = (
-        <>
-          {childEls.map((el, i) => (
+// Per-node editor chrome — the "decorate each node" wrapper, keyed on its path. A
+// child's own before/after drop lines live in the child's wrapper (keyed on the
+// child path), so the parent never interleaves anything.
+function EditableShell({
+  frameId,
+  path,
+  children,
+}: {
+  frameId: string;
+  path: NodePath;
+  children: ReactNode;
+}): ReactElement {
+  const selected = useEditor(
+    (s) => s.selectedFrameId === frameId && samePath(s.selectedPath, path),
+  );
+  const selectNode = useEditor((s) => s.selectNode);
+  const { setNodeRef } = useDroppable({
+    id: `drop:${frameId}:${path.join('.')}`,
+    data: { frameId, path },
+  });
+  const mode = useEditor((s) =>
+    s.dropTarget?.frameId === frameId && samePath(s.dropTarget.path, path)
+      ? s.dropTarget.mode
+      : null,
+  );
+  const style: CSSProperties = {
+    position: 'relative',
+    cursor: 'pointer',
+    ...(selected ? selectedOutline : mode === 'inside' ? insideOutline : {}),
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      className="ed-node"
+      style={style}
+      onClick={(e) => {
+        e.stopPropagation();
+        selectNode(frameId, path);
+      }}
+    >
+      {path.length > 0 && <DragHandle frameId={frameId} path={path} />}
+      {mode === 'before' && <div className="ed-drop-line ed-drop-before" />}
+      {children}
+      {mode === 'after' && <div className="ed-drop-line ed-drop-after" />}
+    </div>
+  );
+}
+
+function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
+  return {
+    container(node, shape, children, ctx) {
+      const wrapFlex = shape.kind === 'flow' && shape.wrapChildren;
+      const body: ReactNode =
+        children.length === 0 ? (
+          <div className="ed-empty-hint">Drop into {node.type}…</div>
+        ) : wrapFlex ? (
+          children.map((c, i) => (
             <div key={i} style={{ flex: 1 }}>
-              {el}
+              {c}
             </div>
-          ))}
-        </>
-      );
-    } else {
-      body = <>{childEls}</>;
-    }
-    switch (node.type) {
-      case 'Stack':
-        return <Stack style={node.style}>{body}</Stack>;
-      case 'Column':
-        return <Column style={node.style}>{body}</Column>;
-      case 'Row':
-        return <Row style={node.style}>{body}</Row>;
-      case 'Grid':
-        return (
-          <Grid columns={node.props.columns} style={node.style}>
-            {body}
-          </Grid>
+          ))
+        ) : (
+          children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
         );
-      default:
-        return body;
-    }
-  }
-  switch (node.type) {
-    case 'Text':
-      return <Text variant={node.props.variant}>{node.props.content}</Text>;
-    case 'Button':
-      return <Button variant={node.props.variant}>{node.props.content}</Button>;
-    case 'Image':
-      return <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />;
-    default:
-      return <span />;
-  }
+      return (
+        <EditableShell frameId={frameId} path={ctx}>
+          {layoutElement(node, body)}
+        </EditableShell>
+      );
+    },
+    text(node, ctx) {
+      return (
+        <EditableShell frameId={frameId} path={ctx}>
+          <Text variant={node.props.variant}>{node.props.content}</Text>
+        </EditableShell>
+      );
+    },
+    button(node, ctx) {
+      return (
+        <EditableShell frameId={frameId} path={ctx}>
+          <Button variant={node.props.variant}>{node.props.content}</Button>
+        </EditableShell>
+      );
+    },
+    image(node, ctx) {
+      return (
+        <EditableShell frameId={frameId} path={ctx}>
+          <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />
+        </EditableShell>
+      );
+    },
+    descend(ctx, index) {
+      return [...ctx, index];
+    },
+  };
+}
+
+/** A Frame's editable tree: a drop target with before/after/inside indicators, a
+ *  selection click, and (non-root) a drag handle for reordering/moving each node. */
+export function EditableNode({
+  frameId,
+  node,
+  path,
+}: {
+  frameId: string;
+  node: Node;
+  path: NodePath;
+}): ReactElement {
+  return walkNode<ReactElement, NodePath>(node, path, makeEditableEmitter(frameId));
 }

@@ -1,31 +1,28 @@
-// Static HTML generator. Walks the IR per the contract's "Node -> web output",
-// emitting semantic HTML with inline styles that reference CSS vars (var(--...)).
-import { type Frame, type Node, type StyleMap } from '../ir/types';
+// Static HTML generator. Walks the IR (src/ir/walk) emitting semantic HTML with
+// inline styles that reference CSS vars. α (structure + layout properties) comes
+// from the shared walk; β (the leaf CSS vocabulary) from leaf-style; only the
+// inline-CSS syntax (dash-case + ';'-join) lives here.
+import { type Frame } from '../ir/types';
+import { type Emitter, walkNode } from '../ir/walk';
 
-// Token ref "color.surface" -> CSS var(--color-surface). Dot-path -> kebab.
-function tokenToVar(ref: string): string {
-  return `var(--${ref.replace(/\./g, '-')})`;
+import {
+  buttonDecls,
+  containerDecls,
+  type Decl,
+  imageDecls,
+  structuralDecls,
+  textDecls,
+} from './leaf-style';
+
+function dash(prop: string): string {
+  return prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 }
-
-// The contract only binds these style keys for the layout containers.
-const STYLE_PROP_TO_CSS: Record<string, string> = {
-  background: 'background',
-  padding: 'padding',
-  borderRadius: 'border-radius',
-  gap: 'gap',
-};
-
-function styleMapToDecls(style: StyleMap | undefined): string[] {
-  if (!style) return [];
-  const decls: string[] = [];
-  for (const [key, ref] of Object.entries(style)) {
-    const cssProp = STYLE_PROP_TO_CSS[key];
-    if (!cssProp) continue; // ignore keys with no defined web mapping
-    decls.push(`${cssProp}:${tokenToVar(ref)}`);
-  }
-  return decls;
+function inlineStyle(decls: Decl[]): string {
+  return decls.map((d) => `${dash(d.prop)}:${d.value}`).join('; ');
 }
-
+function escapeText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 function escapeAttr(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -34,62 +31,33 @@ function escapeAttr(value: string): string {
     .replace(/>/g, '&gt;');
 }
 
-function escapeText(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+// C = void: html has no pretty-printing, so there is no context to thread.
+const htmlEmitter: Emitter<string, void> = {
+  container(node, shape, children) {
+    const decls = [...structuralDecls(shape), ...containerDecls(node.style)];
+    const inner =
+      shape.kind === 'flow' && shape.wrapChildren
+        ? children.map((c) => `<div style="flex:1">${c}</div>`).join('')
+        : children.join('');
+    return `<div style="${inlineStyle(decls)}">${inner}</div>`;
+  },
+  text(node) {
+    const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+    return `<${tag} style="${inlineStyle(textDecls(node))}">${escapeText(node.props.content)}</${tag}>`;
+  },
+  button(node) {
+    return `<a href="#" style="${inlineStyle(buttonDecls(node))}">${escapeText(node.props.content)}</a>`;
+  },
+  image(node) {
+    const { src, alt } = node.props;
+    return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+  },
+  descend() {
+    /* void context: nothing to thread */
+  },
+};
 
-function emitNode(node: Node): string {
-  switch (node.type) {
-    case 'Stack':
-    case 'Column': {
-      const decls = ['display:flex', 'flex-direction:column', ...styleMapToDecls(node.style)];
-      const inner = node.children.map(emitNode).join('');
-      return `<div style="${decls.join('; ')}">${inner}</div>`;
-    }
-    case 'Row': {
-      const decls = ['display:flex', 'flex-direction:row', ...styleMapToDecls(node.style)];
-      // Each direct child wrapped so it sits side-by-side with flex:1.
-      const inner = node.children
-        .map((child) => `<div style="flex:1">${emitNode(child)}</div>`)
-        .join('');
-      return `<div style="${decls.join('; ')}">${inner}</div>`;
-    }
-    case 'Grid': {
-      const cols = `repeat(${String(node.props.columns)}, 1fr)`;
-      const decls = [
-        'display:grid',
-        `grid-template-columns:${cols}`,
-        ...styleMapToDecls(node.style),
-      ];
-      const inner = node.children.map(emitNode).join('');
-      return `<div style="${decls.join('; ')}">${inner}</div>`;
-    }
-    case 'Text': {
-      const content = escapeText(node.props.content);
-      if (node.props.variant === 'h2') {
-        return `<h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">${content}</h2>`;
-      }
-      return `<p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">${content}</p>`;
-    }
-    case 'Button': {
-      const content = escapeText(node.props.content);
-      const base =
-        'display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600';
-      if (node.props.variant === 'primary') {
-        return `<a href="#" style="${base}; background:var(--color-brand); color:var(--color-on-brand)">${content}</a>`;
-      }
-      return `<a href="#" style="${base}; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">${content}</a>`;
-    }
-    case 'Image': {
-      const { src, alt, width } = node.props;
-      const maxWidth = width !== undefined ? `; max-width:${String(width)}px` : '';
-      const style = `display:block; width:100%${maxWidth}; height:auto; border-radius:var(--radius-lg)`;
-      return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" style="${style}">`;
-    }
-  }
-}
-
-// Walk a Frame's root node and return the rendered HTML fragment.
+/** Walk a Frame's root node and return the rendered HTML fragment. */
 export function emitHTML(frame: Frame): string {
-  return emitNode(frame.root);
+  return walkNode<string, void>(frame.root, undefined, htmlEmitter);
 }

@@ -1,34 +1,25 @@
 // Angular generator: emits ONE standalone Angular component (.ts, inline template)
-// whose template mirrors the web HTML markup. The sample is fully static, so a
-// literal inline template is rendered — no @if/@for. Modern Angular (v17+) makes
-// components standalone by default, so no NgModule and no `standalone: true`.
-import { type Frame, type Node, type StyleMap } from '../ir/types';
+// whose template mirrors the web HTML markup. α (structure + layout properties)
+// comes from the shared walk; β (the leaf CSS vocabulary) from leaf-style; only the
+// inline-CSS template syntax + bottom-up indentation + {{ }} escaping live here.
+import { type Frame } from '../ir/types';
+import { type Emitter, walkNode } from '../ir/walk';
 
-function cssVar(ref: string): string {
-  return `var(--${ref.replace(/\./g, '-')})`;
+import {
+  buttonDecls,
+  containerDecls,
+  type Decl,
+  imageDecls,
+  structuralDecls,
+  textDecls,
+} from './leaf-style';
+
+function dash(prop: string): string {
+  return prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 }
-
-const STYLE_PROP_CSS: Record<string, string> = {
-  background: 'background',
-  padding: 'padding',
-  borderRadius: 'border-radius',
-  gap: 'gap',
-};
-
-function styleMapDecls(style: StyleMap | undefined): string[] {
-  if (!style) return [];
-  const out: string[] = [];
-  for (const [key, ref] of Object.entries(style)) {
-    const cssProp = STYLE_PROP_CSS[key] ?? key;
-    out.push(`${cssProp}:${cssVar(ref)}`);
-  }
-  return out;
+function inlineStyle(decls: Decl[]): string {
+  return decls.map((d) => `${dash(d.prop)}:${d.value}`).join('; ');
 }
-
-function styleAttr(decls: string[]): string {
-  return decls.filter(Boolean).join('; ');
-}
-
 function escAttr(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -36,7 +27,6 @@ function escAttr(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
-
 // Angular treats `{{` / `}}` as interpolation, so neutralize any literal braces.
 function escText(s: string): string {
   return s
@@ -46,7 +36,6 @@ function escText(s: string): string {
     .replace(/\{\{/g, '{{ "{{" }}')
     .replace(/\}\}/g, '{{ "}}" }}');
 }
-
 function indent(html: string, pad: string): string {
   return html
     .split('\n')
@@ -54,65 +43,38 @@ function indent(html: string, pad: string): string {
     .join('\n');
 }
 
-function renderNode(node: Node): string {
-  switch (node.type) {
-    case 'Stack':
-    case 'Column': {
-      const decls = ['display:flex', 'flex-direction:column', ...styleMapDecls(node.style)];
-      const inner = node.children.map(renderNode).join('\n');
-      return `<div style="${styleAttr(decls)}">\n${indent(inner, '  ')}\n</div>`;
-    }
-    case 'Row': {
-      const decls = ['display:flex', 'flex-direction:row', ...styleMapDecls(node.style)];
-      const inner = node.children
-        .map((child) => `<div style="flex:1">\n${indent(renderNode(child), '  ')}\n</div>`)
-        .join('\n');
-      return `<div style="${styleAttr(decls)}">\n${indent(inner, '  ')}\n</div>`;
-    }
-    case 'Grid': {
-      const cols = `repeat(${String(node.props.columns)}, 1fr)`;
-      const decls = ['display:grid', `grid-template-columns:${cols}`, ...styleMapDecls(node.style)];
-      const inner = node.children.map(renderNode).join('\n');
-      return `<div style="${styleAttr(decls)}">\n${indent(inner, '  ')}\n</div>`;
-    }
-    case 'Text': {
-      if (node.props.variant === 'h2') {
-        return (
-          `<h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); ` +
-          `line-height:1.25; color:var(--color-text); font-weight:700">` +
-          `${escText(node.props.content)}</h2>`
-        );
-      }
-      return (
-        `<p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); ` +
-        `line-height:var(--font-line); color:var(--color-text)">` +
-        `${escText(node.props.content)}</p>`
-      );
-    }
-    case 'Button': {
-      const base =
-        'display:inline-block; text-align:center; text-decoration:none; ' +
-        'padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); ';
-      const variant =
-        node.props.variant === 'primary'
-          ? 'background:var(--color-brand); color:var(--color-on-brand); '
-          : 'background:transparent; color:var(--color-brand); border:1px solid var(--color-brand); ';
-      const font = 'font-family:var(--font-family); font-size:var(--font-body); font-weight:600';
-      return `<a style="${base}${variant}${font}">${escText(node.props.content)}</a>`;
-    }
-    case 'Image': {
-      const widthDecl = node.props.width != null ? `max-width:${String(node.props.width)}px; ` : '';
-      return (
-        `<img src="${escAttr(node.props.src)}" alt="${escAttr(node.props.alt)}" ` +
-        `style="display:block; width:100%; ${widthDecl}height:auto; border-radius:var(--radius-lg)">`
-      );
-    }
-  }
-}
+// C = void: Angular indentation is built bottom-up via indent(), not depth-threaded.
+const angularEmitter: Emitter<string, void> = {
+  container(node, shape, children) {
+    const styleStr = inlineStyle([...structuralDecls(shape), ...containerDecls(node.style)]);
+    const inner =
+      shape.kind === 'flow' && shape.wrapChildren
+        ? children.map((c) => `<div style="flex:1">\n${indent(c, '  ')}\n</div>`).join('\n')
+        : children.join('\n');
+    return `<div style="${styleStr}">\n${indent(inner, '  ')}\n</div>`;
+  },
+  text(node) {
+    const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+    return `<${tag} style="${inlineStyle(textDecls(node))}">${escText(node.props.content)}</${tag}>`;
+  },
+  button(node) {
+    return `<a style="${inlineStyle(buttonDecls(node))}">${escText(node.props.content)}</a>`;
+  },
+  image(node) {
+    const { src, alt } = node.props;
+    return `<img src="${escAttr(src)}" alt="${escAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+  },
+  descend() {
+    /* void context: indentation is bottom-up */
+  },
+};
 
-// Emit ONE standalone Angular component source as a string.
+/** Emit ONE standalone Angular component source as a string. */
 export function emitAngularSource(frame: Frame): string {
-  const indentedTemplate = indent(renderNode(frame.root), '    ');
+  const indentedTemplate = indent(
+    walkNode<string, void>(frame.root, undefined, angularEmitter),
+    '    ',
+  );
   return `// AUTO-GENERATED by EasyDesign — do not edit by hand.
 // One standalone Angular component mirroring the web markup.
 import { Component, ChangeDetectionStrategy } from '@angular/core';

@@ -80,3 +80,16 @@ _Avoid_: format, renderer
   Components). They are distinct panels that happen to display the same Components.
 - "schema"/"theme" were used interchangeably for the design system — resolved: the canonical
   term is **Theme**, composed of **Design Tokens**.
+
+## Architecture terms
+
+These name internal seams, not domain concepts; full rationale lives in `docs/adr/`.
+
+**Node Walk**:
+The single traversal over the IR node vocabulary (`src/ir/walk.ts`), shared by the HTML / React /
+Angular **Export Targets**, the live canvas, and the editor's node tree via an `Emitter` adapter per
+target. It owns structure (which children recurse, the **Layout element** facts, the `Row` `flex:1`
+rule, justify/align/wrap); the per-target CSS vocabulary lives beside it (`leaf-style.ts` for the
+string targets, the component layer for React). MJML is intentionally **not** part of it (ADR-0006,
+ADR-0008).
+_Avoid_: visitor, renderer, codegen pass (when you mean the shared traversal specifically)

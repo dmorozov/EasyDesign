@@ -1,61 +1,45 @@
-import { type ReactElement } from 'react';
+import { Fragment, type ReactElement } from 'react';
 
 import { type Frame, type Node } from '../ir/types';
+import { type Emitter, walkNode } from '../ir/walk';
 
 import { Button } from './Button';
-import { Column, Grid, Row, Stack } from './Layout';
+import { layoutElement } from './layoutElement';
 import { Image, Text } from './primitives';
 
 /**
- * Renders one IR node as live React elements using the themed component layer.
- * This is the canvas runtime — what the editor shows on the Board (ADR-0001).
- * Exports stay separate: the generators emit framework-native code, while this
- * tree powers the in-app preview (so React Aria is the editor runtime, not the
- * export substrate).
+ * The canvas runtime — render IR as live React-Aria elements (ADR-0001/0005). It
+ * walks the shared Node Walk (src/ir/walk): α (structure + layout properties) comes
+ * from the walk, β (styling) is delegated to the component layer. No editing chrome
+ * and no node path, so the context type is `void`.
+ *
+ * Exports stay separate: the generators emit framework-native code, while this tree
+ * powers the in-app preview (React Aria is the editor runtime, not the export
+ * substrate).
  */
-export function CanvasNode({ node }: { node: Node }): ReactElement {
-  switch (node.type) {
-    case 'Stack':
-      return (
-        <Stack style={node.style}>
-          {node.children.map((child, i) => (
-            <CanvasNode key={i} node={child} />
-          ))}
-        </Stack>
-      );
-    case 'Column':
-      return (
-        <Column style={node.style}>
-          {node.children.map((child, i) => (
-            <CanvasNode key={i} node={child} />
-          ))}
-        </Column>
-      );
-    case 'Row':
-      return (
-        <Row style={node.style}>
-          {node.children.map((child, i) => (
+const canvasEmitter: Emitter<ReactElement, void> = {
+  container(node, shape, children) {
+    const body =
+      shape.kind === 'flow' && shape.wrapChildren
+        ? children.map((c, i) => (
             <div key={i} style={{ flex: 1 }}>
-              <CanvasNode node={child} />
+              {c}
             </div>
-          ))}
-        </Row>
-      );
-    case 'Grid':
-      return (
-        <Grid columns={node.props.columns} style={node.style}>
-          {node.children.map((child, i) => (
-            <CanvasNode key={i} node={child} />
-          ))}
-        </Grid>
-      );
-    case 'Text':
-      return <Text variant={node.props.variant}>{node.props.content}</Text>;
-    case 'Button':
-      return <Button variant={node.props.variant}>{node.props.content}</Button>;
-    case 'Image':
-      return <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />;
-  }
+          ))
+        : children.map((c, i) => <Fragment key={i}>{c}</Fragment>);
+    return layoutElement(node, body);
+  },
+  text: (node) => <Text variant={node.props.variant}>{node.props.content}</Text>,
+  button: (node) => <Button variant={node.props.variant}>{node.props.content}</Button>,
+  image: (node) => <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />,
+  descend() {
+    /* void context: the canvas threads no per-node state */
+  },
+};
+
+/** Renders one IR node as live React elements using the themed component layer. */
+export function CanvasNode({ node }: { node: Node }): ReactElement {
+  return walkNode<ReactElement, void>(node, undefined, canvasEmitter);
 }
 
 /** Renders a whole Frame's tree. */

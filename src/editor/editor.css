@@ -280,6 +280,14 @@ body {
   font-weight: var(--fw-semibold);
   color: var(--text-ink);
 }
+.ed-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.ed-field + .ed-field {
+  margin-top: var(--space-6);
+}
 
 /* ---- design palette ---- */
 .ed-theme {

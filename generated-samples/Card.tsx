@@ -8,12 +8,8 @@ export default function Card(): React.ReactElement {
       <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-h2)', lineHeight: '1.25', color: 'var(--color-text)', fontWeight: '700' }}>Welcome aboard</h2>
       <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', lineHeight: 'var(--font-line)', color: 'var(--color-text)' }}>Your account is ready. Start building your first design in minutes.</p>
       <div style={{ display: 'flex', flexDirection: 'row', gap: 'var(--space-md)' }}>
-        <div style={{ flex: 1 }}>
-          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Get started</a>
-        </div>
-        <div style={{ flex: 1 }}>
-          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Learn more</a>
-        </div>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Get started</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Learn more</a>
       </div>
     </div>
   );

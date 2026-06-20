@@ -6,6 +6,9 @@ coverage/
 generated-samples/
 src/theme/generated/
 
+# Vitest golden snapshots (managed by vitest, not Prettier)
+**/__snapshots__/
+
 # The standalone reference proof has its own toolchain
 skeleton/
 

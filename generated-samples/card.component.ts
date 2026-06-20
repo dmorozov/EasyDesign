@@ -11,12 +11,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Welcome aboard</h2>
       <p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">Your account is ready. Start building your first design in minutes.</p>
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
-        <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); background:var(--color-brand); color:var(--color-on-brand); font-family:var(--font-family); font-size:var(--font-body); font-weight:600">Get started</a>
-        </div>
-        <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand); font-family:var(--font-family); font-size:var(--font-body); font-weight:600">Learn more</a>
-        </div>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Get started</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a>
       </div>
     </div>
   `,
