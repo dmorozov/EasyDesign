@@ -10,6 +10,9 @@ export type { EditorFrame };
 
 export type ExportTarget = 'html' | 'react' | 'angular' | 'mjml';
 
+/** Which right-rail panel is showing (chrome UI state — not part of the document/undo). */
+export type RightTab = 'inspector' | 'design' | 'export';
+
 export type DropMode = 'before' | 'after' | 'inside';
 export interface DropTarget {
   frameId: string;
@@ -29,12 +32,14 @@ interface EditorState {
   selectedPath: NodePath | null;
   themeOverrides: Record<string, string>;
   exportTarget: ExportTarget;
+  rightTab: RightTab;
   dropTarget: DropTarget | null;
   docKey: number;
   past: Snapshot[];
   future: Snapshot[];
   lastCommitKey: string | null;
   selectNode: (frameId: string, path: NodePath) => void;
+  setRightTab: (tab: RightTab) => void;
   clearSelection: () => void;
   insertChild: (frameId: string, parentPath: NodePath, node: Node) => void;
   insertAt: (frameId: string, parentPath: NodePath, index: number, node: Node) => void;
@@ -119,13 +124,17 @@ export const useEditor = create<EditorState>()((set) => ({
   selectedPath: null,
   themeOverrides: saved?.themeOverrides ?? {},
   exportTarget: 'react',
+  rightTab: 'inspector',
   dropTarget: null,
   docKey: 0,
   past: [],
   future: [],
   lastCommitKey: null,
 
-  selectNode: (frameId, path) => set({ selectedFrameId: frameId, selectedPath: path }),
+  // Selecting a node jumps the right rail to the Inspector (matches the reference editor).
+  selectNode: (frameId, path) =>
+    set({ selectedFrameId: frameId, selectedPath: path, rightTab: 'inspector' }),
+  setRightTab: (tab) => set({ rightTab: tab }),
   clearSelection: () => set({ selectedFrameId: null, selectedPath: null }),
 
   insertChild: (frameId, parentPath, node) =>
@@ -139,6 +148,7 @@ export const useEditor = create<EditorState>()((set) => ({
       return commit(state, null, {
         frames: state.frames.map((f) => (f.id === frameId ? { ...f, root } : f)),
         selectedFrameId: frameId,
+        rightTab: 'inspector',
         selectedPath: [...parentPath, parent.children.length - 1],
       });
     }),
@@ -155,6 +165,7 @@ export const useEditor = create<EditorState>()((set) => ({
       return commit(state, null, {
         frames: state.frames.map((f) => (f.id === frameId ? { ...f, root } : f)),
         selectedFrameId: frameId,
+        rightTab: 'inspector',
         selectedPath: [...parentPath, i],
       });
     }),
@@ -181,6 +192,7 @@ export const useEditor = create<EditorState>()((set) => ({
       return commit(state, null, {
         frames: state.frames.map((f) => (f.id === frameId ? { ...f, root } : f)),
         selectedFrameId: frameId,
+        rightTab: 'inspector',
         selectedPath: [...parentPath, i],
       });
     }),

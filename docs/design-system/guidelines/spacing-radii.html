@@ -1,0 +1,23 @@
+<!-- @dsCard group="Spacing" viewport="700x150" name="Corner Radii" subtitle="Gentle 4–18px; pill for toggles." -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../styles.css"/>
+<style>
+  body{margin:0;padding:22px;background:var(--surface);font-family:var(--font-sans);}
+  .row{display:flex;gap:18px;align-items:flex-end;}
+  .col{text-align:center;}
+  .box{width:64px;height:64px;background:var(--accent-soft);border:2px solid var(--accent);}
+  .n{font-size:11px;font-weight:600;color:var(--text-body);margin-top:9px;}
+  .v{font-family:var(--font-mono);font-size:10px;color:var(--text-muted);}
+</style></head>
+<body>
+<div class="row">
+  <div class="col"><div class="box" style="border-radius:var(--radius-xs)"></div><div class="n">xs · 4</div></div>
+  <div class="col"><div class="box" style="border-radius:var(--radius-sm)"></div><div class="n">sm · 6</div></div>
+  <div class="col"><div class="box" style="border-radius:var(--radius-md)"></div><div class="n">md · 8</div></div>
+  <div class="col"><div class="box" style="border-radius:var(--radius-lg)"></div><div class="n">lg · 10</div></div>
+  <div class="col"><div class="box" style="border-radius:var(--radius-xl)"></div><div class="n">xl · 14</div></div>
+  <div class="col"><div class="box" style="border-radius:var(--radius-2xl)"></div><div class="n">2xl · 18</div></div>
+  <div class="col"><div class="box" style="border-radius:var(--radius-pill)"></div><div class="n">pill</div></div>
+</div>
+</body></html>

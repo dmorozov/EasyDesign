@@ -25,6 +25,8 @@ export default tseslint.config(
       'skeleton',
       'generated-samples',
       'src/theme/generated/**',
+      // Vendored design system (delivered .jsx + .d.ts) — not linted, like skeleton/.
+      'src/design-system/**',
       '**/*.d.ts',
     ],
   },

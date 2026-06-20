@@ -9,6 +9,12 @@ src/theme/generated/
 # The standalone reference proof has its own toolchain
 skeleton/
 
+# Vendored design system (delivered source — kept pristine)
+src/design-system/
+
+# Delivered design-system reference bundle (not project source)
+docs/design-system/
+
 # Tooling / agent files — not project source
 .claude/
 

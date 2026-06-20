@@ -16,13 +16,11 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { type Node } from '../ir/types';
 
 import { Board } from './Board';
-import { ExportPanel } from './ExportPanel';
-import { Inspector } from './Inspector';
 import { type PaletteItem } from './palette';
 import { Palette } from './Palette';
 import { isContainer, nodeAt, type NodePath } from './paths';
+import { RightRail } from './RightRail';
 import { useEditor, type DropMode, type DropTarget, type EditorFrame } from './store';
-import { ThemePanel } from './ThemePanel';
 import { Toolbar } from './Toolbar';
 
 type ActiveData =
@@ -34,11 +32,13 @@ interface DropData {
   path: NodePath;
 }
 
-// Live theme overrides become a :root stylesheet rendered after the base theme.
+// Live theme overrides become a stylesheet rendered after the base theme. It targets
+// .ed-board-content (the board-content scope) — NOT :root — so user theming stays off the
+// global chrome tokens (the golden rule). Matches theme.scoped.css's selector.
 function buildOverrideCss(overrides: Record<string, string>): string {
   const entries = Object.entries(overrides);
   if (entries.length === 0) return '';
-  return `:root {\n${entries.map(([key, value]) => `  --${key}: ${value};`).join('\n')}\n}`;
+  return `.ed-board-content {\n${entries.map(([key, value]) => `  --${key}: ${value};`).join('\n')}\n}`;
 }
 
 // When the pointer is over several nested nodes, target the deepest (longest path).
@@ -189,11 +189,7 @@ export function Editor(): ReactElement {
           <div className="ed-board">
             <Board key={docKey} />
           </div>
-          <div className="ed-right">
-            <Inspector />
-            <ThemePanel />
-            <ExportPanel />
-          </div>
+          <RightRail />
         </div>
       </div>
       <DragOverlay>

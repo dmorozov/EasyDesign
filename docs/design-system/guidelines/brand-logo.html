@@ -1,0 +1,27 @@
+<!-- @dsCard group="Brand" viewport="700x180" name="Logo & Wordmark" subtitle="Diamond glyph + EasyDesign lockup." -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../styles.css"/>
+<style>
+  body{margin:0;padding:0;font-family:var(--font-sans);display:grid;grid-template-columns:1fr 1fr;}
+  .pane{padding:26px;display:flex;flex-direction:column;gap:20px;justify-content:center;}
+  .light{background:var(--surface);}
+  .dark{background:var(--slate-900);}
+  .lockup{display:flex;align-items:center;gap:10px;}
+  .wm{font-size:22px;font-weight:800;letter-spacing:-0.02em;}
+  .wm .e{color:var(--text-ink);} .dark .wm .e{color:#fff;}
+  .wm .d{color:var(--accent);}
+  .gly{flex:none;}
+  .cap{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);}
+</style></head>
+<body>
+<div class="pane light">
+  <div class="cap">On light</div>
+  <div class="lockup"><img class="gly" src="../assets/logo-glyph.svg" width="28" height="28" alt=""/><span class="wm"><span class="e">Easy</span><span class="d">Design</span></span></div>
+  <div class="lockup"><img class="gly" src="../assets/logo-glyph.svg" width="38" height="38" alt=""/></div>
+</div>
+<div class="pane dark">
+  <div class="cap">On dark</div>
+  <div class="lockup"><img class="gly" src="../assets/logo-glyph.svg" width="28" height="28" alt=""/><span class="wm"><span class="e">Easy</span><span class="d">Design</span></span></div>
+</div>
+</body></html>

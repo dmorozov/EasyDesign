@@ -1,0 +1,7 @@
+<svg width="172" height="30" viewBox="0 0 172 30" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EasyDesign">
+  <rect x="1" y="2" width="26" height="26" rx="7" fill="#5B5BD6"></rect>
+  <path d="M14 6.5L20.5 13L14 19.5L7.5 13L14 6.5Z" fill="white" fill-opacity="0.95"></path>
+  <path d="M14 6.5L20.5 13L14 19.5L14 6.5Z" fill="white" fill-opacity="0.68"></path>
+  <path d="M9.8 22.4H18.2" stroke="white" stroke-opacity="0.9" stroke-width="2" stroke-linecap="round"></path>
+  <text x="37" y="21" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="800" letter-spacing="-0.4" fill="#161B27">Easy<tspan fill="#5B5BD6">Design</tspan></text>
+</svg>

@@ -45,7 +45,7 @@ export function Board(): ReactElement {
       minZoom={0.2}
       fitView
     >
-      <Background />
+      <Background color="var(--dot-color)" bgColor="var(--canvas-bg)" gap={22} />
       <Controls />
     </ReactFlow>
   );

@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Read the SKILL.md at design-system/SKILL.md before building any UI.
+
 ## Project status: editor MVP working (create → theme → export loop)
 
 EasyDesign is a beginner-friendly visual UI design tool: an infinite **Board** where non-designers

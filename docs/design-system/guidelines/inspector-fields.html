@@ -1,0 +1,69 @@
+<!-- @dsCard group="Components" viewport="700x440" name="Inspector Fields & States" subtitle="Labels, inputs, dropdowns — rest, focus, filled, open." -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../styles.css"/>
+<style>
+  body{margin:0;padding:20px;background:var(--app-bg);font-family:var(--font-sans);}
+  .panel{max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .head{display:flex;align-items:center;gap:11px;padding:13px 15px;border-bottom:1px solid var(--border-faint);}
+  .badge{width:36px;height:36px;border-radius:var(--radius-md);background:var(--accent-soft);color:var(--accent-press);display:flex;align-items:center;justify-content:center;}
+  .badge svg{width:18px;height:18px;}
+  .htitle{font-size:14px;font-weight:600;color:var(--text-ink);}
+  .hsub{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);}
+  .sec{padding:14px 15px;border-bottom:1px solid var(--border-faint);}
+  .lbl{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:9px;}
+  .flbl{font-size:12px;font-weight:500;color:var(--text-body);margin:0 0 6px;}
+  .state{font-size:10px;font-weight:600;color:var(--text-faint);margin-left:6px;}
+  .field{margin-bottom:13px;}
+  .input{height:34px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);color:var(--text-ink);font-size:14px;padding:0 12px;display:flex;align-items:center;}
+  .input.focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .input.placeholder{color:var(--text-faint);}
+  .row2{display:flex;gap:10px;}
+  .row2 .field{flex:1;margin:0;}
+  .input .unit{margin-left:auto;font-size:12px;color:var(--text-muted);}
+  /* select */
+  .sel{height:34px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);color:var(--text-ink);font-size:14px;padding:0 12px;display:flex;align-items:center;}
+  .sel .chev{margin-left:auto;color:var(--text-faint);display:flex;}
+  .sel.open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  .menu{margin-top:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:5px;}
+  .opt{padding:8px 10px;border-radius:var(--radius-sm);font-size:13.5px;color:var(--text-body);display:flex;align-items:center;gap:8px;}
+  .opt.on{background:var(--accent-soft);color:var(--accent-press);font-weight:600;}
+  .opt .ck{margin-left:auto;display:flex;}
+  /* segmented */
+  .seg{display:inline-flex;gap:2px;padding:3px;background:var(--surface-sunken);border:1px solid var(--border);border-radius:var(--radius-md);}
+  .seg b{height:26px;padding:0 14px;display:inline-flex;align-items:center;border-radius:var(--radius-sm);font-size:13px;font-weight:500;color:var(--text-muted);}
+  .seg b.on{background:var(--surface);color:var(--accent-press);box-shadow:var(--shadow-xs);font-weight:600;}
+</style></head>
+<body>
+<div class="panel">
+  <div class="head">
+    <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 12h6"/></svg></div>
+    <div><div class="htitle">Primary Button</div><div class="hsub">element.button</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="lbl">Content</div>
+    <div class="field"><p class="flbl">Label <span class="state">· rest</span></p><div class="input">Get Started</div></div>
+    <div class="field"><p class="flbl">Alt text <span class="state">· focused</span></p><div class="input focus">Hero call-to-action</div></div>
+    <div class="field" style="margin:0"><p class="flbl">Link URL <span class="state">· placeholder</span></p><div class="input placeholder">https://…</div></div>
+  </div>
+
+  <div class="sec">
+    <div class="lbl">Style</div>
+    <div class="row2" style="margin-bottom:13px">
+      <div class="field"><p class="flbl">Variant <span class="state">· open</span></p><div class="sel open">Filled<span class="chev"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+      <div class="field"><p class="flbl">Width</p><div class="input">320<span class="unit">px</span></div></div>
+    </div>
+    <div class="menu">
+      <div class="opt on">Filled <span class="ck"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5L20 7"/></svg></span></div>
+      <div class="opt">Outline</div>
+      <div class="opt">Ghost</div>
+    </div>
+  </div>
+
+  <div class="sec" style="border-bottom:none">
+    <div class="lbl">Alignment</div>
+    <div class="seg"><b class="on">Left</b><b>Center</b><b>Right</b></div>
+  </div>
+</div>
+</body></html>

@@ -1,13 +1,7 @@
 import { type Node as RFNode, type NodeProps } from '@xyflow/react';
 import { type ReactElement } from 'react';
-import {
-  Button as AriaButton,
-  ListBox,
-  ListBoxItem,
-  Popover,
-  Select,
-  SelectValue,
-} from 'react-aria-components';
+
+import { Icon, SegmentedControl } from '../design-system';
 
 import { EditableNode } from './EditableNode';
 import { useEditor } from './store';
@@ -19,7 +13,14 @@ export interface FrameData extends Record<string, unknown> {
 }
 type FrameRFNode = RFNode<FrameData, 'frame'>;
 
-/** A React Flow node = one Frame: a draggable header + a live, editable IR tree. */
+const MEDIUM = [
+  { value: 'web', label: 'Web', icon: <Icon.web size={14} /> },
+  { value: 'email', label: 'Email', icon: <Icon.mail size={14} /> },
+];
+
+/** A React Flow node = one Frame: a draggable header (title + Web/Email medium) + a live,
+ *  editable IR tree. The body carries `ed-board-content` so the user's design Theme tokens
+ *  resolve there (NOT on the global :root, which the chrome owns). */
 export function FrameNode({ data }: NodeProps<FrameRFNode>): ReactElement | null {
   const frame = useEditor((s) => s.frames.find((f) => f.id === data.frameId));
   const setFrameTarget = useEditor((s) => s.setFrameTarget);
@@ -28,35 +29,18 @@ export function FrameNode({ data }: NodeProps<FrameRFNode>): ReactElement | null
   return (
     <div className="ed-frame-shell">
       <header className="ed-frame-header">
-        <span>{frame.title}</span>
-        {/* React Aria Select — fully styleable (incl. the open popover) + accessible.
-            `nodrag` keeps interacting with it from dragging the Frame (ADR-0005). */}
-        <Select
-          aria-label="Frame target medium"
-          selectedKey={frame.target}
-          onSelectionChange={(key) => {
-            setFrameTarget(frame.id, key === 'email' ? 'email' : 'web');
+        <span className="ed-frame-title">{frame.title}</span>
+        {/* `nodrag` keeps interacting with the medium toggle from dragging the Frame. */}
+        <SegmentedControl
+          className="ed-frame-medium nodrag"
+          options={MEDIUM}
+          value={frame.target}
+          onChange={(v) => {
+            setFrameTarget(frame.id, v === 'email' ? 'email' : 'web');
           }}
-        >
-          <AriaButton className="ed-select-trigger nodrag">
-            <SelectValue />
-            <span aria-hidden="true" className="ed-select-caret">
-              ▾
-            </span>
-          </AriaButton>
-          <Popover className="ed-select-popover nodrag">
-            <ListBox className="ed-select-listbox">
-              <ListBoxItem id="web" className="ed-select-item">
-                web
-              </ListBoxItem>
-              <ListBoxItem id="email" className="ed-select-item">
-                email
-              </ListBoxItem>
-            </ListBox>
-          </Popover>
-        </Select>
+        />
       </header>
-      <div className="nodrag ed-frame-body">
+      <div className="nodrag ed-frame-body ed-board-content">
         <EditableNode frameId={frame.id} node={frame.root} path={[]} />
       </div>
     </div>

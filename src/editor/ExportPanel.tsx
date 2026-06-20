@@ -1,12 +1,18 @@
-import { useMemo, type ReactElement } from 'react';
+import { useMemo, useState, type ReactElement } from 'react';
 
+import { Button, Icon, SegmentedControl } from '../design-system';
 import { emitAngularSource, emitHTML, emitMJML, emitReactSource } from '../generators';
 import { type Frame } from '../ir/types';
 
 import { literalsWithOverrides } from './literals';
 import { useEditor, type EditorFrame, type ExportTarget } from './store';
 
-const TARGETS: ExportTarget[] = ['html', 'react', 'angular', 'mjml'];
+const TARGETS: { value: ExportTarget; label: string }[] = [
+  { value: 'react', label: 'React' },
+  { value: 'angular', label: 'Angular' },
+  { value: 'html', label: 'HTML' },
+  { value: 'mjml', label: 'Email' },
+];
 
 function generate(
   frame: EditorFrame,
@@ -30,13 +36,15 @@ function generate(
   }
 }
 
-/** Live code export for the selected Frame (the flagship feature, ADR-0002). */
+/** Live code export for the selected Frame (the flagship feature, ADR-0002).
+ *  Rendered as the Export tab body in the right rail. */
 export function ExportPanel(): ReactElement {
   const frames = useEditor((s) => s.frames);
   const selectedFrameId = useEditor((s) => s.selectedFrameId);
   const exportTarget = useEditor((s) => s.exportTarget);
   const setExportTarget = useEditor((s) => s.setExportTarget);
   const overrides = useEditor((s) => s.themeOverrides);
+  const [copied, setCopied] = useState(false);
 
   const frame = frames.find((f) => f.id === selectedFrameId) ?? frames[0];
   const code = useMemo(
@@ -44,25 +52,44 @@ export function ExportPanel(): ReactElement {
     [frame, exportTarget, overrides],
   );
 
+  const onCopy = () => {
+    void navigator.clipboard.writeText(code).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => {
+          setCopied(false);
+        }, 1200);
+      },
+      () => {
+        // clipboard blocked (permissions / insecure context) — ignore
+      },
+    );
+  };
+
   return (
-    <section className="ed-panel ed-export">
-      <h3>Export</h3>
-      <div className="ed-targets">
-        {TARGETS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            aria-pressed={t === exportTarget}
-            onClick={() => {
-              setExportTarget(t);
-            }}
-          >
-            {t}
-          </button>
-        ))}
+    <div className="ed-export">
+      <p className="ed-rail-intro">Your design, as real code.</p>
+      <SegmentedControl
+        className="ed-export-targets"
+        options={TARGETS}
+        value={exportTarget}
+        onChange={(v) => {
+          setExportTarget(v as ExportTarget);
+        }}
+      />
+      <p className="ed-export-meta">{frame ? `${frame.title} → ${exportTarget}` : 'No frame'}</p>
+      <div className="ed-code-surface">
+        <pre className="ed-code">{code}</pre>
       </div>
-      <p className="ed-hint">{frame ? `${frame.title} → ${exportTarget}` : 'no frame'}</p>
-      <pre className="ed-code">{code}</pre>
-    </section>
+      <Button
+        variant="secondary"
+        size="md"
+        block
+        icon={copied ? <Icon.check /> : <Icon.copy />}
+        onClick={onCopy}
+      >
+        {copied ? 'Copied!' : 'Copy code'}
+      </Button>
+    </div>
   );
 }

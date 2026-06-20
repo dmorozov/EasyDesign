@@ -1,0 +1,67 @@
+/* ============================================================
+   EasyDesign Design System — EDITOR CHROME entry point.
+   Vendored from docs/design-system. Link THIS (not the DS styles.css):
+   it imports the token graph but DELIBERATELY omits the DS base.css,
+   whose unscoped element resets (body/h1-h6/p/button/input/a) would
+   bleed chrome typography & colors into BOARD CONTENT (the user's
+   rendered design) and violate the golden rule. The chrome base below
+   is scoped to .ed-shell instead.
+   DS chrome tokens own :root; the user's design Theme lives on
+   .ed-board-content (see theme.scoped.css) — the two never collide.
+   ============================================================ */
+
+@import './tokens/fonts.css';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/effects.css';
+@import './tokens/dark.css';
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Chrome root — app background + default chrome typography. Scoped to the
+   editor shell so it never restyles the user's board content. */
+.ed-shell {
+  background: var(--app-bg);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv05' 1, 'ss01' 1;
+}
+
+/* ALL-CAPS micro-label for panel section headers (INSPECTOR, COLORS, …). */
+.eds-label {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Faint dot-grid canvas helper. */
+.eds-dotgrid {
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+
+::selection {
+  background: var(--accent-soft-2);
+  color: var(--text-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

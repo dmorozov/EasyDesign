@@ -1,0 +1,66 @@
+/* ============================================================
+   EasyDesign — DARK CHROME VARIANT
+   Activated by `data-theme="dark"` on <html> (or any ancestor).
+   Overrides ONLY the chrome's semantic aliases — the user's design
+   Theme (board content) stays whatever the user picked.
+   Flat, calm dark: deep cool-slate surfaces, brightened indigo accent.
+   ============================================================ */
+
+[data-theme="dark"] {
+  /* Brightened accent for contrast on dark surfaces */
+  --accent:           #7c7cf0;
+  --accent-hover:     #8e8ef4;
+  --accent-press:     #a6a6f7;   /* used as text/icon on dark (selected swatch, active tab) */
+  --accent-soft:      #262652;
+  --accent-soft-2:    #313170;
+  --on-accent:        #ffffff;
+
+  /* Surfaces */
+  --app-bg:           #14161f;
+  --canvas-bg:        #181b25;
+  --surface:          #1e2230;
+  --surface-sunken:   #181b24;
+  --surface-hover:    #272c3c;
+
+  /* Borders / hairlines */
+  --border:           #2c3346;
+  --border-strong:    #3a435a;
+  --border-faint:     #232839;
+
+  /* Text */
+  --text-ink:         #f2f4f9;
+  --text-body:        #c6cdda;
+  --text-muted:       #8b94a7;
+  --text-faint:       #5e6678;
+  --text-on-accent:   #ffffff;
+  --text-link:        #a6a6f7;
+
+  /* Icons */
+  --icon:             #8b94a7;
+  --icon-strong:      #c6cdda;
+
+  /* Semantic feedback — darker tints */
+  --success:          #34c178;
+  --success-soft:     #14301f;
+  --warning:          #e0a23a;
+  --warning-soft:     #332611;
+  --danger:           #f06a6a;
+  --danger-hover:     #f58383;
+  --danger-soft:      #321a1a;
+
+  /* Selection / focus / drops */
+  --focus-ring:       #8a8af2;
+  --selection:        #7c7cf0;
+  --drop-indicator:   #8a8af2;
+  --drop-inside:      #262652;
+  --dot-color:        #2b3247;
+
+  /* Elevation — deeper shadows on dark */
+  --shadow-xs:    0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.40), 0 1px 3px rgba(0, 0, 0, 0.30);
+  --shadow-md:    0 2px 8px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-lg:    0 8px 26px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.40);
+  --shadow-xl:    0 16px 44px rgba(0, 0, 0, 0.60), 0 4px 14px rgba(0, 0, 0, 0.45);
+  --shadow-frame: 0 6px 22px rgba(0, 0, 0, 0.50), 0 1px 3px rgba(0, 0, 0, 0.40);
+  --shadow-lift:  0 10px 26px rgba(124, 124, 240, 0.30), 0 2px 8px rgba(0, 0, 0, 0.45);
+}

@@ -1,0 +1,24 @@
+<!-- @dsCard group="Colors" viewport="700x170" name="Chrome Aliases" subtitle="Semantic tokens the chrome is built from." -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../styles.css"/>
+<style>
+  body{margin:0;padding:20px;background:var(--surface);font-family:var(--font-sans);}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .sw{display:flex;align-items:center;gap:9px;}
+  .chip{width:30px;height:30px;border-radius:var(--radius-sm);box-shadow:inset 0 0 0 1px rgba(22,27,39,.1);flex:none;}
+  .t{min-width:0;}
+  .nm{font-size:11px;font-weight:600;color:var(--text-ink);}
+  .tok{font-family:var(--font-mono);font-size:9px;color:var(--text-muted);}
+</style></head>
+<body>
+<div class="grid" id="g"></div>
+<script>
+  const items=[['Accent','--accent'],['Accent hover','--accent-hover'],['Accent soft','--accent-soft'],['On accent','--on-accent'],
+    ['Surface','--surface'],['Sunken','--surface-sunken'],['Hover','--surface-hover'],['Canvas','--canvas-bg'],
+    ['Border','--border'],['Border strong','--border-strong'],['Text ink','--text-ink'],['Text body','--text-body'],
+    ['Text muted','--text-muted'],['Text faint','--text-faint'],['Icon','--icon'],['Focus ring','--focus-ring']];
+  document.getElementById('g').innerHTML=items.map(([n,v])=>
+    `<div class="sw"><div class="chip" style="background:var(${v})"></div><div class="t"><div class="nm">${n}</div><div class="tok">${v}</div></div></div>`).join('');
+</script>
+</body></html>

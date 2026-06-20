@@ -1,0 +1,99 @@
+/* ============================================================
+   EasyDesign — COLOR TOKENS
+   Two strictly separated palettes:
+   1. CHROME  — the editor app's own skin (neutral slate + indigo accent).
+                NEVER driven by the user's design Theme.
+   2. (User design Theme colors live inside the board content only and are
+       not declared here — they are runtime values the user picks.)
+   ============================================================ */
+
+:root {
+  /* ---- Brand / accent (indigo–violet) ---- */
+  --indigo-50:  #eeeefb;
+  --indigo-100: #e0e0f9;
+  --indigo-200: #c7c7f3;
+  --indigo-300: #a3a3ea;
+  --indigo-400: #7d7de0;
+  --indigo-500: #5b5bd6;   /* primary accent */
+  --indigo-600: #4f4fcb;   /* hover */
+  --indigo-700: #4040ad;   /* active / press */
+  --indigo-800: #34348a;
+  --indigo-900: #2b2b6e;
+
+  /* ---- Neutral cool-gray (slate) chrome scale ---- */
+  --slate-0:   #ffffff;
+  --slate-25:  #fbfcfe;   /* canvas / app background tint */
+  --slate-50:  #f6f8fb;
+  --slate-100: #eef1f6;
+  --slate-150: #e6eaf1;
+  --slate-200: #dbe1ea;   /* hairline borders */
+  --slate-300: #c4cdda;
+  --slate-400: #97a3b6;   /* muted icon */
+  --slate-500: #6b7688;   /* secondary text */
+  --slate-600: #4d586b;
+  --slate-700: #374155;   /* body text */
+  --slate-800: #232b3b;
+  --slate-900: #161b27;   /* headings / ink */
+
+  /* ---- Semantic feedback ---- */
+  --green-50:  #e8f7ef;
+  --green-500: #1f9d57;   /* saved / success */
+  --green-600: #178049;
+  --amber-50:  #fcf3e4;
+  --amber-500: #d98a1a;   /* saving / warning */
+  --red-50:    #fdecec;
+  --red-500:   #d94545;   /* destructive / reset */
+  --red-600:   #bf3838;
+
+  /* ---- Code / export view (dark block) ---- */
+  --code-bg:    #1b1e2b;
+  --code-bg-2:  #232739;   /* gutter / active line */
+  --code-fg:    #cdd3e1;   /* default code text */
+  --code-dim:   #6a7390;   /* comments / punctuation */
+  --code-key:   #8c8cf0;   /* keywords (indigo) */
+  --code-str:   #7fd6a3;   /* strings */
+  --code-tag:   #f0a36b;   /* tags / attrs */
+  --code-num:   #e0c074;   /* numbers */
+
+  /* ============ SEMANTIC ALIASES (chrome) ============ */
+  --accent:           var(--indigo-500);
+  --accent-hover:     var(--indigo-600);
+  --accent-press:     var(--indigo-700);
+  --accent-soft:      var(--indigo-50);
+  --accent-soft-2:    var(--indigo-100);
+  --on-accent:        var(--slate-0);
+
+  --app-bg:           var(--slate-25);
+  --canvas-bg:        #f4f6fb;
+  --surface:          var(--slate-0);
+  --surface-sunken:   var(--slate-50);
+  --surface-hover:    var(--slate-100);
+
+  --border:           var(--slate-200);
+  --border-strong:    var(--slate-300);
+  --border-faint:     var(--slate-150);
+
+  --text-ink:         var(--slate-900);
+  --text-body:        var(--slate-700);
+  --text-muted:       var(--slate-500);
+  --text-faint:       var(--slate-400);
+  --text-on-accent:   var(--slate-0);
+  --text-link:        var(--indigo-600);
+
+  --icon:             var(--slate-500);
+  --icon-strong:      var(--slate-700);
+
+  --success:          var(--green-500);
+  --success-soft:     var(--green-50);
+  --warning:          var(--amber-500);
+  --warning-soft:     var(--amber-50);
+  --danger:           var(--red-500);
+  --danger-hover:     var(--red-600);
+  --danger-soft:      var(--red-50);
+
+  --focus-ring:       var(--indigo-400);
+  --selection:        var(--indigo-500);
+  --drop-indicator:   var(--indigo-500);
+  --drop-inside:      var(--indigo-50);
+  --dot-color:        var(--slate-300);   /* dot-grid canvas dots */
+}

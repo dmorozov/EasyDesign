@@ -159,3 +159,4 @@ A few deliberate tooling invariants (don't "fix" them): **ESLint is pinned to 9.
 `eslint-plugin-react`); the flat config is `eslint.config.mjs`; Prettier owns all formatting and
 `.editorconfig` / `.vscode/settings.json` / `.prettierrc` are kept in agreement; `tsconfig.app.json`
 keeps `experimentalDecorators` (the Angular generator emits decorators). Details in `CLAUDE.md`.
+

@@ -1,0 +1,71 @@
+<!-- @dsCard group="Components" viewport="700x440" name="Form Controls" subtitle="Inputs, selects, toggles, segmented" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="../../styles.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  body{margin:0;padding:22px;background:var(--app-bg);}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 24px;max-width:640px;}
+  .stack{display:flex;flex-direction:column;gap:14px;}
+  .lbl{font-size:var(--fs-micro);font-weight:var(--fw-semibold);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+  .row{display:flex;gap:18px;flex-wrap:wrap;align-items:center;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { Input, Select, Checkbox, Switch, SegmentedControl } = window.EasyDesignDesignSystem_95eb6c;
+const I = ({d}) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={d}/></svg>;
+const Search = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>;
+
+function Demo(){
+  const [med,setMed] = React.useState('web');
+  const [al,setAl] = React.useState('left');
+  return (
+    <div className="grid">
+      <div className="stack">
+        <Input label="Text Value" defaultValue="Get Started" />
+        <Input lead={<Search/>} placeholder="Search components…" />
+        <div className="row">
+          <Input label="Width" defaultValue="320" trail={<span style={{fontSize:12,color:'var(--text-muted)'}}>px</span>} size="sm" />
+          <Input label="Height" defaultValue="Auto" size="sm" />
+        </div>
+      </div>
+      <div className="stack">
+        <Select label="Variant" options={['Filled','Outline','Ghost']} />
+        <Select label="Rounding" size="sm" options={[{value:'8',label:'8px'},{value:'12',label:'12px'},{value:'999',label:'Pill'}]} />
+        <Input label="Disabled field" defaultValue="Locked" disabled />
+      </div>
+      <div>
+        <div className="lbl">Toggles</div>
+        <div className="stack">
+          <Checkbox label="Clip content" defaultChecked />
+          <Checkbox label="Snap to grid" />
+          <Switch label="Live Preview" defaultChecked />
+        </div>
+      </div>
+      <div>
+        <div className="lbl">Segmented</div>
+        <div className="stack" style={{gap:16}}>
+          <SegmentedControl value={med} onChange={setMed} options={[
+            {value:'web',label:'Web',icon:<I d="M3 5h18v12H3zM8 21h8M12 17v4"/>},
+            {value:'email',label:'Email',icon:<I d="M4 6h16v12H4zM4 7l8 6 8-6"/>}]} />
+          <SegmentedControl iconOnly value={al} onChange={setAl} options={[
+            {value:'left',ariaLabel:'Left',icon:<I d="M3 6h18M3 12h12M3 18h15"/>},
+            {value:'center',ariaLabel:'Center',icon:<I d="M3 6h18M6 12h12M5 18h14"/>},
+            {value:'right',ariaLabel:'Right',icon:<I d="M3 6h18M9 12h12M6 18h15"/>}]} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo/>);
+</script>
+</body>
+</html>

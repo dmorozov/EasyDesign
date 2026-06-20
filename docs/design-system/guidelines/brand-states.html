@@ -1,0 +1,26 @@
+<!-- @dsCard group="Brand" viewport="700x150" name="Interaction States" subtitle="Hover lift · press · selection ring · focus · drop." -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../styles.css"/>
+<style>
+  body{margin:0;padding:24px;background:var(--surface-sunken);font-family:var(--font-sans);}
+  .row{display:flex;gap:18px;align-items:center;}
+  .col{text-align:center;}
+  .tile{width:96px;height:54px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-muted);}
+  .hover{box-shadow:var(--shadow-lift);border-color:var(--accent);transform:translateY(-1px);}
+  .press{transform:translateY(.5px);background:var(--slate-100);}
+  .sel{box-shadow:var(--ring-select);border-color:var(--accent);}
+  .focus{box-shadow:var(--ring-focus);}
+  .drop{border:2px solid var(--drop-indicator);background:var(--drop-inside);}
+  .n{font-size:10px;font-weight:600;color:var(--text-body);margin-top:9px;}
+</style></head>
+<body>
+<div class="row">
+  <div class="col"><div class="tile">rest</div><div class="n">Default</div></div>
+  <div class="col"><div class="tile hover">lift</div><div class="n">Hover</div></div>
+  <div class="col"><div class="tile press">press</div><div class="n">Active</div></div>
+  <div class="col"><div class="tile sel">ring</div><div class="n">Selected</div></div>
+  <div class="col"><div class="tile focus">focus</div><div class="n">Focus</div></div>
+  <div class="col"><div class="tile drop">inside</div><div class="n">Drop target</div></div>
+</div>
+</body></html>

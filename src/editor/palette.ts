@@ -1,9 +1,14 @@
+import { type IconName } from '../design-system';
 import { type Node } from '../ir/types';
 
 /** A draggable Component Palette entry. `create()` mints a fresh IR node. */
 export interface PaletteItem {
   id: string;
   label: string;
+  /** Chrome icon shown on the palette tile/row. */
+  icon: IconName;
+  /** Layout components render as cards (2-col grid); content components as rows. */
+  group: 'layout' | 'content';
   /** False items are hidden in email Frames (ADR-0006). */
   emailSafe: boolean;
   create: () => Node;
@@ -18,18 +23,24 @@ export const PALETTE: PaletteItem[] = [
   {
     id: 'stack',
     label: 'Stack',
+    icon: 'stack',
+    group: 'layout',
     emailSafe: true,
     create: () => ({ type: 'Stack', style: { gap: 'space.md' }, children: [] }),
   },
   {
     id: 'row',
     label: 'Row',
+    icon: 'row',
+    group: 'layout',
     emailSafe: true,
     create: () => ({ type: 'Row', style: { gap: 'space.md' }, children: [] }),
   },
   {
     id: 'grid',
     label: 'Grid (2-col)',
+    icon: 'grid',
+    group: 'layout',
     emailSafe: false,
     create: () => ({
       type: 'Grid',
@@ -41,30 +52,40 @@ export const PALETTE: PaletteItem[] = [
   {
     id: 'heading',
     label: 'Heading',
+    icon: 'heading',
+    group: 'content',
     emailSafe: true,
     create: () => ({ type: 'Text', props: { content: 'Heading', variant: 'h2' } }),
   },
   {
     id: 'text',
     label: 'Text',
+    icon: 'text',
+    group: 'content',
     emailSafe: true,
     create: () => ({ type: 'Text', props: { content: 'Body text', variant: 'body' } }),
   },
   {
     id: 'button-primary',
     label: 'Button (primary)',
+    icon: 'button',
+    group: 'content',
     emailSafe: true,
     create: () => ({ type: 'Button', props: { content: 'Button', variant: 'primary' } }),
   },
   {
     id: 'button-secondary',
     label: 'Button (secondary)',
+    icon: 'button',
+    group: 'content',
     emailSafe: true,
     create: () => ({ type: 'Button', props: { content: 'Button', variant: 'secondary' } }),
   },
   {
     id: 'image',
     label: 'Image',
+    icon: 'image',
+    group: 'content',
     emailSafe: true,
     create: () => ({ type: 'Image', props: { src: placeholder, alt: 'image', width: 200 } }),
   },

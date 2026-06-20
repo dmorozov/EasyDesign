@@ -1,0 +1,26 @@
+<!-- @dsCard group="Type" viewport="700x130" name="Weights & Micro-labels" subtitle="Five Inter weights; ALL-CAPS labels at 0.07em." -->
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="../styles.css"/>
+<style>
+  body{margin:0;padding:22px;background:var(--surface);font-family:var(--font-sans);color:var(--text-ink);}
+  .weights{display:flex;gap:26px;align-items:baseline;margin-bottom:18px;}
+  .w{text-align:center;}
+  .w b{font-size:26px;display:block;}
+  .w span{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);}
+  .labels{display:flex;gap:24px;align-items:center;}
+  .lab{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted);}
+  .lab.on{color:var(--accent-press);}
+</style></head>
+<body>
+  <div class="weights">
+    <div class="w"><b style="font-weight:400">Aa</b><span>400 Regular</span></div>
+    <div class="w"><b style="font-weight:500">Aa</b><span>500 Medium</span></div>
+    <div class="w"><b style="font-weight:600">Aa</b><span>600 Semibold</span></div>
+    <div class="w"><b style="font-weight:700">Aa</b><span>700 Bold</span></div>
+    <div class="w"><b style="font-weight:800">Aa</b><span>800 Extra</span></div>
+  </div>
+  <div class="labels">
+    <span class="lab">Inspector</span><span class="lab">Size &amp; Position</span><span class="lab on">Design Palette</span><span class="lab">Export</span>
+  </div>
+</body></html>

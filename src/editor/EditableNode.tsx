@@ -4,6 +4,7 @@ import { type CSSProperties, type MouseEvent, type ReactElement } from 'react';
 import { Button } from '../components/Button';
 import { Column, Grid, Row, Stack } from '../components/Layout';
 import { Image, Text } from '../components/primitives';
+import { Icon } from '../design-system';
 import { type Node } from '../ir/types';
 
 import { samePath, type NodePath } from './paths';
@@ -15,11 +16,13 @@ interface NodeViewProps {
   path: NodePath;
 }
 
+// Selection + drop indicators use CHROME tokens (NOT the user's --color-brand), so they stay
+// visible and on-brand for the editor regardless of what the user themes their design to.
 const selectedOutline: CSSProperties = {
-  outline: '2px solid var(--color-brand)',
+  outline: '2px solid var(--selection)',
   outlineOffset: 1,
 };
-const insideOutline: CSSProperties = { outline: '2px dashed var(--color-brand)', outlineOffset: 1 };
+const insideOutline: CSSProperties = { outline: '2px dashed var(--accent)', outlineOffset: 1 };
 
 function useNodeSelection(frameId: string, path: NodePath) {
   const selected = useEditor(
@@ -81,7 +84,7 @@ function DragHandle({ frameId, path }: { frameId: string; path: NodePath }): Rea
       {...listeners}
       {...attributes}
     >
-      ⠿
+      <Icon.dots size={12} />
     </button>
   );
 }

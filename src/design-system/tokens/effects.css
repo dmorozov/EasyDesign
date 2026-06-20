@@ -1,0 +1,33 @@
+/* ============================================================
+   EasyDesign — EFFECTS: shadows, motion, focus
+   Flat material style: gentle, low-spread shadows; quick, subtle motion.
+   Nothing bouncy.
+   ============================================================ */
+
+:root {
+  /* ---- Elevation (soft, cool-tinted) ---- */
+  --shadow-xs:   0 1px 2px rgba(22, 27, 39, 0.05);
+  --shadow-sm:   0 1px 2px rgba(22, 27, 39, 0.06), 0 1px 3px rgba(22, 27, 39, 0.05);
+  --shadow-md:   0 2px 6px rgba(22, 27, 39, 0.07), 0 1px 2px rgba(22, 27, 39, 0.05);
+  --shadow-lg:   0 6px 20px rgba(22, 27, 39, 0.10), 0 2px 6px rgba(22, 27, 39, 0.06);
+  --shadow-xl:   0 14px 40px rgba(22, 27, 39, 0.14), 0 4px 12px rgba(22, 27, 39, 0.07);
+
+  /* ---- Frame / card surface on canvas ---- */
+  --shadow-frame: 0 4px 16px rgba(35, 43, 59, 0.08), 0 1px 3px rgba(35, 43, 59, 0.06);
+
+  /* ---- Lift on hover (drag affordance) ---- */
+  --shadow-lift:  0 8px 22px rgba(91, 91, 214, 0.18), 0 2px 6px rgba(22, 27, 39, 0.08);
+
+  /* ---- Selection / focus rings ---- */
+  --ring-accent:  0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  --ring-focus:   0 0 0 2px var(--surface), 0 0 0 4px var(--focus-ring);
+  --ring-select:  0 0 0 1.5px var(--accent);
+
+  /* ---- Motion (subtle, quick 120–180ms) ---- */
+  --ease-out:     cubic-bezier(0.2, 0.7, 0.3, 1);    /* @kind other */
+  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);       /* @kind other */
+  --dur-fast:     120ms;  /* @kind other */
+  --dur:          150ms;  /* @kind other */
+  --dur-slow:     180ms;  /* @kind other */
+  --transition:   all var(--dur) var(--ease-out); /* @kind other */
+}

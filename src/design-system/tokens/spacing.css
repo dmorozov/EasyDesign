@@ -1,0 +1,47 @@
+/* ============================================================
+   EasyDesign — SPACING, RADIUS, SIZING TOKENS
+   4px base grid. Comfortable, touch-friendly chrome density.
+   ============================================================ */
+
+:root {
+  /* ---- Spacing scale (4px base) ---- */
+  --space-0:   0;
+  --space-1:   2px;
+  --space-2:   4px;
+  --space-3:   6px;
+  --space-4:   8px;
+  --space-5:   10px;
+  --space-6:   12px;
+  --space-8:   16px;
+  --space-10:  20px;
+  --space-12:  24px;
+  --space-16:  32px;
+  --space-20:  40px;
+  --space-24:  48px;
+
+  /* ---- Corner radii (gentle, 8–10px chrome) ---- */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;    /* default control radius */
+  --radius-lg:   10px;   /* cards / palette items */
+  --radius-xl:   14px;   /* frames / large surfaces */
+  --radius-2xl:  18px;
+  --radius-pill: 999px;
+
+  /* ---- Control sizing ---- */
+  --control-h-sm:  28px;
+  --control-h:     34px;   /* default input / button */
+  --control-h-lg:  40px;
+  --hit-min:       44px;   /* min touch target */
+
+  /* ---- App-shell regions ---- */
+  --toolbar-h:     48px;
+  --rail-left-w:   240px;
+  --rail-right-w:  360px;
+
+  /* ---- Borders ---- */
+  --border-w:      1px;
+  --border-w-2:    2px;
+  --focus-w:       2px;
+  --focus-offset:  2px;
+}

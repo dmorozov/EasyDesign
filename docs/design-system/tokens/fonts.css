@@ -1,0 +1,8 @@
+/* EasyDesign webfonts
+   Inter — humanist UI sans (chrome + board body/headings)
+   JetBrains Mono — code/export view only
+   Loaded from Google Fonts CDN. Substitution note: the reference product
+   specifies "Inter"; we load the genuine Inter family. If self-hosting is
+   required, drop .woff2 files in assets/fonts/ and rewrite these @font-face src. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
