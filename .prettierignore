@@ -1,0 +1,23 @@
+# Build & generated output
+dist/
+build/
+out/
+coverage/
+generated-samples/
+src/theme/generated/
+
+# The standalone reference proof has its own toolchain
+skeleton/
+
+# Tooling / agent files — not project source
+.claude/
+
+# Dependencies & lockfiles
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Generated / minified
+*.min.js
+*.min.css

@@ -1,0 +1,4 @@
+  - #2 — Promote the IR + generators out of skeleton/ into the real package, and wrap the IR node types over React Aria components (the layer we deliberately stubbed).
+  - #3 — Build the editor: React Flow workspace + dnd-kit tree that produces this IR, with email-mode restriction enforced.
+  - #4 — Second sample stressing a two-column content email layout before the MJML mapper hardens.
+

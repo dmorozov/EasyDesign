@@ -1,0 +1,23 @@
+# EditorConfig — https://EditorConfig.org
+# Values MUST stay identical to .prettierrc and .vscode/settings.json.
+# Prettier reads end_of_line, indent_style, indent_size/tab_width, max_line_length
+# from this file as a fallback (overridden by .prettierrc, which agrees with it).
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+max_line_length = 100
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown: keep trailing whitespace (hard line breaks).
+[*.md]
+trim_trailing_whitespace = false
+
+# Lockfiles / minified / generated: don't impose width or indent.
+[{package-lock.json,*.min.*}]
+indent_size = unset
+max_line_length = unset

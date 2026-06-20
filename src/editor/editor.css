@@ -1,0 +1,384 @@
+/*
+ * Editor CHROME styles. This is the editor's own small design system — kept
+ * deliberately separate from the user's design Theme (the design DTCG tokens
+ * such as --color-brand). Editing the design's brand colour must NOT re-skin the editor,
+ * so the chrome uses its own --ed-* namespace and a fixed accent.
+ */
+:root {
+  --ed-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ed-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* type scale — one purpose each: heading / secondary / primary */
+  --ed-fs-heading: 11px;
+  --ed-fs-sm: 12px;
+  --ed-fs-md: 13px;
+
+  --ed-text: #1f2937;
+  --ed-text-muted: #6b7280;
+  --ed-heading: #374151;
+  --ed-border: #d1d5db;
+  --ed-border-subtle: #e5e7eb;
+  --ed-surface: #ffffff;
+  --ed-surface-2: #f9fafb;
+  --ed-bg: #f3f4f6;
+  --ed-accent: #4f46e5; /* the editor's own accent, independent of the design Theme */
+  --ed-accent-soft: #eef2ff;
+  --ed-on-accent: #ffffff;
+  --ed-danger: #b91c1c;
+  --ed-danger-border: #fca5a5;
+  --ed-radius: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: var(--ed-font);
+  font-size: var(--ed-fs-md);
+  color: var(--ed-text);
+}
+
+/* ---- layout ---- */
+.ed-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.ed-app {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 220px 1fr 340px;
+  grid-template-rows: minmax(0, 1fr);
+}
+.ed-palette {
+  border-right: 1px solid var(--ed-border-subtle);
+  overflow: auto;
+}
+.ed-board {
+  min-width: 0;
+  height: 100%;
+  background: var(--ed-bg);
+}
+
+/* ---- top toolbar ---- */
+.ed-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 12px;
+  background: var(--ed-surface);
+  border-bottom: 1px solid var(--ed-border-subtle);
+}
+.ed-brand {
+  margin-right: 4px;
+  font-weight: 700;
+  font-size: var(--ed-fs-md);
+  color: var(--ed-heading);
+}
+.ed-toolbar-group {
+  display: flex;
+  gap: 4px;
+}
+.ed-toolbar-spacer {
+  flex: 1;
+}
+.ed-save-status {
+  font-size: var(--ed-fs-sm);
+  color: var(--ed-text-muted);
+}
+.ed-tbtn {
+  padding: 5px 10px;
+  border: 1px solid var(--ed-border);
+  background: var(--ed-surface);
+  border-radius: var(--ed-radius);
+  cursor: pointer;
+  font-size: var(--ed-fs-sm);
+  color: var(--ed-text);
+}
+.ed-tbtn:hover:not(:disabled) {
+  border-color: var(--ed-accent);
+}
+.ed-tbtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ed-tbtn.ed-danger {
+  border-color: var(--ed-danger-border);
+  color: var(--ed-danger);
+}
+.ed-right {
+  border-left: 1px solid var(--ed-border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+/* ---- panels ---- */
+.ed-panel {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ed-border-subtle);
+}
+.ed-panel h3 {
+  margin: 0 0 8px;
+  font-size: var(--ed-fs-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ed-heading);
+}
+.ed-hint {
+  margin: 0 0 8px;
+  font-size: var(--ed-fs-sm);
+  color: var(--ed-text-muted);
+}
+
+/* ---- shared chrome controls ---- */
+.ed-app button,
+.ed-app input,
+.ed-app select {
+  font-family: var(--ed-font);
+  font-size: var(--ed-fs-sm);
+  color: var(--ed-text);
+}
+
+/* visible keyboard focus on every chrome control (native + React Aria) */
+.ed-app button:focus-visible,
+.ed-app input:focus-visible,
+.ed-tbtn:focus-visible,
+.ed-select-trigger[data-focus-visible],
+.ed-select-item[data-focus-visible] {
+  outline: 2px solid var(--ed-accent);
+  outline-offset: 1px;
+}
+
+/* ---- Frame target dropdown (React Aria Select; popover portals to <body>) ---- */
+.ed-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+  background: var(--ed-surface);
+  font-family: var(--ed-font);
+  font-size: var(--ed-fs-sm);
+  font-weight: 400;
+  color: var(--ed-text);
+  cursor: pointer;
+}
+.ed-select-trigger:hover {
+  border-color: var(--ed-accent);
+}
+.ed-select-caret {
+  font-size: 10px;
+  color: var(--ed-text-muted);
+}
+.ed-select-popover {
+  min-width: 96px;
+  padding: 4px;
+  background: var(--ed-surface);
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  font-family: var(--ed-font);
+}
+.ed-select-listbox {
+  outline: none;
+}
+.ed-select-item {
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: var(--ed-fs-sm);
+  color: var(--ed-text);
+  cursor: pointer;
+  outline: none;
+}
+.ed-select-item[data-hovered],
+.ed-select-item[data-focused] {
+  background: var(--ed-accent-soft);
+}
+.ed-select-item[data-selected] {
+  color: var(--ed-accent);
+  font-weight: 600;
+}
+
+/* ---- component palette ---- */
+.ed-palette button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 4px 0;
+  padding: 7px 10px;
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+  background: var(--ed-surface);
+  cursor: grab;
+  font-size: var(--ed-fs-md);
+}
+.ed-palette button:hover {
+  border-color: var(--ed-accent);
+  background: var(--ed-accent-soft);
+}
+
+/* ---- inspector / theme fields ---- */
+.ed-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--ed-fs-sm);
+  color: var(--ed-heading);
+  margin-bottom: 8px;
+}
+.ed-field input {
+  padding: 6px 8px;
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+}
+.ed-swatch {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.ed-swatch input[type='color'] {
+  width: 40px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--ed-border);
+  border-radius: var(--ed-radius);
+  cursor: pointer;
+}
+.ed-danger {
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--ed-danger-border);
+  color: var(--ed-danger);
+  background: var(--ed-surface);
+  border-radius: var(--ed-radius);
+  cursor: pointer;
+}
+
+/* ---- export target tabs + code ---- */
+.ed-targets {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.ed-targets button {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid var(--ed-border);
+  background: var(--ed-surface);
+  border-radius: var(--ed-radius);
+  cursor: pointer;
+}
+.ed-targets button[aria-pressed='true'] {
+  background: var(--ed-accent);
+  color: var(--ed-on-accent);
+  border-color: var(--ed-accent);
+}
+.ed-code {
+  margin: 0;
+  padding: 10px;
+  background: #0b1021;
+  color: #e5e7eb;
+  font: var(--ed-fs-sm) / 1.5 var(--ed-mono);
+  overflow: auto;
+  max-height: 320px;
+  border-radius: var(--ed-radius);
+  white-space: pre;
+}
+
+/* ---- React Flow frame node ---- */
+.ed-frame-shell {
+  width: 380px;
+  background: var(--ed-surface);
+  border: 1px solid var(--ed-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+.ed-frame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--ed-surface-2);
+  border-bottom: 1px solid var(--ed-border-subtle);
+  border-radius: 8px 8px 0 0;
+  cursor: grab;
+  font-size: var(--ed-fs-sm);
+  font-weight: 600;
+  color: var(--ed-heading);
+}
+.ed-frame-body {
+  padding: 14px;
+}
+.ed-empty-hint {
+  padding: 10px;
+  border: 1px dashed #9ca3af;
+  border-radius: var(--ed-radius);
+  color: var(--ed-text-muted);
+  font-size: var(--ed-fs-sm);
+  text-align: center;
+}
+.ed-drag-overlay {
+  padding: 6px 10px;
+  background: var(--ed-accent);
+  color: var(--ed-on-accent);
+  border-radius: var(--ed-radius);
+  font-size: var(--ed-fs-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- drop indicators + move handle ---- */
+.ed-node {
+  min-height: 6px;
+}
+.ed-node-handle {
+  position: absolute;
+  top: -9px;
+  left: -9px;
+  z-index: 6;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #c7d2fe;
+  border-radius: 4px;
+  background: var(--ed-accent-soft);
+  color: var(--ed-accent);
+  font-size: var(--ed-fs-heading);
+  line-height: 1;
+  cursor: grab;
+  opacity: 0;
+}
+.ed-node:hover > .ed-node-handle {
+  opacity: 1;
+}
+.ed-drop-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ed-accent);
+  z-index: 5;
+  pointer-events: none;
+}
+.ed-drop-before {
+  top: -2px;
+}
+.ed-drop-after {
+  bottom: -2px;
+}

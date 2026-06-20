@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    /* Language / environment */
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
+
+    /* Bundler-mode interop */
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "types": ["vite/client", "node"],
+    "skipLibCheck": true,
+
+    /* Vite/Rolldown bundles; tsc only type-checks */
+    "noEmit": true,
+
+    /* The Angular generator emits decorator metadata. KEEP these — and as a direct
+       consequence do NOT add erasableSyntaxOnly or verbatimModuleSyntax, which would
+       reject decorators (see docs/adr/0004 / walking-skeleton notes). */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+
+    /* Strictness — full strict PLUS the IR/codegen guards */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"]
+}

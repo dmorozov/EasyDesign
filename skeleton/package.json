@@ -1,0 +1,32 @@
+{
+  "name": "easydesign-skeleton",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Walking skeleton: prove one IR exports to React, Angular, static HTML, and MJML",
+  "scripts": {
+    "tokens": "node style-dictionary.config.mjs",
+    "build": "npm run tokens && tsx src/emit-html.ts && tsx src/emit-react.tsx && tsx src/emit-angular.ts && tsx src/emit-email.ts && tsx src/render-angular.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@angular/common": "^22.0.2",
+    "@angular/compiler": "^22.0.2",
+    "@angular/core": "^22.0.2",
+    "@angular/platform-browser": "^22.0.2",
+    "@angular/platform-server": "^22.0.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "mjml": "^5.3.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "rxjs": "^7.8.2",
+    "style-dictionary": "^5.4.4",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "zone.js": "^0.16.2"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0"
+  }
+}
