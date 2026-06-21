@@ -3,8 +3,8 @@ import { useMemo, useState, type ReactElement } from 'react';
 import { Button, Icon, SegmentedControl } from '../design-system';
 import { emitAngularSource, emitHTML, emitMJML, emitReactSource } from '../generators';
 import { type Frame } from '../ir/types';
+import { catalog } from '../theme/design-tokens';
 
-import { literalsWithOverrides } from './literals';
 import { useEditor, type EditorFrame, type ExportTarget } from './store';
 
 const TARGETS: { value: ExportTarget; label: string }[] = [
@@ -29,7 +29,7 @@ function generate(
       case 'angular':
         return emitAngularSource(f);
       case 'mjml':
-        return emitMJML(f, literalsWithOverrides(overrides));
+        return emitMJML(f, catalog.withOverrides(overrides));
     }
   } catch (err) {
     return `/* Cannot export this frame to ${target}:\n   ${err instanceof Error ? err.message : String(err)} */`;

@@ -7,15 +7,11 @@
 // they delegate β to src/components (ADR-0005), so β has one home per side, not three.
 import { type Align, type Justify, type StyleMap } from '../ir/types';
 import { type ButtonNode, type ContainerShape, type ImageNode, type TextNode } from '../ir/walk';
+import { catalog, STYLE_KEYS } from '../theme/design-tokens';
 
 export interface Decl {
   readonly prop: string; // camelCase: 'borderRadius', 'flexDirection'
   readonly value: string;
-}
-
-/** Token ref dot-path -> web `var(--…)`. */
-export function tokenVar(ref: string): string {
-  return `var(--${ref.replace(/\./g, '-')})`;
 }
 
 // Friendly keyword -> CSS value (the string-side copy; React's home is Layout.tsx).
@@ -62,22 +58,13 @@ export function structuralDecls(shape: ContainerShape): Decl[] {
   }
 }
 
-// The IR style keys the contract binds on containers (the 3x-duplicated map).
-const CONTAINER_STYLE_PROP: Record<string, string> = {
-  background: 'background',
-  padding: 'padding',
-  borderRadius: 'borderRadius',
-  gap: 'gap',
-};
-
-/** Token-bound container decls (background/padding/radius/gap), now stated once. */
+/** Token-bound container decls: the bound style keys (STYLE_KEYS) resolved by the Design-Token Model
+ *  (D2). One home for which keys bind + the dot->var resolution (camelCase-correct). */
 export function containerDecls(style: StyleMap | undefined): Decl[] {
   if (!style) return [];
   const out: Decl[] = [];
   for (const [key, ref] of Object.entries(style)) {
-    const prop = CONTAINER_STYLE_PROP[key];
-    if (prop === undefined) continue; // ignore keys with no defined web mapping
-    out.push({ prop, value: tokenVar(ref) });
+    if (key in STYLE_KEYS) out.push({ prop: key, value: catalog.resolveVar(ref) });
   }
   return out;
 }

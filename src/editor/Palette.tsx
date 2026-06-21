@@ -3,6 +3,7 @@ import { useState, type ReactElement } from 'react';
 
 import { Icon, Input, PaletteItem as PaletteTile } from '../design-system';
 
+import { canInsertComponent, canInsertInTarget, insertHint } from './frames';
 import { PALETTE, type PaletteItem } from './palette';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
@@ -83,7 +84,7 @@ interface PaletteEntryProps {
 }
 
 function PaletteEntry({ item, target, tile }: PaletteEntryProps): ReactElement {
-  const disabled = target === 'email' && !item.emailSafe;
+  const disabled = !canInsertInTarget(target, item);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `palette:${item.id}`,
     data: { kind: 'insert', item },
@@ -99,7 +100,7 @@ function PaletteEntry({ item, target, tile }: PaletteEntryProps): ReactElement {
     if (disabled || !selectedFrameId) return;
     const frame = frames.find((f) => f.id === selectedFrameId);
     if (!frame) return;
-    if (frame.target === 'email' && !item.emailSafe) return;
+    if (!canInsertComponent(frame, item)) return;
     const selected = selectedPath ? nodeAt(frame.root, selectedPath) : undefined;
     const parentPath: NodePath = selected && 'children' in selected ? (selectedPath ?? []) : [];
     insertChild(selectedFrameId, parentPath, item.create());
@@ -117,7 +118,7 @@ function PaletteEntry({ item, target, tile }: PaletteEntryProps): ReactElement {
         label={item.label}
         dragging={isDragging}
         disabled={disabled}
-        disabledNote="Not available in email"
+        disabledNote={insertHint(target)}
         onClick={onClick}
         {...listeners}
         {...attributes}

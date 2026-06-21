@@ -61,9 +61,9 @@ changes some facts the plan relied on. Read this before trusting the file/symbol
   `SWATCHES` is now a curated, **kebab-keyed** (`color-brand`) `{key,label}[]` rendered via DS `Swatch`,
   not a dot-path list. The email-mode restriction now shows email-unsafe palette items as **locked** (DS
   `PaletteItem disabled` + `disabledNote`) rather than hidden — so the old `paletteFor(target)` filter that
-  implemented hiding (`palette.ts:94`) is now **dead code with zero callers**, and the `emailSafe` JSDoc
-  that still reads "hidden in email Frames" (`palette.ts:13`) is stale. Remove the vestige (or fold the
-  filter into D3's `canInsertComponent`) when D3 lands.
+  implemented hiding was dead code with zero callers, and the `emailSafe` JSDoc read "hidden in email
+  Frames". **Both removed/corrected in D3** — `paletteFor` is deleted and the rule now lives only in
+  `frames.ts` (`canInsertComponent`/`canInsertInTarget`).
 
 **Guardrail.** D1 touches `src/components/canvas.tsx`/`EditableNode.tsx`; the reskin left
 `src/components/*` design-system-free on purpose (export substrate, ADR-0007). Anything D1 extracts must
@@ -132,6 +132,17 @@ import **no** design-system code — the seam stays inside `src/ir/` + `src/comp
 
 ### D2 — The Design-Token Model: a queryable Theme module
 
+> **✅ Implemented (2026-06-20).** `src/theme/design-tokens.ts` (`catalog`: `get`/`byCategory`/`resolveVar`/
+> `resolveLiteral`/`withOverrides`/`fromKebab` + `STYLE_KEYS`) over a build-generated `tokens.catalog.json`
+> (4th Style-Dictionary output; `categoryOf` shared via `token-category.mjs`). All five cruxes shipped as
+> decided: build-step catalog (a); Model owns literal resolution, `literals.ts` deleted (b); **dot keying
+> collapsed atomically** with the 3-leg gate — `buildOverrideCss`→`cssVarName`, MJML via `withOverrides`,
+> `fromKebab` load-shim — and `color.onBrand` canonicalized (c); scope-blind (d); flat `STYLE_KEYS` (e).
+> Consolidated `tokenVar`×2 + `styleFromTokens`/`CONTAINER_STYLE_PROP` + `makeLit`; ThemePanel now shows
+> all 6 colors via `byCategory`. Generators **byte-identical** (snapshots held); the `onBrand` `.replace`
+> bug is closed by construction. Verified live: re-theme, MJML override, kebab→dot migration. The
+> description below is retained as the original rationale.
+
 - **Modules/files:** new `src/theme/design-tokens.ts` (the seam) over `src/theme/tokens.json`. Today the
   knowledge is smeared across `src/components/tokens.ts` (`tokenVar` + `styleFromTokens`), each web
   generator's resolver (`tokenToVar` + `STYLE_PROP_TO_CSS` in `html.ts`, plus the react/angular twins),
@@ -183,13 +194,149 @@ import **no** design-system code — the seam stays inside `src/ir/` + `src/comp
   leaks — so a renamed token fails the suite instead of rendering blank.
 - **Unlocks:** **container-style-editing** (now landing on the real Inspector tab); runtime IR validation
   on load; per-Frame overrides; a fuller Design Palette later (drop the curated `SWATCHES` subset).
-- **Test it (Phase 0 is live — don't skip).** The Design-Token Model is pure: add
-  `src/theme/design-tokens.test.ts` (assert `byCategory` / `isValidRef` / `resolveVar` / `stylableKeys`,
-  that every hardcoded default in `palette.ts` / `sample.ts` / `webRoot` resolves, and that no chrome
-  alias leaks) **and** add `src/theme/design-tokens.ts` to `coverage.include` in `vitest.config.ts`. The
-  D1 seam tests (`src/ir/walk.test.ts`, `src/generators/*.test.ts`) are the pattern to copy.
+- **Test it. ✅ Done.** `src/theme/design-tokens.test.ts` (get-as-validation, `byCategory`, `resolveVar`
+  camelCase-correctness, `resolveLiteral`, `withOverrides`, `fromKebab`, `STYLE_KEYS`, the `createCatalog`
+  fixture seam) + `src/theme/token-category.test.ts`; both modules added to `coverage.include`. Suite at
+  43 tests / 99% stmts / 92% branch.
+
+#### D2 design cruxes (to grill later)
+
+These are the open interface decisions for the Design-Token Model — captured here to grill in a later
+session. (A "Design It Twice" run produced four candidate interfaces + a comparison — digest after the
+cruxes.) **Post-D1 reality:** the dot→CSS resolver is already down to **two** `var` copies
+(`components/tokens.ts:7`, `leaf-style.ts:18`) plus MJML's `makeLit` literal path — D1 merged the three
+generator resolvers. The headline gap is that **no module can answer "which Design Tokens are
+spacings?"**, which is what blocks the gap/padding pickers. Candidate interface surface: `byCategory(cat)`
+· `categoryOf(ref)` · `isValidRef(ref)` · `resolveVar(ref)` · `resolveLiteral(ref)?` · `styleKeys()`.
+
+- **(a) Catalog source. ✅ RESOLVED (grilled 2026-06-20) — BUILD-STEP generated catalog.** Extend Style
+  Dictionary to emit `tokens.catalog.json` — an array of `{ref (dot), category, cssVarName, literal}`
+  keyed by the dot-ref — and the Model indexes that (no runtime DTCG parse). **Deciding premise:** the
+  token graph will likely grow DTCG aliases / semantic tokens (e.g. `color.primary: {color.brand}`),
+  which runtime-parse would have to re-resolve itself; SD already resolves them. Build-step is also what
+  makes (c)'s `onBrand` fix correct — SD owns the camelCase-aware `name/kebab`, so the catalog's
+  `cssVarName` (`--color-on-brand`) can't drift and we never hand-roll `.replace`. **Confirms & enables
+  (c):** the catalog is keyed by the dot-ref (= (c)'s identity), and kebab lives only as the SD-derived
+  `cssVarName` field. _Sub-decisions locked:_ (i) the catalog **subsumes `tokens.literals.json`** — it
+  carries `literal` per entry, so `literals.ts` + `literalsWithOverrides` collapse into
+  `catalog.withOverrides` (this **is** (c)'s regression-gate leg 2); net generated files stay 3→3.
+  (ii) `categoryOf($type, path)` (the `dimension → space|radius|font` disambiguation) is a **shared pure
+  function** imported by both the SD format and app validation — typed + unit-tested once, not buried in
+  the `.mjs`. _Note:_ runtime-parse stays the right call only if the token graph is ever frozen as a flat
+  literal list (no aliases) — not the expectation for a theming tool (ADR-0004).
+- **(b) Literal-resolution ownership. ✅ RESOLVED by corollary of (a)-subsume.** The catalog carries
+  `literal` per entry and owns `withOverrides`, so the Model **owns literal resolution**: `mjml.ts`'s
+  `makeLit` becomes `resolveLiteral(ref)` over the catalog and `editor/literals.ts` collapses in. MJML's
+  **flatten** (`renderCardSections`/`renderRowSection`) stays bespoke (ADR-0008) — the catalog hands MJML
+  per-leaf literals only, never tree shape.
+- **(c) dot↔kebab keying. ✅ RESOLVED (grilled 2026-06-20) — COLLAPSE TO DOT, atomically.** Make the IR
+  dot-path the ONE true ref; migrate `themeOverrides` / `SWATCHES` / `buildOverrideCss` / persistence to
+  dot **inside the D2 commit** (not staged). The bridge (`toKebab` / `fromKebab`) is **rejected**:
+  permanent dual keying, it leaks the boundary D2 exists to delete, and it doesn't even save the `onBrand`
+  fix (its `toKebab` must be SD-correct anyway). Risk today is **trivial** — only the `themeOverrides`
+  _keys_ are kebab; the design structure (every `StyleMap`) is already dot, and the only persisted state
+  is the dev's localStorage scratch + exported JSON. **Canonical ref mirrors `tokens.json` 1:1**, so the
+  `onBrand` ref is `color.onBrand` (catalog derives `--color-on-brand`); fix `mjml.ts:77`'s `color.on-brand`
+  cheat as part of the same change. "Single-keyed" means dot is the **identity**; kebab survives only as
+  the catalog's derived `cssVarName` field (SD-computed, camelCase-correct), so the `.replace(/\./g,'-')`
+  dies in all three files. See the three-leg regression gate below.
+- **(d) Scope awareness. ✅ RESOLVED (grilled 2026-06-20) — SCOPE-BLIND.** `resolveVar('space.md')` →
+  `'var(--space-md)'`, never a selector. This is **forced**, not a preference: a CSS `var()` _reference_
+  is scope-invariant (it resolves against wherever it's used); scope lives only in the _declaration
+  block's selector_, which `resolveVar` never emits. The selector is owned by the three places that emit
+  blocks — SD config (`theme.css @ :root`, `theme.scoped.css @ .ed-board-content`), `buildOverrideCss`,
+  and `FrameNode`'s class — **never the Model** (`.ed-board-content` is editor-chrome knowledge, not token
+  knowledge; putting it in the Model is the ADR-0007 smell the rejected frozen-index design committed).
+  Holds under per-Frame overrides / dark variants too (the editor's override-emitter picks the selector,
+  the Model still just resolves refs). _Adjacent (non-Model, optional) tidy:_ hoist the `.ed-board-content`
+  literal to one **editor** constant shared by `buildOverrideCss` + `FrameNode` — do it opportunistically
+  when (c)'s `buildOverrideCss` change touches that line.
+- **(e) `stylableKeys` granularity. ✅ RESOLVED (grilled 2026-06-20) — FLAT table.** A flat
+  `Record<styleKey, category>` (`background→color, padding→space, borderRadius→radius, gap→space`),
+  understood as the **container style keys** (consolidates `styleFromTokens` + `CONTAINER_STYLE_PROP`).
+  Leaf-exclusion (e.g. `gap` never offered on a `Text`) comes from the **Inspector's existing
+  container-gate**, not the table; the generators apply the table as a harmless filter (a leaf with
+  `borderRadius` is fine). The `key→category` mapping is **global truth** (`gap` is always `space`), so
+  only a per-node _set_ could ever vary → flat→per-node is a cheap local refactor, deferred until its real
+  trigger: **user-editable `Text` color/`fontSize`** via the IR (then add `stylableKeys(nodeType)`).
+  D2's token pickers are a **new** Inspector group (token-bound style), complementary to the existing
+  keyword Layout controls (Distribute/Justify/Align/Wrap are props, not tokens), in the same
+  container-gated panel.
+
+**Candidate interfaces (Design It Twice — digest, 2026-06-20).** Four designs were generated and judged;
+the run **agreed with every lean above** ((a) generated catalog · (b) own literal resolution · (c)
+collapse to dot · (d) scope-blind). The menu:
+
+| Design                       | Shape                                                                                                                    | Keying                   | Resolution seam                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------ | ---------------------------------------------------------------------- |
+| **Catalog (minimal)** ★      | one self-describing `Token` {ref, category, var, cssVarName, literal} + `get()`; `get()===undefined` **is** `isValidRef` | collapse to dot          | none — `resolveVar`/`resolveLiteral` are thin projections over `get()` |
+| Category-registry (flexible) | `byCategory` + pluggable `resolveFor(target)` / `registerTarget`                                                         | collapse to dot          | runtime plugin registry (unpaid-for surface; no 3rd target exists)     |
+| Frozen index (common-caller) | two hot calls (`resolveVar`=Map.get, `byCategory`=bucket) + public `toKebab`/`fromKebab`                                 | **bridge (keeps kebab)** | two baked fields; also puts `SCOPE_SELECTOR` inside the Model          |
+| Ports & adapters             | `resolve(ref, renderer)` + `webVar`/`emailLiteral` 1-line adapters                                                       | collapse to dot          | one real 2-adapter port, audited honestly                              |
+
+**Verdict (to grill): ship the minimal `Token` catalog interface**, and adopt the ports design's
+_explicit two-adapter audit_ as its written justification (source port collapsed = 1 adapter =
+indirection → plain `createCatalog(entries)`; resolution is the real 2-adapter seam, realized as two
+thin projections, **not** a `TokenRenderer` interface or a `registerTarget` plugin). **Reject** the
+frozen-index design's public `toKebab`/`fromKebab` and its in-Model `SCOPE_SELECTOR` (the latter names
+the chrome/canvas selectors _inside_ the token Model — an ADR-0007 smell). Flat `STYLE_KEYS` table
+(`background→color, padding/gap→space, borderRadius→radius`); `byCategory` powers ThemePanel swatches
+**and** the Inspector pickers; `literals.ts` collapses to a thin re-export.
+
+**Non-negotiable regression gate (LOCKED — atomic, all THREE in the D2 commit).** The grill found a third
+leg the first digest missed. The collapse to dot is safe _only if_ all of these land together:
+
+1. **`buildOverrideCss`** switches `--${key}` → `--${catalog.get(ref).cssVarName}` — else the live canvas
+   re-theme silently emits invalid `--color.brand:` and stops working (it's also a strict bug fix: the
+   var name now always comes from SD, never a hand-typed kebab key).
+2. **`literalsWithOverrides` / the MJML export path** stops doing `{ ...kebab baseLiterals, ...dot
+overrides }` (which would merge as _separate_ keys → `makeLit` finds the base, silently ignores the
+   live override) and routes through the catalog's dot-aware `withOverrides`.
+3. **`loadFromLocal` AND `loadDocument`** (the JSON-import path too) get the one-line `fromKebab` shim —
+   else saved kebab themes drop on load.
+
+Miss any one → a _silent_ break (dead canvas re-theme, stale MJML export, or lost themes).
+
+**Latent bug the catalog fixes (confirmed; canonical ref locked to `color.onBrand`).** `color.onBrand` → today's `.replace(/\./g,'-')`
+(in 3 files) → `--color-onBrand`, but Style Dictionary emits `--color-on-brand`. Hidden only because no
+`StyleMap` ref or swatch uses `onBrand` (mjml.ts hand-writes `color.on-brand`). The moment a user binds
+`background: color.onBrand` — which `byCategory('color')` will now offer — the naive `.replace` ships a
+broken `var()`. The catalog's SD-derived `cssVarName` closes it permanently: the decisive reason
+build-step source (crux a) beats runtime-parse.
 
 ### D3 — The Frame lifecycle Module + the Board↔React-Flow seam
+
+> **✅ IMPLEMENTED (2026-06-20, ADR-0011).** `src/editor/frames.ts` (pure: `TARGET_PROFILES`,
+> `canInsertComponent`/`canInsertInTarget`/`insertHint`, `createFrame`/`deleteFrame`/`moveFrame`/
+> `nextSlot`, injected `MintId`) + `frames.test.ts` (11 tests, in `coverage.include`). Seam
+> `src/editor/useFrameNodes.ts` reconciles the React-Flow node list against the store off a cheap
+> `id:x:y` signature — add/remove/move/undo with **no remount** (live-verified: undo dropped a Frame
+> with a byte-identical viewport transform). Store gained `addFrame`/`removeFrame`/`renameFrame`/
+> `selectFrame` and routes `moveFrame` through the module; **`undo`/`redo` no longer bump `docKey`**
+> (load/reset still do → `fitView` on a fresh document only).
+>
+> **Decisions locked.** (1) **Target FIXED at creation** — `setFrameTarget` + the header Web/Email
+> `SegmentedControl` are deleted; the medium is a read-only label that _drives the Palette_ (via the
+> selected Frame's target) but is never toggled, closing the web→email-with-Grid → broken-MJML hole
+> (ADR-0006). New Frames are minted via a Board `+ Web page` / `+ Email` panel. (2) **Module shape:**
+> the simpler pure functions returning `{frames, created}` / `{frames, removed}`, with the store doing
+> Selection reconciliation (chosen over a heavier `FrameMutation` object — `deleteFrame` has one
+> caller, so it doesn't concentrate). (3) **Frame chrome** (per user): thin 1px **dashed** body, title
+> label top-left = the React-Flow `dragHandle` **and** the select affordance, read-only medium label
+> top-right — no window titlebar. Frame-level Selection = `selectedFrameId` set + `selectedPath: null`
+> → a Frame Inspector panel (editable title via `renameFrame`, read-only medium, Delete frame). All
+> **four** email-rule sites (Palette tile `disabled`, Palette click guard, Palette locked note, Editor
+> drop guard) now route through `canInsertComponent`/`insertHint`. Green: typecheck · eslint · 54
+> vitest (98.7% stmt) · `generate` · build · live browser pass.
+>
+> **Post-review (13 confirmed findings, all minor/nit) addressed.** Deleted dead `paletteFor`; unified
+> the Inspector node badge on `TARGET_PROFILES[].label`; corrected the `emailSafe` JSDoc; softened the
+> `nextSlot` comment; dropped the unused `data-target`; added the `moveFrame` unknown-id test. **Both
+> deferred follow-ups now done:** (a) an **import-time audit** — `frames.ts` `isEmailFrameClean` +
+> `EMAIL_UNSAFE_TYPES` (kept in sync with the Palette by a test), consulted in `isEditorFrame`, rejects
+> an email-unsafe node in an email Frame on load/import (verified: a Grid-in-email doc is rejected,
+> Grid-in-web accepted); (b) **pan-to-new-Frame** — `pendingFocusFrameId` + a `ViewportFocus` child
+> `setCenter`s on a newly-added Frame, zoom preserved (verified live). 60 tests green.
 
 - **Modules/files:** new `src/editor/frames.ts` + a `useFrameNodes` seam; today split across
   `src/editor/store.ts` (`createInitialFrames` :98, `setFrameTarget` :232, `moveFrame` :248),

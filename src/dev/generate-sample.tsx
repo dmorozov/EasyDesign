@@ -14,7 +14,7 @@ import { emitHTML } from '../generators/html';
 import { emitMJML } from '../generators/mjml';
 import { emitReactSource } from '../generators/react';
 import { sampleCard } from '../ir/sample';
-import { type TokenLiterals } from '../ir/types';
+import { catalog } from '../theme/design-tokens';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const generatedDir = resolve(root, 'src/theme/generated');
@@ -22,9 +22,6 @@ const outDir = resolve(root, 'generated-samples');
 mkdirSync(outDir, { recursive: true });
 
 const theme = readFileSync(resolve(generatedDir, 'theme.css'), 'utf8');
-const literals = JSON.parse(
-  readFileSync(resolve(generatedDir, 'tokens.literals.json'), 'utf8'),
-) as TokenLiterals;
 
 // Wrap a card fragment in a standalone, offline-renderable HTML document.
 function page(title: string, cardHtml: string): string {
@@ -58,7 +55,7 @@ writeFileSync(resolve(outDir, 'Card.tsx'), emitReactSource(sampleCard), 'utf8');
 writeFileSync(resolve(outDir, 'card.component.ts'), emitAngularSource(sampleCard), 'utf8');
 
 // 4. MJML email target (resolved literals -> mjml() -> email HTML).
-const mjmlSource = emitMJML(sampleCard, literals);
+const mjmlSource = emitMJML(sampleCard, catalog.withOverrides({}));
 writeFileSync(resolve(outDir, 'email.mjml'), mjmlSource, 'utf8');
 const compiled = await mjml2html(mjmlSource, { validationLevel: 'strict' });
 writeFileSync(resolve(outDir, 'email.html'), compiled.html, 'utf8');

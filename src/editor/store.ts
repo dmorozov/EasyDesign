@@ -1,16 +1,10 @@
 import { create } from 'zustand';
 
 import { sampleCard } from '../ir/sample';
-import {
-  type Align,
-  type Distribute,
-  type Frame,
-  type Justify,
-  type Node,
-  type Wrap,
-} from '../ir/types';
+import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
 
 import { loadFromLocal, type EditorDocument, type EditorFrame } from './document';
+import * as Frames from './frames';
 import { isPrefix, nodeAt, type NodePath } from './paths';
 
 export type { EditorFrame };
@@ -41,6 +35,8 @@ interface EditorState {
   exportTarget: ExportTarget;
   rightTab: RightTab;
   dropTarget: DropTarget | null;
+  // Transient (not in Snapshot/undo): id of a just-added Frame the Board should pan into view.
+  pendingFocusFrameId: string | null;
   docKey: number;
   past: Snapshot[];
   future: Snapshot[];
@@ -59,7 +55,11 @@ interface EditorState {
     patch: { justify?: Justify; align?: Align; wrap?: Wrap; distribute?: Distribute },
   ) => void;
   deleteNode: (frameId: string, path: NodePath) => void;
-  setFrameTarget: (frameId: string, target: Frame['target']) => void;
+  addFrame: (target: Frames.FrameTarget) => void;
+  removeFrame: (frameId: string) => void;
+  renameFrame: (frameId: string, title: string) => void;
+  selectFrame: (frameId: string) => void;
+  clearPendingFocus: () => void;
   setThemeOverride: (name: string, value: string) => void;
   setExportTarget: (target: ExportTarget) => void;
   moveFrame: (frameId: string, x: number, y: number) => void;
@@ -138,6 +138,7 @@ export const useEditor = create<EditorState>()((set) => ({
   exportTarget: 'react',
   rightTab: 'inspector',
   dropTarget: null,
+  pendingFocusFrameId: null,
   docKey: 0,
   past: [],
   future: [],
@@ -264,10 +265,42 @@ export const useEditor = create<EditorState>()((set) => ({
       });
     }),
 
-  setFrameTarget: (frameId, target) =>
+  // Add a Frame (medium FIXED at creation, ADR-0006) and select it so the Palette reflects its medium.
+  addFrame: (target) =>
+    set((state) => {
+      const { frames, created } = Frames.createFrame(state.frames, target);
+      return commit(state, null, {
+        frames,
+        selectedFrameId: created.id,
+        selectedPath: null,
+        rightTab: 'inspector',
+        pendingFocusFrameId: created.id, // ask the Board to pan the new Frame into view
+      });
+    }),
+
+  removeFrame: (frameId) =>
+    set((state) => {
+      const { frames, removed } = Frames.deleteFrame(state.frames, frameId);
+      if (!removed) return {};
+      const cleared = state.selectedFrameId === frameId; // drop a Selection pointing at the dead Frame
+      return commit(state, null, {
+        frames,
+        ...(cleared ? { selectedFrameId: null, selectedPath: null } : {}),
+        dropTarget: null,
+      });
+    }),
+
+  // Frame-level selection (no specific node) — drives the Component Palette's medium filter.
+  selectFrame: (frameId) =>
+    set({ selectedFrameId: frameId, selectedPath: null, rightTab: 'inspector' }),
+
+  clearPendingFocus: () => set({ pendingFocusFrameId: null }),
+
+  // Rename a Frame (its title is the top-left label that identifies it). Coalesced like text edits.
+  renameFrame: (frameId, title) =>
     set((state) =>
-      commit(state, null, {
-        frames: state.frames.map((f) => (f.id === frameId ? { ...f, target } : f)),
+      commit(state, `rename:${frameId}`, {
+        frames: state.frames.map((f) => (f.id === frameId ? { ...f, title } : f)),
       }),
     ),
 
@@ -281,11 +314,11 @@ export const useEditor = create<EditorState>()((set) => ({
   setExportTarget: (target) => set({ exportTarget: target }),
 
   moveFrame: (frameId, x, y) =>
-    set((state) =>
-      commit(state, null, {
-        frames: state.frames.map((f) => (f.id === frameId ? { ...f, x, y } : f)),
-      }),
-    ),
+    set((state) => {
+      const frames = Frames.moveFrame(state.frames, frameId, x, y);
+      if (frames === state.frames) return {}; // same position — no history entry
+      return commit(state, null, { frames });
+    }),
 
   loadDocument: (doc) =>
     set((state) =>
@@ -324,7 +357,6 @@ export const useEditor = create<EditorState>()((set) => ({
         selectedPath: null,
         dropTarget: null,
         lastCommitKey: null,
-        docKey: state.docKey + 1,
       };
     }),
 
@@ -341,7 +373,6 @@ export const useEditor = create<EditorState>()((set) => ({
         selectedPath: null,
         dropTarget: null,
         lastCommitKey: null,
-        docKey: state.docKey + 1,
       };
     }),
 }));

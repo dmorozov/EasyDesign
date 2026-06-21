@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buttonDecls,
-  containerDecls,
-  imageDecls,
-  structuralDecls,
-  textDecls,
-  tokenVar,
-} from './leaf-style';
+import { buttonDecls, containerDecls, imageDecls, structuralDecls, textDecls } from './leaf-style';
 
 describe('structuralDecls — α/layout -> CSS, shared by the string targets', () => {
   it('a flow row is display:flex + flex-direction:row', () => {
@@ -63,11 +56,7 @@ describe('containerDecls — token-bound container styles', () => {
   });
 });
 
-describe('tokenVar — dot-path to kebab CSS var', () => {
-  it('color.on-brand -> var(--color-on-brand)', () => {
-    expect(tokenVar('color.on-brand')).toBe('var(--color-on-brand)');
-  });
-});
+// (token resolution moved to the Design-Token Model — see design-tokens.test.ts `resolveVar`.)
 
 describe('leaf β — the CSS vocabulary, stated once', () => {
   it('a primary button binds the brand tokens', () => {

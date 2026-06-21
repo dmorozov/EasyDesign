@@ -3,6 +3,7 @@ import { type ReactElement } from 'react';
 import { Badge, Button, Icon, Input, PanelSection, SegmentedControl } from '../design-system';
 import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
 
+import { TARGET_PROFILES } from './frames';
 import { nodeAt } from './paths';
 import { useEditor } from './store';
 
@@ -37,9 +38,50 @@ export function Inspector(): ReactElement {
   const updateText = useEditor((s) => s.updateText);
   const setLayout = useEditor((s) => s.setLayout);
   const deleteNode = useEditor((s) => s.deleteNode);
+  const renameFrame = useEditor((s) => s.renameFrame);
+  const removeFrame = useEditor((s) => s.removeFrame);
 
   const frame = frames.find((f) => f.id === selectedFrameId);
   const node = frame && selectedPath ? nodeAt(frame.root, selectedPath) : undefined;
+
+  // Frame-level selection (the title label was clicked, or a Frame was just added): the Frame panel.
+  // Its medium is READ-ONLY (fixed at creation); this is the only place a Frame is deleted.
+  if (frame && selectedFrameId && !selectedPath) {
+    return (
+      <div className="ed-inspector">
+        <div className="ed-inspector-head">
+          <span className="ed-inspector-type">Frame</span>
+          <Badge tone="accent">{TARGET_PROFILES[frame.target].label}</Badge>
+        </div>
+        <PanelSection title="Frame">
+          <Input
+            label="Title"
+            value={frame.title}
+            onChange={(e) => {
+              renameFrame(frame.id, e.target.value);
+            }}
+          />
+          <div className="ed-field">
+            <span className="eds-label">Medium</span>
+            <span className="ed-inspector-note">{TARGET_PROFILES[frame.target].label} · fixed</span>
+          </div>
+        </PanelSection>
+        <div className="ed-rail-actions">
+          <Button
+            variant="danger"
+            size="sm"
+            block
+            icon={<Icon.trash />}
+            onClick={() => {
+              removeFrame(frame.id);
+            }}
+          >
+            Delete frame
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!frame || !selectedFrameId || !selectedPath || !node) {
     return (
@@ -70,7 +112,7 @@ export function Inspector(): ReactElement {
     <div className="ed-inspector">
       <div className="ed-inspector-head">
         <span className="ed-inspector-type">{node.type}</span>
-        <Badge tone="accent">{frame.target === 'email' ? 'Email' : 'Web'}</Badge>
+        <Badge tone="accent">{TARGET_PROFILES[frame.target].label}</Badge>
       </div>
 
       {editable && (

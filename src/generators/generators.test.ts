@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { sampleCard } from '../ir/sample';
-import {
-  type Distribute,
-  type Frame,
-  type Justify,
-  type RowProps,
-  type TokenLiterals,
-} from '../ir/types';
-import literals from '../theme/generated/tokens.literals.json';
+import { type Distribute, type Frame, type Justify, type RowProps } from '../ir/types';
+import { catalog } from '../theme/design-tokens';
 
 import { emitAngularSource } from './angular';
 import { emitHTML } from './html';
@@ -44,7 +38,7 @@ describe('generators — golden output on the sample (regression guard)', () => 
     expect(emitAngularSource(sampleCard)).toMatchSnapshot();
   });
   it('mjml', () => {
-    expect(emitMJML(sampleCard, literals as TokenLiterals)).toMatchSnapshot();
+    expect(emitMJML(sampleCard, catalog.withOverrides({}))).toMatchSnapshot();
   });
 });
 
@@ -74,9 +68,9 @@ describe('Row distribute (ADR-0010) — every web target', () => {
 
 describe('MJML guardrails (ADR-0006/0008)', () => {
   it('throws on a non-Stack root rather than emitting broken email', () => {
-    expect(() => emitMJML({ target: 'email', root: { type: 'Row', children: [] } }, {})).toThrow(
-      /Stack/,
-    );
+    expect(() =>
+      emitMJML({ target: 'email', root: { type: 'Row', children: [] } }, catalog.withOverrides({})),
+    ).toThrow(/Stack/);
   });
 
   it('throws on an unknown token ref (caught at email-build time, not silently)', () => {
@@ -88,7 +82,7 @@ describe('MJML guardrails (ADR-0006/0008)', () => {
         children: [{ type: 'Text', props: { content: 'x', variant: 'body' } }],
       },
     };
-    expect(() => emitMJML(frame, literals as TokenLiterals)).toThrow(/Unknown token ref/);
+    expect(() => emitMJML(frame, catalog.withOverrides({}))).toThrow(/Unknown token ref/);
   });
 
   it('throws if a non-Row container reaches the leaf flattener', () => {
@@ -96,6 +90,6 @@ describe('MJML guardrails (ADR-0006/0008)', () => {
       target: 'email',
       root: { type: 'Stack', children: [{ type: 'Grid', props: { columns: 2 }, children: [] }] },
     };
-    expect(() => emitMJML(frame, literals as TokenLiterals)).toThrow(/non-leaf/);
+    expect(() => emitMJML(frame, catalog.withOverrides({}))).toThrow(/non-leaf/);
   });
 });

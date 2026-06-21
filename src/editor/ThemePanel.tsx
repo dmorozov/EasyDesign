@@ -1,23 +1,22 @@
 import { type ReactElement } from 'react';
 
 import { PanelSection, Swatch } from '../design-system';
+import { catalog } from '../theme/design-tokens';
 
-import { baseLiterals } from './literals';
 import { useEditor } from './store';
 
-const SWATCHES: { key: string; label: string }[] = [
-  { key: 'color-brand', label: 'Primary' },
-  { key: 'color-surface', label: 'Surface' },
-  { key: 'color-page', label: 'Page' },
-  { key: 'color-text', label: 'Text' },
-];
-
-function baseHex(key: string): string {
-  const value = baseLiterals[key];
-  return typeof value === 'string' ? value : '#000000';
+// A friendly label from a token ref: 'color.onBrand' -> 'On brand'.
+function humanize(ref: string): string {
+  const last = ref.split('.').pop() ?? ref;
+  const spaced = last
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-/** The Design Palette: edit Theme tokens once and re-theme every Frame live (ADR-0004).
+/** The Design Palette: edit Theme tokens once and re-theme every Frame live (ADR-0004). The swatches
+ *  come from the Design-Token catalog (`byCategory`) — no hardcoded list, so every color shows up.
  *  Rendered as the Design tab body in the right rail. */
 export function ThemePanel(): ReactElement {
   const overrides = useEditor((s) => s.themeOverrides);
@@ -29,13 +28,13 @@ export function ThemePanel(): ReactElement {
         Your style guide — edit a color and the whole board re-themes instantly.
       </p>
       <PanelSection title="Brand colors">
-        {SWATCHES.map(({ key, label }) => (
+        {catalog.byCategory('color').map((t) => (
           <Swatch
-            key={key}
-            name={label}
-            value={overrides[key] ?? baseHex(key)}
+            key={t.ref}
+            name={humanize(t.ref)}
+            value={overrides[t.ref] ?? t.literal}
             onChange={(hex) => {
-              setThemeOverride(key, hex);
+              setThemeOverride(t.ref, hex);
             }}
           />
         ))}

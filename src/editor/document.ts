@@ -1,4 +1,7 @@
 import { type Frame, type Node } from '../ir/types';
+import { catalog } from '../theme/design-tokens';
+
+import { isEmailFrameClean } from './frames';
 
 // A Frame as the editor holds it: the IR plus its board position (so layout persists).
 export interface EditorFrame {
@@ -36,7 +39,9 @@ function isEditorFrame(value: unknown): value is EditorFrame {
     typeof f.x === 'number' &&
     typeof f.y === 'number' &&
     typeof f.root === 'object' &&
-    f.root !== null
+    f.root !== null &&
+    // ADR-0006: an email Frame's tree must be email-safe (the interactive guards can't vet imports).
+    isEmailFrameClean(f.target, f.root)
   );
 }
 
@@ -52,6 +57,21 @@ export function isEditorDocument(value: unknown): value is EditorDocument {
   );
 }
 
+// Migrate legacy kebab-keyed themeOverrides ('color-brand') to the canonical dot ref ('color.brand')
+// on load, so saves from before the D2 keying-collapse still apply. Unknown keys are dropped.
+function withMigratedOverrides(doc: EditorDocument): EditorDocument {
+  const themeOverrides: Record<string, string> = {};
+  for (const [key, value] of Object.entries(doc.themeOverrides)) {
+    if (catalog.get(key))
+      themeOverrides[key] = value; // already a dot ref
+    else {
+      const ref = catalog.fromKebab(key); // legacy kebab -> dot
+      if (ref) themeOverrides[ref] = value;
+    }
+  }
+  return { ...doc, themeOverrides };
+}
+
 export function saveToLocal(doc: EditorDocument): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(doc));
@@ -65,7 +85,7 @@ export function loadFromLocal(): EditorDocument | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) return null;
     const parsed: unknown = JSON.parse(raw);
-    return isEditorDocument(parsed) ? parsed : null;
+    return isEditorDocument(parsed) ? withMigratedOverrides(parsed) : null;
   } catch {
     return null;
   }
@@ -84,7 +104,7 @@ export function downloadDocument(doc: EditorDocument): void {
 export async function readDocumentFile(file: File): Promise<EditorDocument | null> {
   try {
     const parsed: unknown = JSON.parse(await file.text());
-    return isEditorDocument(parsed) ? parsed : null;
+    return isEditorDocument(parsed) ? withMigratedOverrides(parsed) : null;
   } catch {
     return null;
   }

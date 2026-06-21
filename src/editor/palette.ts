@@ -9,7 +9,8 @@ export interface PaletteItem {
   icon: IconName;
   /** Layout components render as cards (2-col grid); content components as rows. */
   group: 'layout' | 'content';
-  /** False items are hidden in email Frames (ADR-0006). */
+  /** The data the email rule reads (ADR-0006): `false` items are locked in email Frames. The rule
+   *  itself lives in `frames.ts` (`canInsertComponent`/`canInsertInTarget`), not here. */
   emailSafe: boolean;
   create: () => Node;
 }
@@ -90,7 +91,3 @@ export const PALETTE: PaletteItem[] = [
     create: () => ({ type: 'Image', props: { src: placeholder, alt: 'image', width: 200 } }),
   },
 ];
-
-export function paletteFor(target: 'web' | 'email'): PaletteItem[] {
-  return target === 'email' ? PALETTE.filter((item) => item.emailSafe) : PALETTE;
-}

@@ -5,27 +5,11 @@
 // FLATTENS into sibling sections. A nested Row becomes its OWN <mj-section> with
 // one <mj-column> per child (the Row -> two-column mapping), carrying the surface
 // background so the card reads continuous. See docs/walking-skeleton.md findings.
-import {
-  type Frame,
-  type Node,
-  type StyleMap,
-  type TokenLiterals,
-  type TokenRef,
-} from '../ir/types';
+import { type Frame, type Node, type StyleMap, type TokenRef } from '../ir/types';
 
+// The literal resolver (dot-ref -> '16px') is supplied by the caller — the Design-Token Model's
+// catalog.withOverrides (D2). MJML keeps only its bespoke FLATTEN (ADR-0008), never token resolution.
 type Lit = (ref: TokenRef) => string;
-
-// Build a resolver: token ref "color.surface" -> kebab "color-surface" -> literal.
-function makeLit(literals: TokenLiterals): Lit {
-  return (ref) => {
-    const key = ref.replace(/\./g, '-');
-    const value = literals[key];
-    if (value === undefined) {
-      throw new Error(`Unknown token ref "${ref}" (looked up "${key}")`);
-    }
-    return String(value);
-  };
-}
 
 function styleLit(lit: Lit, style: StyleMap | undefined, key: string): string | undefined {
   const ref = style?.[key];
@@ -74,7 +58,7 @@ function renderButton(lit: Lit, node: Extract<Node, { type: 'Button' }>, depth: 
     `align="left"`,
   ];
   if (node.props.variant === 'primary') {
-    common.push(`background-color="${lit('color.brand')}"`, `color="${lit('color.on-brand')}"`);
+    common.push(`background-color="${lit('color.brand')}"`, `color="${lit('color.onBrand')}"`);
   } else {
     common.push(
       `background-color="transparent"`,
@@ -185,12 +169,11 @@ function renderCardSections(
 
 // --- Entry point ----------------------------------------------------------
 
-export function emitMJML(frame: Frame, literals: TokenLiterals): string {
+export function emitMJML(frame: Frame, lit: Lit): string {
   const root = frame.root;
   if (root.type !== 'Stack') {
     throw new Error(`emitMJML expects a top-level Stack card, got "${root.type}"`);
   }
-  const lit = makeLit(literals);
   const sections = renderCardSections(lit, root, 2);
 
   return [

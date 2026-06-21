@@ -14,8 +14,10 @@ import {
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
 import { type Node } from '../ir/types';
+import { catalog } from '../theme/design-tokens';
 
 import { Board } from './Board';
+import { canInsertComponent } from './frames';
 import { type PaletteItem } from './palette';
 import { Palette } from './Palette';
 import { isContainer, nodeAt, type NodePath } from './paths';
@@ -36,9 +38,15 @@ interface DropData {
 // .ed-board-content (the board-content scope) — NOT :root — so user theming stays off the
 // global chrome tokens (the golden rule). Matches theme.scoped.css's selector.
 function buildOverrideCss(overrides: Record<string, string>): string {
-  const entries = Object.entries(overrides);
-  if (entries.length === 0) return '';
-  return `.ed-board-content {\n${entries.map(([key, value]) => `  --${key}: ${value};`).join('\n')}\n}`;
+  // Keys are dot refs (post keying-collapse); the catalog gives the SD-correct CSS var name.
+  const decls = Object.entries(overrides)
+    .map(([ref, value]) => {
+      const token = catalog.get(ref);
+      return token ? `  ${token.cssVarName}: ${value};` : '';
+    })
+    .filter(Boolean);
+  if (decls.length === 0) return '';
+  return `.ed-board-content {\n${decls.join('\n')}\n}`;
 }
 
 // When the pointer is over several nested nodes, target the deepest (longest path).
@@ -159,7 +167,7 @@ export function Editor(): ReactElement {
     if (!resolved) return;
     if (active.kind === 'insert') {
       if (!active.item) return;
-      if (frame.target === 'email' && !active.item.emailSafe) return; // email restriction (ADR-0006)
+      if (!canInsertComponent(frame, active.item)) return; // email restriction (ADR-0006)
       insertAt(target.frameId, resolved.parentPath, resolved.index, active.item.create());
     } else {
       moveNode(target.frameId, active.path, resolved.parentPath, resolved.index);

@@ -193,7 +193,3 @@ deletion test against current code. The obsolescence was in the plan's reference
 └─────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────────────────────────┘
 
 Start with D2 in a design conversation
-
-justify/align/wrap aren't live yet. They're modeled, in the component layer, and proven through the seam — but the real
-exports/canvas/editor still ignore them, and there's no control to set them. Making them live means promoting the seam (the D1
-refactor) + an Inspector control.

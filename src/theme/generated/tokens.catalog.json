@@ -1,0 +1,86 @@
+[
+  {
+    "ref": "color.brand",
+    "category": "color",
+    "cssVarName": "--color-brand",
+    "literal": "#4f46e5"
+  },
+  {
+    "ref": "color.onBrand",
+    "category": "color",
+    "cssVarName": "--color-on-brand",
+    "literal": "#ffffff"
+  },
+  {
+    "ref": "color.surface",
+    "category": "color",
+    "cssVarName": "--color-surface",
+    "literal": "#ffffff"
+  },
+  {
+    "ref": "color.page",
+    "category": "color",
+    "cssVarName": "--color-page",
+    "literal": "#f3f4f6"
+  },
+  {
+    "ref": "color.text",
+    "category": "color",
+    "cssVarName": "--color-text",
+    "literal": "#111827"
+  },
+  {
+    "ref": "color.muted",
+    "category": "color",
+    "cssVarName": "--color-muted",
+    "literal": "#6b7280"
+  },
+  {
+    "ref": "space.sm",
+    "category": "space",
+    "cssVarName": "--space-sm",
+    "literal": "8px"
+  },
+  {
+    "ref": "space.md",
+    "category": "space",
+    "cssVarName": "--space-md",
+    "literal": "16px"
+  },
+  {
+    "ref": "space.lg",
+    "category": "space",
+    "cssVarName": "--space-lg",
+    "literal": "24px"
+  },
+  {
+    "ref": "radius.lg",
+    "category": "radius",
+    "cssVarName": "--radius-lg",
+    "literal": "12px"
+  },
+  {
+    "ref": "font.family",
+    "category": "font",
+    "cssVarName": "--font-family",
+    "literal": "Helvetica, Arial, sans-serif"
+  },
+  {
+    "ref": "font.h2",
+    "category": "font",
+    "cssVarName": "--font-h2",
+    "literal": "24px"
+  },
+  {
+    "ref": "font.body",
+    "category": "font",
+    "cssVarName": "--font-body",
+    "literal": "16px"
+  },
+  {
+    "ref": "font.line",
+    "category": "font",
+    "cssVarName": "--font-line",
+    "literal": "1.5"
+  }
+]

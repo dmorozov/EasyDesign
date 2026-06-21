@@ -1,11 +1,35 @@
-// Compiles the ONE DTCG token graph three ways (ADR-0004):
+// Compiles the ONE DTCG token graph (ADR-0004):
 //   src/theme/generated/theme.css            -> :root CSS variables for STANDALONE EXPORT pages
 //   src/theme/generated/theme.scoped.css     -> the SAME vars, scoped to .ed-board-content, for the
 //                                               in-editor canvas (keeps the user's design Theme OFF
 //                                               the global :root so it never collides with the design
 //                                               system's chrome tokens — e.g. --radius-lg 12px vs 10px)
-//   src/theme/generated/tokens.literals.json -> resolved hex/px literals for MJML
+//   src/theme/generated/tokens.catalog.json  -> the queryable Design-Token catalog (the D2 Model's
+//                                               source): one {ref (dot), category, cssVarName, literal}
+//                                               per token. SD owns the camelCase-aware name/kebab AND
+//                                               the resolved literal, so the catalog can't drift and the
+//                                               app never hand-rolls dot->kebab. Subsumes the old
+//                                               tokens.literals.json (the catalog carries `literal`).
 import StyleDictionary from 'style-dictionary';
+
+import { categoryOf } from './token-category.mjs';
+
+// Custom format: emit the Design-Token catalog. Reads token.$value (the SD v5 footgun, ADR-0004) for
+// the resolved literal, token.path for the dot-ref, token.name (name/kebab) for the CSS var name.
+StyleDictionary.registerFormat({
+  name: 'json/catalog',
+  format: ({ dictionary }) =>
+    `${JSON.stringify(
+      dictionary.allTokens.map((token) => ({
+        ref: token.path.join('.'),
+        category: categoryOf(token.$type, token.path),
+        cssVarName: `--${token.name}`,
+        literal: String(token.$value),
+      })),
+      null,
+      2,
+    )}\n`,
+});
 
 const sd = new StyleDictionary({
   source: ['src/theme/tokens.json'],
@@ -27,11 +51,11 @@ const sd = new StyleDictionary({
         },
       ],
     },
-    // No value transforms -> literals preserved exactly (#4f46e5, 16px) for email.
-    literals: {
+    // The queryable catalog (D2). name/kebab gives the camelCase-correct var name (onBrand -> on-brand).
+    catalog: {
       transforms: ['attribute/cti', 'name/kebab'],
       buildPath: 'src/theme/generated/',
-      files: [{ destination: 'tokens.literals.json', format: 'json/flat' }],
+      files: [{ destination: 'tokens.catalog.json', format: 'json/catalog' }],
     },
   },
 });
