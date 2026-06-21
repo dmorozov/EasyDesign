@@ -137,16 +137,6 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node } },
   },
 
-  // 5. Editor canvas: nodes are clickable for selection. Real keyboard a11y for
-  // the recursive canvas tree is a separate effort; product components stay strict.
-  {
-    files: ['src/editor/**/*.{ts,tsx}'],
-    rules: {
-      'jsx-a11y/click-events-have-key-events': 'off',
-      'jsx-a11y/no-static-element-interactions': 'off',
-    },
-  },
-
-  // 6. eslint-config-prettier — MUST be last; disables all formatting rules.
+  // 5. eslint-config-prettier — MUST be last; disables all formatting rules.
   prettier,
 );

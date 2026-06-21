@@ -16,6 +16,7 @@ import { type Emitter, walkNode } from '../ir/walk';
 
 import { type NodePath, samePath } from './paths';
 import { useEditor } from './store';
+import { useCanvasA11y } from './useCanvasA11y';
 
 // Selection + drop indicators use CHROME tokens (NOT the user's --color-brand), so they stay
 // visible and on-brand for the editor regardless of what the user themes their design to.
@@ -51,16 +52,19 @@ function DragHandle({ frameId, path }: { frameId: string; path: NodePath }): Rea
 function EditableShell({
   frameId,
   path,
+  node,
   children,
 }: {
   frameId: string;
   path: NodePath;
+  node: Node;
   children: ReactNode;
 }): ReactElement {
   const selected = useEditor(
     (s) => s.selectedFrameId === frameId && samePath(s.selectedPath, path),
   );
   const selectNode = useEditor((s) => s.selectNode);
+  const a11y = useCanvasA11y(frameId, path, node);
   const { setNodeRef } = useDroppable({
     id: `drop:${frameId}:${path.join('.')}`,
     data: { frameId, path },
@@ -80,6 +84,14 @@ function EditableShell({
       ref={setNodeRef}
       className="ed-node"
       style={style}
+      role={a11y.role}
+      tabIndex={a11y.tabIndex}
+      aria-label={a11y['aria-label']}
+      aria-level={a11y['aria-level']}
+      aria-expanded={a11y['aria-expanded']}
+      aria-selected={a11y['aria-selected']}
+      data-ed-path={a11y['data-ed-path']}
+      onKeyDown={a11y.onKeyDown}
       onClick={(e) => {
         e.stopPropagation();
         selectNode(frameId, path);
@@ -110,28 +122,28 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
           children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
         );
       return (
-        <EditableShell frameId={frameId} path={ctx}>
+        <EditableShell frameId={frameId} path={ctx} node={node}>
           {layoutElement(node, body)}
         </EditableShell>
       );
     },
     text(node, ctx) {
       return (
-        <EditableShell frameId={frameId} path={ctx}>
+        <EditableShell frameId={frameId} path={ctx} node={node}>
           <Text variant={node.props.variant}>{node.props.content}</Text>
         </EditableShell>
       );
     },
     button(node, ctx) {
       return (
-        <EditableShell frameId={frameId} path={ctx}>
+        <EditableShell frameId={frameId} path={ctx} node={node}>
           <Button variant={node.props.variant}>{node.props.content}</Button>
         </EditableShell>
       );
     },
     image(node, ctx) {
       return (
-        <EditableShell frameId={frameId} path={ctx}>
+        <EditableShell frameId={frameId} path={ctx} node={node}>
           <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />
         </EditableShell>
       );

@@ -48,7 +48,11 @@ export function FrameNode({ data }: NodeProps<FrameRFNode>): ReactElement | null
           {TARGET_PROFILES[frame.target].label}
         </span>
       </div>
-      <div className="nodrag ed-frame-body ed-board-content">
+      <div
+        className="nodrag ed-frame-body ed-board-content"
+        role="tree"
+        aria-label={`${frame.title} layers`}
+      >
         <EditableNode frameId={frame.id} node={frame.root} path={[]} />
       </div>
     </div>

@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 
 import { sampleCard } from '../ir/sample';
-import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
+import {
+  type Align,
+  type Distribute,
+  type Justify,
+  type Node,
+  type StyleMap,
+  type Wrap,
+} from '../ir/types';
+import { type StyleKey } from '../theme/design-tokens';
 
 import {
   loadFromLocal,
@@ -63,6 +71,7 @@ interface EditorState {
     path: NodePath,
     patch: { justify?: Justify; align?: Align; wrap?: Wrap; distribute?: Distribute },
   ) => void;
+  setNodeStyle: (frameId: string, path: NodePath, key: StyleKey, ref: string) => void;
   deleteNode: (frameId: string, path: NodePath) => void;
   addFrame: (target: Frames.FrameTarget) => void;
   removeFrame: (frameId: string) => void;
@@ -264,6 +273,27 @@ export const useEditor = create<EditorState>()((set) => {
         }
         if (target.type === 'Grid') delete next.wrap; // Grid has no flex-wrap
         (target as { props?: unknown }).props = next;
+        return {
+          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
+        };
+      }),
+
+    // Bind/clear a container's token-bound style key (background/padding/borderRadius/gap → a Design
+    // Token ref, or '' to clear). Coalesced per node + key.
+    setNodeStyle: (frameId, path, key, ref) =>
+      mutate(`style:${frameId}:${path.join('.')}:${key}`, (doc) => {
+        const frame = doc.frames.find((f) => f.id === frameId);
+        if (!frame) return null;
+        const root = structuredClone(frame.root);
+        const target = nodeAt(root, path);
+        if (!target || !('children' in target)) return null; // only containers honour style keys
+        const current = target.style?.[key];
+        const nextRef = ref || undefined;
+        if (current === nextRef) return null; // no change → no history entry
+        const style: StyleMap = { ...target.style };
+        if (nextRef) style[key] = nextRef;
+        else delete style[key];
+        target.style = style;
         return {
           body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
         };

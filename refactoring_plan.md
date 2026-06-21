@@ -507,10 +507,29 @@ the interface is the test surface.
 `rightTab` in `store.ts` — already ships, so the UI side of #5 is mostly token-picker rows in the existing
 Inspector, not new panel chrome.)
 
-4. **add/remove Frames** (on D3; "+ Frame" in the Toolbar).
-5. **container style editing** (on D2 + the existing Inspector tab).
-6. **canvas keyboard a11y** (on D1 + `useCanvasA11y`); then delete the two-rule `src/editor/**`
-   `jsx-a11y` relaxation.
+4. ✅ **add/remove Frames** — done in D3 (Board `+ Web page`/`+ Email` panel; `addFrame`/`removeFrame`).
+5. ✅ **container style editing** — done (2026-06-20). `setNodeStyle(frameId, path, key, ref)` store action
+   through the D4 `mutate()` funnel (coalesced per `style:frame:path:key`, `''` clears); the Inspector's
+   container-gated **Style** `PanelSection` renders a DS `<Select>` per D2 `STYLE_KEYS` entry, options from
+   `catalog.byCategory` + a "Default" clear. Live canvas preview (via `components/tokens.ts`) + undo +
+   autosave. Tests in `store.test.ts`. No hardcoded token names, no new panel chrome.
+6. ✅ **canvas keyboard a11y** — done (2026-06-20). `src/editor/useCanvasA11y(frameId, path, node)` gives the
+   `EditableShell` wrapper `role="treeitem"`, a roving `tabIndex`, `aria-label`/`aria-selected`, and
+   `onKeyDown` (Enter/Space select · Delete/Backspace remove · Escape deselect · Arrow Up/Down walk the tree
+   in document order via the new pure `flattenPaths`). Props applied **explicitly** (jsx-a11y is static), the
+   click handler stays for the mouse, and the **two-rule `src/editor/**` `jsx-a11y` relaxation is deleted\*\* —
+   lint passes clean. Verified live (Enter/Arrow/Delete/Escape + ARIA).
+
+> **Post-review (both features, 14 findings — 2 major, rest minor/nit) addressed.** (1) **Style picker is
+> now target-aware** — an email Frame offers only the keys MJML honours (`background`/`padding`, root Stack
+> only), so a live-preview edit can't silently vanish on email export (ADR-0006); web keeps all four.
+> (2) **Valid ARIA tree** — each Frame body is `role="tree"`, nodes carry `aria-level` + `aria-expanded`
+> (containers) + `aria-selected` (selected only). Plus: `setNodeStyle` gained the container guard +
+> value-equality no-op (matches `setLayout`); keyboard Delete now lands focus on the parent and Backspace no
+> longer browser-navigates; Arrow ←/→ step parent/first-child; Image/empty `aria-label`s; options hoisted;
+> deeper `flattenPaths` tests. **Deferred (noted):** a `style` ref absent from the catalog (only via
+> hand-edited JSON) shows "Default" in the Select — the real fix is import-time style-ref validation
+> (a stale ref already throws in `resolveVar` on export), a separate hardening. 95 tests green.
 
 **Phase 3 — Hardening.**
 

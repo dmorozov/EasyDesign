@@ -1,10 +1,19 @@
 import { type ReactElement } from 'react';
 
-import { Badge, Button, Icon, Input, PanelSection, SegmentedControl } from '../design-system';
+import {
+  Badge,
+  Button,
+  Icon,
+  Input,
+  PanelSection,
+  SegmentedControl,
+  Select,
+} from '../design-system';
 import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
+import { catalog, STYLE_KEYS, type StyleKey } from '../theme/design-tokens';
 
 import { TARGET_PROFILES } from './frames';
-import { nodeAt } from './paths';
+import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
 
 const DISTRIBUTE_OPTS = [
@@ -29,14 +38,50 @@ const WRAP_OPTS = [
   { value: 'wrap', label: 'Wrap' },
 ];
 
-/** Edits the selected node: text content, container layout (distribute/justify/align/wrap),
- *  and delete. Rendered as the Inspector tab body in the right rail. */
+// Token-bound container style keys (D2 STYLE_KEYS) → a Select per key; options are the Design Tokens
+// of the key's category. Leaf nodes don't honour these keys, so the Style section is container-gated.
+const STYLE_LABEL: Record<StyleKey, string> = {
+  background: 'Background',
+  padding: 'Padding',
+  borderRadius: 'Border radius',
+  gap: 'Gap',
+};
+const STYLE_KEY_LIST = Object.keys(STYLE_KEYS) as StyleKey[];
+const leaf = (ref: string): string => ref.split('.').pop() ?? ref;
+
+// Built once (the catalog is static): a Select option list per style key. "Default" (value '') clears.
+interface Opt {
+  value: string;
+  label: string;
+}
+const STYLE_OPTIONS: Record<StyleKey, Opt[]> = Object.fromEntries(
+  STYLE_KEY_LIST.map((key) => [
+    key,
+    [
+      { value: '', label: 'Default' },
+      ...catalog
+        .byCategory(STYLE_KEYS[key])
+        .map((t) => ({ value: t.ref, label: `${leaf(t.ref)} · ${t.literal}` })),
+    ],
+  ]),
+) as Record<StyleKey, Opt[]>;
+
+// MJML email export only honours background/padding, and only on the root Stack (mjml.ts
+// renderCardSections) — it ignores border-radius/gap and any nested-container style. So an email Frame
+// offers the picker ONLY for what export will keep, avoiding live-preview-vs-export divergence (ADR-0006).
+const stylableKeys = (target: 'web' | 'email', path: NodePath): StyleKey[] =>
+  target === 'web' ? STYLE_KEY_LIST : path.length === 0 ? ['background', 'padding'] : [];
+
+/** Edits the selected node: text content, container layout (distribute/justify/align/wrap), token-bound
+ *  container style (background/padding/border-radius/gap), and delete — or the Frame panel (rename /
+ *  read-only medium / delete) for a Frame-level Selection. Rendered as the Inspector tab body. */
 export function Inspector(): ReactElement {
   const selectedFrameId = useEditor((s) => s.selectedFrameId);
   const selectedPath = useEditor((s) => s.selectedPath);
   const frames = useEditor((s) => s.frames);
   const updateText = useEditor((s) => s.updateText);
   const setLayout = useEditor((s) => s.setLayout);
+  const setNodeStyle = useEditor((s) => s.setNodeStyle);
   const deleteNode = useEditor((s) => s.deleteNode);
   const renameFrame = useEditor((s) => s.renameFrame);
   const removeFrame = useEditor((s) => s.removeFrame);
@@ -107,6 +152,7 @@ export function Inspector(): ReactElement {
   // wrap have no free space to act on — hide them to avoid a control that does nothing.
   const rowDistribute = container?.type === 'Row' ? (container.props?.distribute ?? 'fit') : null;
   const isFillRow = rowDistribute === 'fill';
+  const styleKeys = container ? stylableKeys(frame.target, selectedPath) : [];
 
   return (
     <div className="ed-inspector">
@@ -175,6 +221,22 @@ export function Inspector(): ReactElement {
               />
             </div>
           )}
+        </PanelSection>
+      )}
+
+      {styleKeys.length > 0 && (
+        <PanelSection title="Style">
+          {styleKeys.map((key) => (
+            <Select
+              key={key}
+              label={STYLE_LABEL[key]}
+              value={container?.style?.[key] ?? ''}
+              options={STYLE_OPTIONS[key]}
+              onChange={(e) => {
+                setNodeStyle(selectedFrameId, selectedPath, key, e.target.value);
+              }}
+            />
+          ))}
         </PanelSection>
       )}
 

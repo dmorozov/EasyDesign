@@ -30,3 +30,13 @@ export function samePath(a: NodePath | null, b: NodePath | null): boolean {
 export function isPrefix(prefix: NodePath, path: NodePath): boolean {
   return prefix.length <= path.length && prefix.every((value, i) => value === path[i]);
 }
+
+/** Every node path in document (pre-order) order — root first, then each child subtree depth-first.
+ *  Powers keyboard tree navigation (Arrow Up/Down) across the canvas. */
+export function flattenPaths(root: Node, base: NodePath = []): NodePath[] {
+  const out: NodePath[] = [base];
+  if ('children' in root) {
+    root.children.forEach((child, i) => out.push(...flattenPaths(child, [...base, i])));
+  }
+  return out;
+}

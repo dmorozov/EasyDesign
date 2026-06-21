@@ -158,3 +158,25 @@ describe('history is bounded', () => {
     expect(s().history.past).toHaveLength(100);
   });
 });
+
+describe('setNodeStyle — token-bound container style', () => {
+  const styleOf = (id: string) => s().frames.find((f) => f.id === id)?.root.style;
+  it('binds a Design Token to a style key and is undoable', () => {
+    s().setNodeStyle('web-1', [], 'background', 'color.brand');
+    expect(styleOf('web-1')?.background).toBe('color.brand');
+    expect(s().history.past).toHaveLength(1);
+    s().undo();
+    expect(s().frames).toEqual(SEED);
+  });
+  it('clears a key when passed an empty ref', () => {
+    s().setNodeStyle('web-1', [], 'gap', '');
+    expect(styleOf('web-1')?.gap).toBeUndefined();
+  });
+  it('coalesces repeated edits of the same key, but not of a different key', () => {
+    s().setNodeStyle('web-1', [], 'background', 'color.brand');
+    s().setNodeStyle('web-1', [], 'background', 'color.surface');
+    expect(s().history.past).toHaveLength(1); // same node+key → one undo step
+    s().setNodeStyle('web-1', [], 'padding', 'space.md');
+    expect(s().history.past).toHaveLength(2); // different key → a new step
+  });
+});
