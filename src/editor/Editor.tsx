@@ -24,6 +24,7 @@ import { isContainer, nodeAt, type NodePath } from './paths';
 import { RightRail } from './RightRail';
 import { useEditor, type DropMode, type DropTarget, type EditorFrame } from './store';
 import { Toolbar } from './Toolbar';
+import { usePersistence } from './usePersistence';
 
 type ActiveData =
   | { kind: 'insert'; item?: PaletteItem }
@@ -121,6 +122,8 @@ export function Editor(): ReactElement {
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
   const pointerY = useRef(0);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  usePersistence(); // debounced localStorage auto-save (lifted out of the Toolbar)
 
   // Undo/redo keyboard shortcuts — but let inputs keep their native undo.
   useEffect(() => {

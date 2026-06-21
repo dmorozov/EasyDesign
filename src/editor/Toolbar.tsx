@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useRef, type ReactElement } from 'react';
 
 import { Button, Icon, IconButton } from '../design-system';
 import logoGlyph from '../design-system/assets/logo-glyph.svg';
 
-import { downloadDocument, readDocumentFile, saveToLocal, toDocument } from './document';
+import { downloadDocument, readDocumentFile, toDocument } from './document';
 import { useEditor } from './store';
 import { useDarkMode } from './useDarkMode';
 
 /** The top toolbar: brand, global actions (undo/redo, document export/import/reset, dark mode,
- *  Export Code) and the auto-save status. Owns the debounced localStorage persistence. */
+ *  Export Code) and the auto-save status (rendered from the store's `saveStatus`; the debounced
+ *  persistence itself lives in `usePersistence`). */
 export function Toolbar(): ReactElement {
   const frames = useEditor((s) => s.frames);
   const overrides = useEditor((s) => s.themeOverrides);
@@ -17,28 +18,11 @@ export function Toolbar(): ReactElement {
   const setRightTab = useEditor((s) => s.setRightTab);
   const undo = useEditor((s) => s.undo);
   const redo = useEditor((s) => s.redo);
-  const canUndo = useEditor((s) => s.past.length > 0);
-  const canRedo = useEditor((s) => s.future.length > 0);
-  const [status, setStatus] = useState<'saved' | 'saving'>('saved');
+  const canUndo = useEditor((s) => s.history.past.length > 0);
+  const canRedo = useEditor((s) => s.history.future.length > 0);
+  const saveStatus = useEditor((s) => s.saveStatus);
   const { isDark, toggle: toggleDark } = useDarkMode();
   const fileRef = useRef<HTMLInputElement>(null);
-  const firstRender = useRef(true);
-
-  // Debounced auto-save. Skip the first render so we don't re-save what we just loaded.
-  useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    setStatus('saving');
-    const timer = setTimeout(() => {
-      saveToLocal(toDocument(frames, overrides));
-      setStatus('saved');
-    }, 400);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [frames, overrides]);
 
   const onImport = (file: File | undefined) => {
     if (!file) return;
@@ -74,7 +58,7 @@ export function Toolbar(): ReactElement {
       </div>
 
       <span className="ed-save-status">
-        {status === 'saved' ? (
+        {saveStatus === 'saved' ? (
           <>
             <span className="ed-save-check">
               <Icon.check size={15} />
@@ -115,7 +99,7 @@ export function Toolbar(): ReactElement {
           size="sm"
           icon={<Icon.download />}
           onClick={() => {
-            downloadDocument(toDocument(frames, overrides));
+            downloadDocument(toDocument({ frames, themeOverrides: overrides }));
           }}
         >
           Export JSON

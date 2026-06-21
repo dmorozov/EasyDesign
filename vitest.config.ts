@@ -21,6 +21,7 @@ export default defineConfig({
         'src/theme/design-tokens.ts',
         'src/theme/token-category.mjs',
         'src/editor/frames.ts',
+        'src/editor/history.ts',
       ],
       exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/generators/index.ts'],
       // Headroom below the current run (98.9 / 90.9 / 100 / 100) so the gate catches

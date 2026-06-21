@@ -1,7 +1,7 @@
 // The Frame lifecycle module (D3) — IN-PROCESS, pure over EditorFrame[]. No React, no React Flow, no
 // zustand, so it is unit-testable directly. This is the ONE home for: what a Frame is, what may go in
 // it (the email-safe rule, ADR-0006), and create/delete/move. The store actions are thin wrappers that
-// call these and add commit() (history/persistence) + the selection/rightTab reconciliation.
+// call these through the `mutate()` funnel (which records history + persists) + reconcile selection/rightTab.
 import { type Node } from '../ir/types';
 
 import { type EditorFrame } from './document';

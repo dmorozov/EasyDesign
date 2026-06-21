@@ -13,20 +13,21 @@ export interface EditorFrame {
   root: Node;
 }
 
-// The full saved document. `version` guards against silently loading an old shape.
-export interface EditorDocument {
-  version: 1;
+// The undoable + persisted document body — the shape history snapshots and the store's present share.
+export interface DocumentBody {
   frames: EditorFrame[];
   themeOverrides: Record<string, string>;
 }
 
+// The full saved document. `version` guards against silently loading an old shape.
+export interface EditorDocument extends DocumentBody {
+  version: 1;
+}
+
 const STORAGE_KEY = 'easydesign:document:v1';
 
-export function toDocument(
-  frames: EditorFrame[],
-  themeOverrides: Record<string, string>,
-): EditorDocument {
-  return { version: 1, frames, themeOverrides };
+export function toDocument(body: DocumentBody): EditorDocument {
+  return { version: 1, ...body };
 }
 
 function isEditorFrame(value: unknown): value is EditorFrame {
@@ -72,6 +73,12 @@ function withMigratedOverrides(doc: EditorDocument): EditorDocument {
   return { ...doc, themeOverrides };
 }
 
+/** The single load pipeline: validate (shape + the ADR-0006 email audit, via isEditorDocument) then
+ *  migrate (D2 legacy kebab overrides → dot). Returns null for anything that isn't a valid document. */
+export function parseDocument(raw: unknown): EditorDocument | null {
+  return isEditorDocument(raw) ? withMigratedOverrides(raw) : null;
+}
+
 export function saveToLocal(doc: EditorDocument): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(doc));
@@ -82,10 +89,10 @@ export function saveToLocal(doc: EditorDocument): void {
 
 export function loadFromLocal(): EditorDocument | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === null) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return isEditorDocument(parsed) ? withMigratedOverrides(parsed) : null;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === null) return null;
+    const raw: unknown = JSON.parse(stored);
+    return parseDocument(raw);
   } catch {
     return null;
   }
@@ -103,8 +110,8 @@ export function downloadDocument(doc: EditorDocument): void {
 
 export async function readDocumentFile(file: File): Promise<EditorDocument | null> {
   try {
-    const parsed: unknown = JSON.parse(await file.text());
-    return isEditorDocument(parsed) ? withMigratedOverrides(parsed) : null;
+    const raw: unknown = JSON.parse(await file.text());
+    return parseDocument(raw);
   } catch {
     return null;
   }

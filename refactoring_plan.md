@@ -379,6 +379,56 @@ build-step source (crux a) beats runtime-parse.
 
 ### D4 — The Editor history + persistence Module (hardening)
 
+> **✅ IMPLEMENTED (2026-06-20, ADR-0012).** Pure `src/editor/history.ts` (reducer over `DocumentBody`:
+> `record`/`undo`/`redo`, coalesce + redo-clear + 100 cap; `history.test.ts`, 10 tests). Store rewritten
+> around a single internal **`mutate(coalesceKey, edit)` funnel** (the one path for all 13 document
+> mutations; `edit` is a pure `(doc, state) => {body, ui?} | null`) + a **denormalised present**;
+> `commit()`/`Snapshot` deleted; `loadDocument`/`resetDocument`/`undo`/`redo` use the reducer directly.
+> `document.ts` gained `DocumentBody` (+ `EditorDocument extends` it, `toDocument(body)`) and one
+> `parseDocument()` pipeline (validate incl. ADR-0006 email audit, then D2 migrate) on both load paths;
+> version stays 1, persisted format unchanged. **`usePersistence()`** hook (mounted once in `Editor`) owns
+> the debounced save + transient `saveStatus`; Toolbar lost its autosave effect and just renders status.
+> Decisions locked & built: (a) `mutate` funnel + pure reducer, **denormalised** present (zero selector
+> ripple); (b) **hook** persistence (not store-subscribe/agnostic-module — keeps store + history.ts pure);
+> (c) `DocumentBody` unifies the shape; (d) one `parseDocument`, **keep v1**; (e) **keep** clearing
+> selection on undo. The 17-test regression net (written first) stayed green through the rewrite — proving
+> behaviour preservation. Green: typecheck · eslint (0 warn) · 87 vitest (99.2% stmt) · generate · build ·
+> live (Saving→Saved on edit, undo/redo, reload round-trips persistence, no console errors). _Deferred:_
+> restore-selection-on-undo; a `version` 1→2 migration when the saved shape actually breaks.
+>
+> **Post-review (7 findings, all nit).** Addressed: documented `history.ts`'s by-reference snapshot
+> immutability contract; fixed the stale `commit()` comment in `frames.ts`; added a `renameFrame` no-op
+> guard (unknown id / unchanged title → no entry); added a history test for "same-key edit right after
+> undo starts a fresh step"; and made `usePersistence` **StrictMode-robust** (a last-seen-body compare
+> replaces the first-run flag that React StrictMode's dev double-invoke defeated, which had caused a
+> spurious save-on-load — pre-existing from the old Toolbar). Live-confirmed: fresh load no longer flashes
+> "Saving…", real edits still save. 88 tests green.
+
+> **Design cruxes — grilled & resolved (2026-06-20, post-D3).** _Refresh:_ the per-action `commit()` surface grew to
+> **thirteen** document mutations (D3 added `addFrame`/`removeFrame`/`renameFrame`); seven UI actions
+> (`selectNode`/`setRightTab`/`clearSelection`/`setDropTarget`/`selectFrame`/`clearPendingFocus`/`setExportTarget`)
+> correctly don't commit. A **regression net now exists** — `src/editor/store.test.ts` (17 characterization
+> tests) pins the coalescing keys, the `{frames, themeOverrides}` Snapshot, undo-clears-selection, the
+> redo-stack-clear, and the 100-entry cap — so D4's refactor can be proven behaviour-preserving.
+> `document.ts` also grew a **second** load transform (`isEmailFrameClean`, D3) beside `withMigratedOverrides`
+> (D2), so the load→validate→migrate pipeline is now D4's to unify.
+>
+> - **(a) Dispatch shape** — how "undoable + persisted" becomes unforgettable: a `mutate(coalesceKey, transform)`
+>   store helper over a pure `history.ts` module (actions compute only a pure `doc → doc` transform) vs a
+>   zustand middleware vs a Redux-style reducer+command enum. Sub-crux: keep the present **denormalised**
+>   (top-level `frames`/`themeOverrides`, no selector ripple) vs **derive** it from `history.present` (true
+>   single-source, ripples to every `useEditor(s => s.frames)`). _Lean: `mutate()` + pure module, denormalised present._
+> - **(b) Persistence home** — lift the 400ms autosave out of `Toolbar`: a store-level subscribe+debounce
+>   owning a `saveStatus` field (Toolbar just renders it) vs a dedicated `usePersistence` hook vs leave it.
+>   _Lean: store-level; contestable because it puts a timer + localStorage in the store module._
+> - **(c) One document shape** — extract `DocumentBody = {frames, themeOverrides}`; `Snapshot` IS
+>   `DocumentBody`, `EditorDocument = DocumentBody & {version}`. _Lean: yes (removes the hand-sync)._
+> - **(d) Load pipeline + versioning** — fold the two load transforms into one `load(raw) → {ok,doc}|{error}`;
+>   bump `version` 1→2 (dot-keyed, explicit migrations) vs keep v1 + lenient normalisation. _Lean: keep v1._
+> - **(e) Selection on undo** — undo/redo currently CLEAR selection (it's out of Snapshot); keep vs restore
+>   the selection at each history point. _Lean: keep clearing; "restore selection" is a later enhancement._
+> - **Scope** — D4 is hardening, not a feature unblock. _Lean: do (a)+(b)+(c); defer (d)'s versioning; (e) is one line._
+
 - **Modules/files:** `src/editor/store.ts` (`commit`/`undo`/`redo`), `src/editor/document.ts`, and the
   debounced auto-save `useEffect` in `src/editor/Toolbar.tsx` (lines 28-41 — Toolbar now documents itself
   as the persistence owner). _(There is no `DocumentPanel.tsx`; it never existed.)_
