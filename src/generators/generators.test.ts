@@ -6,7 +6,7 @@ import { catalog } from '../theme/design-tokens';
 
 import { emitAngularSource } from './angular';
 import { emitHTML } from './html';
-import { emitMJML } from './mjml';
+import { classifyCardChild, emitMJML } from './mjml';
 import { emitReactSource } from './react';
 
 // A minimal two-button Row, for exercising the distribute / justify behaviour.
@@ -85,12 +85,45 @@ describe('MJML guardrails (ADR-0006/0008)', () => {
     expect(() => emitMJML(frame, catalog.withOverrides({}))).toThrow(/Unknown token ref/);
   });
 
-  it('throws if a non-Row container reaches the leaf flattener', () => {
-    const frame: Frame = {
+  it('rejects an unsupported nested container in the email card with a clear message (RP-8)', () => {
+    // A Grid/Column/Stack at card level has no email flattening — the exhaustive card-child dispatch
+    // rejects it explicitly (ADR-0006/0008), rather than silently falling through to the leaf throw.
+    const grid: Frame = {
       target: 'email',
       root: { type: 'Stack', children: [{ type: 'Grid', props: { columns: 2 }, children: [] }] },
     };
+    expect(() => emitMJML(grid, catalog.withOverrides({}))).toThrow(/nested Grid/);
+    const column: Frame = {
+      target: 'email',
+      root: { type: 'Stack', children: [{ type: 'Column', children: [] }] },
+    };
+    expect(() => emitMJML(column, catalog.withOverrides({}))).toThrow(/nested Column/);
+  });
+
+  it('a container nested inside a Row column still hits the leaf-flattener guard (RP-8)', () => {
+    // The Row→column mapping takes only leaves; a container child is caught by renderLeaf's runtime
+    // guardrail (defense in depth — the IR can't yet forbid it at compile time; that is RP-10).
+    const frame: Frame = {
+      target: 'email',
+      root: {
+        type: 'Stack',
+        children: [{ type: 'Row', children: [{ type: 'Column', children: [] }] }],
+      },
+    };
     expect(() => emitMJML(frame, catalog.withOverrides({}))).toThrow(/non-leaf/);
+  });
+
+  it('classifyCardChild maps each card child to its email role (RP-8)', () => {
+    expect(classifyCardChild({ type: 'Text', props: { content: 'x', variant: 'body' } })).toEqual({
+      role: 'leaf',
+      node: { type: 'Text', props: { content: 'x', variant: 'body' } },
+    });
+    expect(classifyCardChild({ type: 'Row', children: [] }).role).toBe('row');
+    expect(classifyCardChild({ type: 'Grid', props: { columns: 2 }, children: [] })).toEqual({
+      role: 'unsupported',
+      type: 'Grid',
+    });
+    expect(classifyCardChild({ type: 'Stack', children: [] }).role).toBe('unsupported');
   });
 
   it('a malformed type-scale override never ships line-height="NaNpx" (RP-6 guard)', () => {

@@ -196,7 +196,7 @@ Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the
 | RP-5 ✅ | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
 | RP-6 ✅ | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
 | RP-7 ✅ | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
-| RP-8    | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
+| RP-8 ✅ | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
 | RP-9 ✅ | Typed per-target renderer exhaustiveness (`Record<LeafType,Renderer>`) | ★★       | A (render-half safety)                 | completeness §5.1 (promoted) |
 
 ---
@@ -619,6 +619,16 @@ worth its own test, or is it too thin to extract?
 **Priority:** ★ (optional) · **Sequence:** last · **Unlocks:** A (only when an email-safe rich
 Component is added).
 
+> ✅ **IMPLEMENTED 2026-06-22 (ADR-0008 amended).** RP-9 had already made the _leaf_ dispatch
+> compile-exhaustive (`MJML_LEAVES` keyed off `LeafType`); this closes the _container_ half. MJML's
+> `renderCardSections` dispatched on a string literal (`child.type === 'Row'`) with everything else
+> implicitly a leaf-run, so a new container type fell through to a runtime throw. It is now
+> `classifyCardChild(node) → leaf | row | unsupported`, an exhaustive `switch` over the container union
+> with a `never`-sentinel `default` (probe: omitting a `case` fails `TS2322`). MJML **stays bespoke**
+> per ADR-0008 — only the dispatch shares `walk.ts`'s vocabulary (new `ContainerType` export); the
+> section/column flattening is untouched, the walk is never touched, output byte-identical. See §4
+> step 8.
+
 **Files / sites:** `src/generators/mjml.ts` (`renderLeaf` 87-101, `renderCardSections`,
 `renderRowSection`) vs. `src/ir/walk.ts`.
 
@@ -828,8 +838,32 @@ next` (the pure "adopt the store position only when it changed, else keep the ex
      forces the root to `inside`). **271 tests**, typecheck / lint / format clean, **golden net
      byte-identical** (zero emitter touch), `npm run generate` green. **No new ADR** (consumes RP-1 +
      RP-2 decisions; ADR-0010's `allowedChildren` will later add a second `RejectReason` here — §5.2).
-8. **RP-8 — MJML walk-seam alignment.** Last/optional; ADR-0008 cleanup; only bites when an
-   _email-safe_ rich Component is added.
+8. **RP-8 — MJML walk-seam alignment.** ✅ **IMPLEMENTED 2026-06-22 (ADR-0008 amended).** Done ahead of
+   its "email-safe rich Component" trigger, as a deliberate completeness pass over the last open
+   candidate. RP-9 had already made the _leaf_ side compile-exhaustive (`MJML_LEAVES` over `LeafType`);
+   the _container_ side was still a string-literal dispatch that let a new container type fall through
+   to a runtime throw.
+   - **Where:** `src/generators/mjml.ts` — new pure `classifyCardChild(node) → { role: 'leaf' | 'row' |
+'unsupported' }`, an exhaustive `switch` over the container union whose `default` is a `never`
+     sentinel (`return node`). A leaf batches into a leaf-run section, a `Row` becomes its own sibling
+     section, and `Stack`/`Column`/`Grid` reject with a clear `unsupportedInEmail` message (Grid is also
+     email-unsafe, ADR-0006). `renderCardSections`'s loop now dispatches on the classifier (leaf-run
+     batching preserved exactly → output byte-identical). New `ContainerType` export from `walk.ts`
+     (symmetric with `LeafType`).
+   - **Bespoke stays bespoke (ADR-0008):** only the _dispatch_ shares the walk's union vocabulary; the
+     section/column **flattening** is non-compositional (cross-sibling leaf-run batching) and is left
+     in `mjml.ts` — the walk is never touched, no section model leaks into it. `renderLeaf`'s
+     container guard is kept as defense-in-depth for a container nested inside a Row column (a
+     runtime-only constraint until RP-10's `allowedChildren`).
+   - **Compile-safety proven by probe:** dropping a `case` from the switch makes the `never` sentinel
+     fail `TS2322` (a new container type is now a build error here, forcing an explicit email decision),
+     mirroring RP-9's leaf probe.
+   - **Tests / verify:** `generators.test.ts` gained a `classifyCardChild` unit test (leaf/row/
+     unsupported roles), a rewritten "rejects an unsupported nested container" guardrail (Grid + Column
+     → clear message), and a "container inside a Row column still hits the leaf guard" case. **273
+     tests**, typecheck / lint / format clean, **golden net byte-identical** (zero output change),
+     `npm run generate` green; mjml.ts 98.6%/100% funcs (the one uncovered line is the `never`
+     sentinel). **ADR-0008 amended** (RP-8 paragraph).
 
 **One-liner:** RP-11 lays the golden safety net; RP-1 gives a tested mutation core with no deps; RP-2
 is the keystone everything hangs off; RP-3/RP-4/RP-6 are the two named features riding the keystone;

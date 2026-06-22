@@ -34,6 +34,9 @@ export type ContainerShape =
 
 /** The four container node types (those with `children`). */
 export type ContainerNode = Extract<Node, { children: Node[] }>;
+/** The container type names — derived from the union, so adding a container type grows it. MJML's
+ *  bespoke flattener keys its card-child dispatch off this to stay compile-exhaustive (RP-8). */
+export type ContainerType = ContainerNode['type'];
 /** The leaf node types — those WITHOUT children. DERIVED from the union, so adding a leaf grows it;
  *  every target's `leaf` renderer record then fails to compile until the new leaf is handled (RP-9). */
 export type LeafNode = Exclude<Node, ContainerNode>;

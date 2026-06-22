@@ -48,3 +48,20 @@ unchanged. MJML stays bespoke but shares the same `LeafType` for its own `MJML_L
 forgotten email leaf compile-fails too — its container-reaches-the-flattener throw is kept as a runtime
 guardrail (ADR-0006), now behind a `'children' in node` check. One narrowing cast bridges TS's
 correlated-union gap in `walkNode` and `renderLeaf`. Output byte-identical (golden net unchanged).
+
+**Amended (RP-8, 2026-06-22): MJML's CONTAINER dispatch now shares the union vocabulary and is
+compile-exhaustive too — MJML stays bespoke, it is still not an adapter of this seam.** RP-9 closed the
+leaf half; this closes the container half. `renderCardSections` previously dispatched on a string
+literal (`child.type === 'Row'`) with everything else implicitly a leaf-run, so adding a _container_
+type left MJML compiling while a new shape fell through to `renderLeaf`'s runtime throw. The per-child
+decision is now a `classifyCardChild(node): CardChild` keyed off the node union: a leaf (batched into a
+leaf-run section), a `Row` (its own sibling section), or an `unsupported` container — with an exhaustive
+`switch` whose `default` is a `never` sentinel (`return node`), so a **new container type is a compile
+error here** (probe: omitting a `case` makes the sentinel fail `TS2322`), forcing an explicit email
+decision (`Stack`/`Column`/`Grid` reject with a clear "cannot represent a nested X" error; `Grid` is also
+email-unsafe per ADR-0006). `ContainerType` is now exported from `walk.ts` (symmetric with `LeafType`).
+This is the limit of the alignment: the section/column **flattening itself stays bespoke** — the
+cross-sibling leaf-run batching is non-compositional and does not belong in the post-order walk (the
+walk is never touched; only mjml.ts shares its types). `renderLeaf`'s container guard is retained as
+defense-in-depth for a container nested inside a Row column (a runtime-only constraint until RP-10's
+`allowedChildren` lands). Output byte-identical (golden net unchanged).

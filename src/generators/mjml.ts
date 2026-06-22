@@ -6,7 +6,7 @@
 // one <mj-column> per child (the Row -> two-column mapping), carrying the surface
 // background so the card reads continuous. See docs/walking-skeleton.md findings.
 import { type Frame, type Node, type StyleMap, type TokenRef } from '../ir/types';
-import { type LeafNode, type LeafType } from '../ir/walk';
+import { type ContainerType, type LeafNode, type LeafType } from '../ir/walk';
 import { TEXT_STYLE_BINDING } from '../theme/generated/typography';
 
 // The literal resolver (dot-ref -> '16px') is supplied by the caller — the Design-Token Model's
@@ -113,6 +113,40 @@ function renderLeaf(lit: Lit, node: Node, depth: number): string {
   return (MJML_LEAVES[node.type] as (l: Lit, n: LeafNode, d: number) => string)(lit, node, depth);
 }
 
+// --- Structure dispatch (RP-8) --------------------------------------------
+
+// MJML's section/column flattener is bespoke and stays so (ADR-0008) — but its CONTAINER dispatch now
+// shares the Node Walk's union vocabulary and is EXHAUSTIVE, mirroring MJML_LEAVES for leaves. A card's
+// child is exactly one of: a leaf (batched into a leaf-run section), a Row (its own sibling section),
+// or an unsupported container — Stack/Column/Grid have no email mapping (Grid is email-unsafe, ADR-0006;
+// nested Stack/Column don't flatten). The `default` is a `never` sentinel: every container type is cased,
+// so adding one stops this compiling until it is given an explicit email decision here — instead of
+// silently falling through to `renderLeaf`'s runtime throw.
+type CardChild =
+  | { role: 'leaf'; node: LeafNode }
+  | { role: 'row'; node: Extract<Node, { type: 'Row' }> }
+  | { role: 'unsupported'; type: ContainerType };
+
+export function classifyCardChild(node: Node): CardChild {
+  if (!('children' in node)) return { role: 'leaf', node };
+  switch (node.type) {
+    case 'Row':
+      return { role: 'row', node };
+    case 'Stack':
+    case 'Column':
+    case 'Grid':
+      return { role: 'unsupported', type: node.type };
+    default:
+      // Exhaustiveness: `node` is `never` here. A new container type makes it non-never → a compile
+      // error, forcing the email decision above (RP-8). Unreachable at runtime for the current union.
+      return node;
+  }
+}
+
+function unsupportedInEmail(type: ContainerType): string {
+  return `MJML email cannot represent a nested ${type} (ADR-0006/0008): email Frames flatten to sections + columns, with leaves and Rows only.`;
+}
+
 // --- Flattener ------------------------------------------------------------
 
 // A Row flattens to its OWN sibling <mj-section> (Row -> two-column mapping).
@@ -147,7 +181,7 @@ function renderCardSections(
   const padding = styleLit(lit, stack.style, 'padding') ?? lit('space.lg');
 
   const blocks: string[] = [];
-  let leafRun: Node[] = [];
+  let leafRun: LeafNode[] = [];
 
   const flushLeafRun = (isFirst: boolean): void => {
     if (leafRun.length === 0) return;
@@ -167,12 +201,15 @@ function renderCardSections(
 
   let firstSectionEmitted = false;
   for (const child of stack.children) {
-    if (child.type === 'Row') {
+    const c = classifyCardChild(child);
+    if (c.role === 'row') {
       flushLeafRun(!firstSectionEmitted);
       firstSectionEmitted = true;
-      blocks.push(renderRowSection(lit, child, surfaceBg, depth));
+      blocks.push(renderRowSection(lit, c.node, surfaceBg, depth));
+    } else if (c.role === 'leaf') {
+      leafRun.push(c.node);
     } else {
-      leafRun.push(child);
+      throw new Error(unsupportedInEmail(c.type));
     }
   }
   flushLeafRun(!firstSectionEmitted);
