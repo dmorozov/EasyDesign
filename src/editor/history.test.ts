@@ -6,7 +6,15 @@ import { emptyHistory, record, redo, undo, type History } from './history';
 // Bodies are identified by a marker frame title so assertions read clearly; only identity/shape matters.
 const body = (tag: string): DocumentBody => ({
   frames: [
-    { id: tag, title: tag, target: 'web', x: 0, y: 0, root: { type: 'Stack', children: [] } },
+    {
+      id: tag,
+      title: tag,
+      target: 'web',
+      x: 0,
+      y: 0,
+      width: 1280,
+      root: { type: 'Stack', children: [] },
+    },
   ],
   themeOverrides: {},
 });

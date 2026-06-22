@@ -13,6 +13,8 @@ import {
   isNodeEmailSafe,
   moveFrame,
   nextSlot,
+  resizeFrame,
+  TARGET_PROFILES,
   type FrameTarget,
 } from './frames';
 import { PALETTE, type PaletteItem } from './palette';
@@ -31,6 +33,7 @@ const frame = (target: FrameTarget, over: Partial<EditorFrame> = {}): EditorFram
   target,
   x: 0,
   y: 0,
+  width: 1280,
   root: { type: 'Stack', children: [] },
   ...over,
 });
@@ -54,16 +57,22 @@ describe('canInsertComponent — the ONE email rule (ADR-0006)', () => {
 });
 
 describe('createFrame — target fixed at creation, unique id, seeded shell', () => {
-  it('mints a Frame with the injected id, default title, empty Stack root', () => {
+  it('mints a Frame with the injected id, default title, default width, empty Stack root', () => {
     const { frames, created } = createFrame([], 'email', () => 'frame-1');
-    expect(created).toMatchObject({ id: 'frame-1', target: 'email', title: 'New email' });
+    expect(created).toMatchObject({
+      id: 'frame-1',
+      target: 'email',
+      title: 'New email',
+      width: 600,
+    });
     expect(created.root).toEqual({ type: 'Stack', style: { gap: 'space.md' }, children: [] });
     expect(frames).toEqual([created]);
   });
-  it('appends without mutating the input array; web gets the web title', () => {
+  it('appends without mutating the input array; web gets the web title + default width', () => {
     const before: EditorFrame[] = [frame('web', { id: 'a' })];
     const { frames, created } = createFrame(before, 'web', () => 'b');
     expect(created.title).toBe('New screen');
+    expect(created.width).toBe(1280);
     expect(frames).toHaveLength(2);
     expect(before).toHaveLength(1); // not mutated
   });
@@ -101,10 +110,45 @@ describe('moveFrame — immutable, same-position short-circuit', () => {
   });
 });
 
-describe('nextSlot — non-overlapping placement', () => {
-  it('first Frame at 40,40; subsequent cascade right', () => {
+describe('nextSlot — non-overlapping placement (cascades past the last Frame width, ADR-0013)', () => {
+  it('first Frame at 40,40; subsequent clear the last Frame width + gap', () => {
     expect(nextSlot([])).toEqual({ x: 40, y: 40 });
-    expect(nextSlot([frame('web', { x: 100, y: 60 })])).toEqual({ x: 560, y: 60 });
+    // last is width 1280 (helper default): 100 + 1280 + 40
+    expect(nextSlot([frame('web', { x: 100, y: 60 })])).toEqual({ x: 1420, y: 60 });
+    // a narrower last Frame cascades less: 0 + 375 + 40
+    expect(nextSlot([frame('web', { x: 0, y: 0, width: 375 })])).toEqual({ x: 415, y: 0 });
+  });
+});
+
+describe('resizeFrame — immutable, same-width short-circuit', () => {
+  it('writes a new Preview width immutably', () => {
+    const fs = [frame('web', { id: 'a', width: 1280 })];
+    const next = resizeFrame(fs, 'a', 375);
+    expect(next[0]?.width).toBe(375);
+    expect(fs[0]?.width).toBe(1280); // original untouched
+  });
+  it('returns the SAME array when the width is unchanged (no history churn)', () => {
+    const fs = [frame('web', { id: 'a', width: 768 })];
+    expect(resizeFrame(fs, 'a', 768)).toBe(fs);
+  });
+  it('returns the SAME array on an unknown id', () => {
+    const fs = [frame('web', { id: 'a', width: 768 })];
+    expect(resizeFrame(fs, 'nope', 375)).toBe(fs);
+  });
+});
+
+describe('TARGET_PROFILES — Preview-width presets per medium (ADR-0013)', () => {
+  it('each medium default is one of its offered widths', () => {
+    for (const target of ['web', 'email'] as const) {
+      const p = TARGET_PROFILES[target];
+      expect(p.widths.map((w) => w.value)).toContain(p.defaultWidth);
+    }
+  });
+  it('web offers Mobile/Tablet/Desktop (default Desktop); email a single 600', () => {
+    expect(TARGET_PROFILES.web.widths.map((w) => w.value)).toEqual([375, 768, 1280]);
+    expect(TARGET_PROFILES.web.defaultWidth).toBe(1280);
+    expect(TARGET_PROFILES.email.widths).toEqual([{ label: 'Email', value: 600 }]);
+    expect(TARGET_PROFILES.email.defaultWidth).toBe(600);
   });
 });
 

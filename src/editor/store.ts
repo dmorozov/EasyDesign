@@ -82,6 +82,7 @@ interface EditorState {
   setExportTarget: (target: ExportTarget) => void;
   setSaveStatus: (status: SaveStatus) => void;
   moveFrame: (frameId: string, x: number, y: number) => void;
+  setFrameWidth: (frameId: string, width: number) => void;
   loadDocument: (doc: EditorDocument) => void;
   resetDocument: () => void;
   undo: () => void;
@@ -127,14 +128,17 @@ function createInitialFrames(): EditorFrame[] {
       target: 'web',
       x: 40,
       y: 40,
+      width: Frames.TARGET_PROFILES.web.defaultWidth,
       root: structuredClone(webRoot),
     },
     {
       id: 'email-1',
       title: 'Welcome email',
       target: 'email',
-      x: 520,
+      // Clear the web Frame's Preview width (1280) so the two seed Frames don't overlap (ADR-0013).
+      x: 1360,
       y: 40,
+      width: Frames.TARGET_PROFILES.email.defaultWidth,
       root: structuredClone(sampleCard.root),
     },
   ];
@@ -364,6 +368,13 @@ export const useEditor = create<EditorState>()((set) => {
       mutate(null, (doc) => {
         const frames = Frames.moveFrame(doc.frames, frameId, x, y);
         return frames === doc.frames ? null : { body: { ...doc, frames } }; // same position → no entry
+      }),
+
+    // Set a Frame's Preview width (ADR-0013) — undoable + persisted like a move; a same-width set is a no-op.
+    setFrameWidth: (frameId, width) =>
+      mutate(null, (doc) => {
+        const frames = Frames.resizeFrame(doc.frames, frameId, width);
+        return frames === doc.frames ? null : { body: { ...doc, frames } }; // same width → no entry
       }),
 
     // ── Whole-document + history ops (use the reducer directly: they replace/restore the body) ──

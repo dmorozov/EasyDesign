@@ -18,9 +18,8 @@ import '@xyflow/react/dist/style.css';
 
 const nodeTypes: NodeTypes = { frame: FrameNode };
 
-// Approx centre of a Frame node (body is 380px wide; labels + body ≈ 300px tall) — close enough to
-// pull a newly-added Frame fully into view.
-const NODE_W = 380;
+// Approx height of a Frame node (varies with content) — close enough to pull a newly-added Frame into
+// view; the width is exact (the Frame's Preview width, ADR-0013).
 const NODE_H = 300;
 
 /** Pans the viewport to a just-added Frame (store.pendingFocusFrameId), preserving the current zoom.
@@ -34,7 +33,7 @@ function ViewportFocus(): null {
     if (!pending) return;
     const frame = useEditor.getState().frames.find((f) => f.id === pending);
     if (frame) {
-      void setCenter(frame.x + NODE_W / 2, frame.y + NODE_H / 2, {
+      void setCenter(frame.x + frame.width / 2, frame.y + NODE_H / 2, {
         zoom: getZoom(),
         duration: 350,
       });

@@ -4,8 +4,9 @@ import { useEffect } from 'react';
 import { type FrameData } from './FrameNode';
 import { useEditor, type EditorFrame } from './store';
 
-/** Only the title label drags the Frame (its class is the React Flow `dragHandle` selector). */
-const DRAG_HANDLE = '.ed-frame-drag';
+/** Only the grip on the Frame's top border drags it (its class is the React Flow `dragHandle`
+ *  selector); the title is select-only (ADR-0013). */
+const DRAG_HANDLE = '.ed-frame-grip';
 
 function toRFNode(f: EditorFrame): RFNode<FrameData> {
   return {

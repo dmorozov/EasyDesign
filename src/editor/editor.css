@@ -326,24 +326,88 @@ body {
   max-height: 320px;
 }
 
-/* ---- React Flow frame node (minimal: thin dashed body + corner labels, no window chrome) ---- */
+/* ---- React Flow frame node (ADR-0013: ONE thin dashed box; identity + controls sit on the top
+   border, fieldset-legend style — no header-over-body window). Width is the Preview width, set inline. */
 .ed-frame {
-  width: 380px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  position: relative;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  /* Inset for the content; the slightly larger top also clears the border legend (which is centred
+     on the top edge). NB: the spacing scale skips 7/9/11 — only even/decade steps exist. */
+  padding: var(--space-12) var(--space-10) var(--space-10);
 }
+.ed-frame[data-selected] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+/* The legend: grip + title (left) and medium (right), centred on the top border. Each group carries the
+   frame's own background so it occludes the dashes behind it; the row itself is click-through. */
 .ed-frame-labels {
+  position: absolute;
+  top: 0;
+  left: var(--space-6);
+  right: var(--space-6);
+  transform: translateY(-50%);
+  /* Above the body's positioned content (EditableShell is position:relative, so it would otherwise
+     paint over this legend and steal clicks on the grip/title). */
+  z-index: 7;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-4);
   line-height: 1;
+  pointer-events: none;
 }
-/* Title label, top-left — the drag handle AND the Frame-select affordance (a plain-text button). */
+/* Left group — grip + title; transparent (the dashed border reads continuously behind it), pointer
+   events re-enabled so the grip drags and the title selects. */
+.ed-frame-id {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: 72%;
+  padding: 0 var(--space-2);
+  pointer-events: auto;
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    rgba(255, 255, 255, 0.85) calc(50% - 1px),
+    rgba(255, 255, 255, 0.85) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+/* Grip — the React Flow drag handle (board move). */
+.ed-frame-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-faint);
+  cursor: grab;
+}
+.ed-frame-grip:hover {
+  color: var(--text-muted);
+  background: var(--surface-hover);
+}
+.ed-frame-grip:active {
+  cursor: grabbing;
+}
+.ed-frame-grip:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+.ed-frame[data-selected] .ed-frame-grip {
+  color: var(--accent);
+}
+/* Title — select-only (a plain-text button). */
 .ed-frame-name {
-  max-width: 70%;
-  padding: var(--space-1) var(--space-3);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -353,38 +417,36 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: grab;
+  cursor: pointer;
 }
 .ed-frame-name:hover {
   color: var(--text-ink);
-  background: var(--surface-hover);
 }
 .ed-frame[data-selected] .ed-frame-name {
   color: var(--accent);
 }
-/* Medium label, top-right — READ-ONLY (the medium is fixed at creation). */
+/* Medium label, top-right — READ-ONLY (the medium is fixed at creation); transparent like the left group. */
 .ed-frame-type {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: var(--border-w) solid var(--border-faint);
-  border-radius: var(--radius-pill);
-  background: var(--surface-sunken);
-  color: var(--text-muted);
+  flex: none;
+  padding: 0 var(--space-2);
+  background: transparent;
+  color: var(--text-faint);
   font-size: var(--fs-caption);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
+  pointer-events: auto;
 }
+.ed-frame[data-selected] .ed-frame-type {
+  color: var(--accent);
+}
+/* Body — the content area; no window chrome now, the dashed box IS the frame. */
 .ed-frame-body {
-  padding: var(--space-8);
-  background: var(--surface);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
-}
-.ed-frame[data-selected] .ed-frame-body {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-soft);
+  min-height: var(--space-12);
 }
 
 /* Add-frame Panel (React Flow overlay, top-left of the board) */

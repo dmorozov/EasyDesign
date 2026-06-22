@@ -85,6 +85,7 @@ export function Inspector(): ReactElement {
   const deleteNode = useEditor((s) => s.deleteNode);
   const renameFrame = useEditor((s) => s.renameFrame);
   const removeFrame = useEditor((s) => s.removeFrame);
+  const setFrameWidth = useEditor((s) => s.setFrameWidth);
 
   const frame = frames.find((f) => f.id === selectedFrameId);
   const node = frame && selectedPath ? nodeAt(frame.root, selectedPath) : undefined;
@@ -110,6 +111,30 @@ export function Inspector(): ReactElement {
             <span className="eds-label">Medium</span>
             <span className="ed-inspector-note">{TARGET_PROFILES[frame.target].label} · fixed</span>
           </div>
+          {(() => {
+            // Preview width presets (ADR-0013) — a canvas affordance; the medium gates which are offered.
+            // A medium with a single preset (email) shows it as a read-only note, like the Medium row.
+            const widths = TARGET_PROFILES[frame.target].widths;
+            const single = widths.length === 1 ? widths[0] : undefined;
+            return (
+              <div className="ed-field">
+                <span className="eds-label">Size</span>
+                {single ? (
+                  <span className="ed-inspector-note">
+                    {single.label} · {single.value}px · fixed
+                  </span>
+                ) : (
+                  <SegmentedControl
+                    options={widths.map((w) => ({ value: String(w.value), label: w.label }))}
+                    value={String(frame.width)}
+                    onChange={(v) => {
+                      setFrameWidth(frame.id, Number(v));
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })()}
         </PanelSection>
         <div className="ed-rail-actions">
           <Button

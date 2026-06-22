@@ -18,18 +18,37 @@ interface TargetProfile {
   allows: (item: PaletteItem) => boolean;
   /** The empty IR shell a new Frame of this medium starts from. */
   makeRoot: () => Node;
+  /** Preview-width presets offered for this medium (ADR-0013) — a canvas affordance, never exported. */
+  widths: { label: string; value: number }[];
+  /** Default Preview width a new (and a back-filled legacy) Frame of this medium gets. */
+  defaultWidth: number;
 }
 
 const emptyStack = (): Node => ({ type: 'Stack', style: { gap: 'space.md' }, children: [] });
 
 // One entry per medium — the two media's facts co-located (a 3rd medium is out of scope, ADR-0002).
+// The width presets live here too (ADR-0013): the medium gates both what may go in a Frame and what
+// Preview widths it offers (email is canonically a single 600px to mirror MJML's default body).
 export const TARGET_PROFILES: Record<FrameTarget, TargetProfile> = {
-  web: { label: 'Web page', defaultTitle: 'New screen', allows: () => true, makeRoot: emptyStack },
+  web: {
+    label: 'Web page',
+    defaultTitle: 'New screen',
+    allows: () => true,
+    makeRoot: emptyStack,
+    widths: [
+      { label: 'Mobile', value: 375 },
+      { label: 'Tablet', value: 768 },
+      { label: 'Desktop', value: 1280 },
+    ],
+    defaultWidth: 1280,
+  },
   email: {
     label: 'Email',
     defaultTitle: 'New email',
     allows: (item) => item.emailSafe, // ADR-0006: email Frames take only email-safe Components
     makeRoot: emptyStack,
+    widths: [{ label: 'Email', value: 600 }],
+    defaultWidth: 600,
   },
 };
 
@@ -83,12 +102,13 @@ export type MintId = () => string;
 export const mintFrameId: MintId = () =>
   `frame-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-const FRAME_W = 460;
-/** A best-effort board slot for the next Frame: cascade right of the most recently added one.
- *  Not collision-checked — a user-dragged last Frame can seed an overlap the user then drags away. */
+const SLOT_GAP = 40;
+/** A best-effort board slot for the next Frame: cascade right of the most recently added one,
+ *  clearing its Preview width (ADR-0013) so wide Frames don't overlap. Not collision-checked — a
+ *  user-dragged last Frame can seed an overlap the user then drags away. */
 export function nextSlot(frames: EditorFrame[]): { x: number; y: number } {
   const last = frames.at(-1);
-  return last ? { x: last.x + FRAME_W, y: last.y } : { x: 40, y: 40 };
+  return last ? { x: last.x + last.width + SLOT_GAP, y: last.y } : { x: 40, y: 40 };
 }
 
 /** Mint a Frame. Target is FIXED here forever (no setTarget exists — ADR-0006). Pure: returns a new
@@ -106,6 +126,7 @@ export function createFrame(
     target,
     x: slot.x,
     y: slot.y,
+    width: profile.defaultWidth, // Preview width, ADR-0013
     root: profile.makeRoot(),
   };
   return { frames: [...frames, created], created };
@@ -125,4 +146,11 @@ export function deleteFrame(
 export function moveFrame(frames: EditorFrame[], id: string, x: number, y: number): EditorFrame[] {
   if (!frames.some((f) => f.id === id && (f.x !== x || f.y !== y))) return frames;
   return frames.map((f) => (f.id === id ? { ...f, x, y } : f));
+}
+
+/** Resize a Frame's Preview width (ADR-0013). Pure; a same-width change returns the SAME array (no
+ *  history churn), mirroring `moveFrame`. */
+export function resizeFrame(frames: EditorFrame[], id: string, width: number): EditorFrame[] {
+  if (!frames.some((f) => f.id === id && f.width !== width)) return frames;
+  return frames.map((f) => (f.id === id ? { ...f, width } : f));
 }

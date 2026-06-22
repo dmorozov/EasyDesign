@@ -15,7 +15,7 @@ export type IconName =
   | 'heading' | 'text' | 'button' | 'image' | 'code' | 'layers' | 'settings' | 'help'
   | 'folder' | 'puzzle' | 'copy' | 'download' | 'upload' | 'plus' | 'trash' | 'check'
   | 'hand' | 'cursor' | 'zoomIn' | 'zoomOut' | 'fit' | 'play' | 'web' | 'mail'
-  | 'alignL' | 'alignC' | 'alignR' | 'alignJ' | 'dots' | 'sliders' | 'palette'
+  | 'alignL' | 'alignC' | 'alignR' | 'alignJ' | 'dots' | 'grip' | 'sliders' | 'palette'
   | 'react' | 'share' | 'sun' | 'moon';
 
 /** Inline icon set. Each entry is a component: `<Icon.undo size={18} />`. */

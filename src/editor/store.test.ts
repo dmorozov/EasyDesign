@@ -104,6 +104,24 @@ describe('moveFrame — only a real move makes history', () => {
   });
 });
 
+describe('setFrameWidth — only a real resize makes history (ADR-0013)', () => {
+  it('resizing to a new Preview width pushes one entry and updates the Frame', () => {
+    s().setFrameWidth('web-1', 375);
+    expect(s().history.past).toHaveLength(1);
+    expect(s().frames.find((f) => f.id === 'web-1')?.width).toBe(375);
+  });
+  it('resizing to the same width pushes nothing (no history churn)', () => {
+    const current = s().frames.find((f) => f.id === 'web-1')?.width ?? 0;
+    s().setFrameWidth('web-1', current);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('undo restores the prior width', () => {
+    s().setFrameWidth('web-1', 768);
+    s().undo();
+    expect(s().frames).toEqual(SEED);
+  });
+});
+
 describe('Snapshot captures the document only', () => {
   it('a history entry has exactly { frames, themeOverrides }', () => {
     s().updateText('web-1', [0], 'a');

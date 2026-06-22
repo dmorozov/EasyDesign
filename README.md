@@ -159,37 +159,3 @@ A few deliberate tooling invariants (don't "fix" them): **ESLint is pinned to 9.
 `eslint-plugin-react`); the flat config is `eslint.config.mjs`; Prettier owns all formatting and
 `.editorconfig` / `.vscode/settings.json` / `.prettierrc` are kept in agreement; `tsconfig.app.json`
 keeps `experimentalDecorators` (the Angular generator emits decorators). Details in `CLAUDE.md`.
-
-## Refactoring
-
-The revised plan is written to refactoring_plan.md. Here's what the audit (6 parallel auditors + synthesis, cross-checked
-against my own greps) changed.
-
-Nothing was wholly obsolete — but the reskin invalidated key facts
-
-The chrome reskin was deliberately chrome-only (src/components/\* untouched per ADR-0007), so all four deepenings still pass the
-deletion test against current code. The obsolescence was in the plan's references, not its theses:
-
-┌─────────────────────┬─────────────────────┬────────────────────────────────────────────────────────────────────────────────┐
-│ Item │ Verdict │ What was obsolete / corrected │
-├─────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────┤
-│ │ │ Six-place dispatch + 5× Row flex:1 duplication intact. Added: reskin proves │
-│ D1 Node Walk │ keep-as-is │ the chrome/traversal seam separates (it edited only EditableNode chrome, left │
-│ │ │ NodeInner switch untouched) + an ADR-0007 "no DS imports in the substrate" │
-│ │ │ guardrail. │
-├─────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────┤
-│ │ │ SWATCHES is now kebab-keyed DS Swatch rows, not a dot-path list. Absorbed the │
-│ D2 Design-Token │ keep-with-revisions │ two-scope token reality (user Theme → .ed-board-content, chrome → :root, │
-│ Model │ │ triple SD output) as a hard invariant: resolveVar must be scope-aware and own │
-│ │ │ the user graph only. │
-├─────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────┤
-│ │ │ "dropdown" → SegmentedControl; email rule went from 2 → 3 inline sites │
-│ D3 Frame lifecycle │ keep-with-revisions │ (locked-not-hidden adds a visible-bug consumer), strengthening the case for │
-│ │ │ one canInsertComponent. │
-├─────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────────────────────┤
-│ D4 │ │ DocumentPanel.tsx never existed — auto-save useEffect is in Toolbar.tsx:28-41. │
-│ history/persistence │ keep-with-revisions │ Added the rightTab-excluded-from-Snapshot boundary as the document/UI-split │
-│ │ │ test. │
-└─────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────────────────────────┘
-
-Start with D2 in a design conversation

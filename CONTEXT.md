@@ -25,8 +25,16 @@ _Avoid_: wrapper, container, frame
 A top-level design unit on the Board whose contents form one layout tree, and the natural unit of
 export. Carries a **target medium**: a _web_ Frame exports to React, Angular, or static HTML
 interchangeably; an _email_ Frame is restricted to email-safe Components and layout and exports
-to MJML.
+to MJML. Sits at a Board position the user can drag, and carries a **Preview width**.
 _Avoid_: artboard, screen, page, canvas
+
+**Preview width**:
+How wide a Frame is shown on the Board — chosen from a small, medium-aware set of presets (web:
+Mobile / Tablet / Desktop; email: a single canonical width). It is a _viewing affordance only_: it
+lets the user eyeball the design narrow vs wide, but never changes the exported output (which stays
+content-flow) and never enters the IR. A Frame has no height — its vertical size is always whatever
+its content needs. (Distinct from any Component's own width.)
+_Avoid_: frame size, artboard size, viewport, breakpoint, canvas size
 
 **Theme**:
 The single, editable set of Design Tokens that every placed Component references; the one
@@ -64,6 +72,7 @@ _Avoid_: format, renderer
 - The **Design Palette** edits the **Theme**; the **Component Palette** supplies draggable **Components** — both show the same Components in different roles
 - A **Selection** — usually a whole **Frame** — is exported to exactly one **Export Target** at a time
 - A **Frame**'s target medium is fixed when it is created: _web_ (React / Angular / static HTML, interchangeable) or _email_ (email-safe subset → MJML)
+- A **Frame**'s **Preview width** is a Board-level viewing property: it changes how the design previews, never the export; the available presets depend on the Frame's medium
 - Editing one **Design Token** re-themes every **Component** on every **Board** that references it
 
 ## Example dialogue

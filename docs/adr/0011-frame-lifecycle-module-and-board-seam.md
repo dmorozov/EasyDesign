@@ -46,6 +46,12 @@ invalid-state path for free. The medium is chosen once, at the `+ Web page` / `+
   top-right. The body keeps `ed-board-content` so user Theme tokens resolve there, not on `:root`
   (ADR-0007 golden rule). Nodes are `selectable: false` in React Flow — Selection is owned entirely by
   the store.
+  - **Superseded (ADR-0013):** overloading the title as _both_ drag handle and select target shrank the
+    grabbable surface to a few characters and made the Frame feel un-movable. The drag handle is now a
+    **dedicated grip** (`.ed-frame-grip`) left of the title; the title is **select-only**. The whole
+    labels strip moves **onto the thin dashed top border** (fieldset-legend chrome) — no header-over-body
+    "window" — with the grip + title on the left and the read-only medium on the right, and the Frame
+    gained a **Preview width**; see ADR-0013.
 - A Frame-level Selection is `selectedFrameId` set with `selectedPath: null`; the Inspector renders a
   Frame panel (editable title, read-only medium, Delete) for that state. Deleting the selected Frame
   clears the Selection.

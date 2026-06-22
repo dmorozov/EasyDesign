@@ -1,15 +1,16 @@
 import { type Frame, type Node } from '../ir/types';
 import { catalog } from '../theme/design-tokens';
 
-import { isEmailFrameClean } from './frames';
+import { isEmailFrameClean, TARGET_PROFILES } from './frames';
 
-// A Frame as the editor holds it: the IR plus its board position (so layout persists).
+// A Frame as the editor holds it: the IR plus its board position and Preview width (so both persist).
 export interface EditorFrame {
   id: string;
   title: string;
   target: Frame['target'];
   x: number;
   y: number;
+  width: number; // Preview width (ADR-0013) — a canvas affordance, never exported
   root: Node;
 }
 
@@ -39,6 +40,8 @@ function isEditorFrame(value: unknown): value is EditorFrame {
     (f.target === 'web' || f.target === 'email') &&
     typeof f.x === 'number' &&
     typeof f.y === 'number' &&
+    // Preview width (ADR-0013) is back-filled on load, so a pre-width document is still valid.
+    (f.width === undefined || typeof f.width === 'number') &&
     typeof f.root === 'object' &&
     f.root !== null &&
     // ADR-0006: an email Frame's tree must be email-safe (the interactive guards can't vet imports).
@@ -73,10 +76,22 @@ function withMigratedOverrides(doc: EditorDocument): EditorDocument {
   return { ...doc, themeOverrides };
 }
 
+// Back-fill a Frame's Preview width (ADR-0013) for documents saved before it existed: a Frame with no
+// width adopts its medium's default. Keeps old saves valid without a version bump (additive + migrated).
+function withFrameDefaults(doc: EditorDocument): EditorDocument {
+  return {
+    ...doc,
+    frames: doc.frames.map((f) =>
+      typeof f.width === 'number' ? f : { ...f, width: TARGET_PROFILES[f.target].defaultWidth },
+    ),
+  };
+}
+
 /** The single load pipeline: validate (shape + the ADR-0006 email audit, via isEditorDocument) then
- *  migrate (D2 legacy kebab overrides → dot). Returns null for anything that isn't a valid document. */
+ *  migrate (D2 legacy kebab overrides → dot; ADR-0013 Preview-width back-fill). Returns null for
+ *  anything that isn't a valid document. */
 export function parseDocument(raw: unknown): EditorDocument | null {
-  return isEditorDocument(raw) ? withMigratedOverrides(raw) : null;
+  return isEditorDocument(raw) ? withFrameDefaults(withMigratedOverrides(raw)) : null;
 }
 
 export function saveToLocal(doc: EditorDocument): void {
