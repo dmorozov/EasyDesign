@@ -369,11 +369,12 @@ body {
   max-width: 72%;
   padding: 0 var(--space-2);
   pointer-events: auto;
+
   background: linear-gradient(
     to bottom,
     transparent calc(50% - 1px),
-    rgba(255, 255, 255, 0.85) calc(50% - 1px),
-    rgba(255, 255, 255, 0.85) calc(50% + 1px),
+    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% - 1px),
+    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% + 1px),
     transparent calc(50% + 1px)
   );
 }
@@ -432,7 +433,6 @@ body {
   gap: var(--space-2);
   flex: none;
   padding: 0 var(--space-2);
-  background: transparent;
   color: var(--text-faint);
   font-size: var(--fs-caption);
   font-weight: var(--fw-semibold);
@@ -440,6 +440,14 @@ body {
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: auto;
+
+  background: linear-gradient(
+    to bottom,
+    transparent calc(50% - 1px),
+    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% - 1px),
+    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
 }
 .ed-frame[data-selected] .ed-frame-type {
   color: var(--accent);
