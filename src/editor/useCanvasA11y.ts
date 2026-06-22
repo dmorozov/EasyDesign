@@ -2,6 +2,7 @@ import { type KeyboardEvent } from 'react';
 
 import { type Node } from '../ir/types';
 
+import { DESCRIPTORS } from './descriptors';
 import { flattenPaths, isContainer, samePath, type NodePath } from './paths';
 import { useEditor } from './store';
 
@@ -19,12 +20,13 @@ export interface CanvasA11yProps {
 
 function describe(node: Node, path: NodePath): string {
   const where = path.length === 0 ? 'root ' : '';
+  const label = DESCRIPTORS[node.type].label; // one home for the per-type label (RP-2)
   if (node.type === 'Text' || node.type === 'Button') {
     const content = node.props.content.trim();
-    return content ? `${where}${node.type}: ${content}` : `${where}${node.type}`;
+    return content ? `${where}${label}: ${content}` : `${where}${label}`;
   }
-  if (node.type === 'Image') return `${where}Image: ${node.props.alt || 'image'}`;
-  return `${where}${node.type}`;
+  if (node.type === 'Image') return `${where}${label}: ${node.props.alt || 'image'}`;
+  return `${where}${label}`;
 }
 
 function focusNode(frameId: string, path: NodePath): void {

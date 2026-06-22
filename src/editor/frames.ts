@@ -4,6 +4,7 @@
 // call these through the `mutate()` funnel (which records history + persists) + reconcile selection/rightTab.
 import { type Node } from '../ir/types';
 
+import { DESCRIPTORS } from './descriptors';
 import { type EditorFrame } from './document';
 import { type PaletteItem } from './palette';
 
@@ -75,10 +76,12 @@ export function insertHint(target: FrameTarget): string {
 // document validator can reject an email Frame whose tree holds an email-unsafe node — which would
 // otherwise reach the MJML generator and fail (it throws on a Grid; ADR-0006).
 
-// The node TYPES an email Frame may not contain. Kept in sync with the Palette's per-item `emailSafe`
-// (Grid is the one blocked Component) — frames.test.ts asserts the two never drift.
-const EMAIL_UNSAFE: readonly Node['type'][] = ['Grid'];
-export const EMAIL_UNSAFE_TYPES: ReadonlySet<string> = new Set(EMAIL_UNSAFE);
+// The node TYPES an email Frame may not contain — DERIVED from the Component Descriptor's `emailSafe`
+// (RP-2/ADR-0014), so the rule has one source and can't drift from the Palette (Grid is the one blocked
+// Component today). `isNodeEmailSafe` keeps its Set-based shape so an unknown imported type is permissive.
+export const EMAIL_UNSAFE_TYPES: ReadonlySet<string> = new Set(
+  (Object.keys(DESCRIPTORS) as Node['type'][]).filter((type) => !DESCRIPTORS[type].emailSafe),
+);
 
 export function isNodeEmailSafe(type: string): boolean {
   return !EMAIL_UNSAFE_TYPES.has(type);

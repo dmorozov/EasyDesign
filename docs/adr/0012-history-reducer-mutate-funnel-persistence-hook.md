@@ -54,3 +54,14 @@ caller — framework-agnostic ceremony for a concern that has no bugs there. The
   the assertions are unchanged.
 - Not done (deferred): **restore-selection on undo** (selection stays out of history — undo clears it);
   a `version` bump / explicit 1→2 migrations (revisit when the saved shape actually breaks).
+- **Amended (RP-1, 2026-06-22):** the structural tree edits the `mutate()` callbacks used to inline —
+  `structuredClone(root)` → `nodeAt` → splice/mutate → reassemble — now extract into a pure module
+  `src/editor/node-tree.ts` (5 type-agnostic ops — `insert`/`move`/`remove`/`updateProps`/`setStyle` —
+  each `(root, …) → { root, path } | null`, owning the clone). It sits **below** the funnel and sharpens
+  the same pure/UI split: `node-tree.ts` owns _structural correctness_ (the move index-adjust, the
+  subtree/root guards), the `mutate()` funnel keeps history / coalescing / Selection / persistence, and
+  the node-_type_ sanitization (the Text/Button and container gates, the Grid-`wrap` rule) stays in the
+  store action as a thin read — pending its move onto the Component Descriptor (RP-2/RP-4). No reversal:
+  the `mutate()` contract and the `{frames, themeOverrides}` snapshot are untouched, and (as in the
+  original D4 refactor) `moveNode`/`deleteNode` got characterization tests **before** the extract, kept
+  green through it. The 7 actions now share one `applyTreeEdit(doc, frameId, op)` helper.

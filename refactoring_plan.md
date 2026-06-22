@@ -5,7 +5,7 @@ a follow-up extensibility/typography research pass._
 
 ## Why this document exists
 
-The architecture is settled (thirteen ADRs) and the editor MVP works end-to-end. The next phase is
+The architecture is settled (fourteen ADRs) and the editor MVP works end-to-end. The next phase is
 **building more functionality on top** — concretely:
 
 - **Capability A — add more React Aria Components** to the Component Palette / editor / exporters
@@ -282,6 +282,10 @@ for implementation:_ the exact `patch` typing for `updateProps`.
 **Priority:** ★★★ keystone · **Sequence:** 2nd · **Unlocks:** A (primary) + B (declares variants).
 **Grill together with the Node-kind-facts consolidation — they are the write-side and read-side of one
 module.**
+
+> ✅ **IMPLEMENTED 2026-06-22** (ADR-0014) — `src/editor/descriptors.ts` (union-mapped `DESCRIPTORS`);
+> PALETTE / `EMAIL_UNSAFE_TYPES` / a11y `describe()` are now descriptor projections, the drift-guard is
+> deleted, `controls`/`styleKeys` declared for RP-6/RP-4. RP-9 kept separate. See §4 step 3.
 
 **Files / sites (consolidates):** `src/editor/palette.ts:23-93` (`PALETTE`),
 `src/editor/frames.ts:80` (`EMAIL_UNSAFE`), `src/editor/paths.ts:6-10`
@@ -669,12 +673,27 @@ only output-level guard against an emitter regression (§5.3).
      golden net unchanged (zero emitter touch). Added both modules to the vitest coverage include.
    - **ADR:** ADR-0012 gets a one-line amendment (the tree-edit module sits _below_ the `mutate()`
      funnel) — no reversal; written when convenient.
-3. **RP-2 — Component Descriptor / Registry (+ Node-kind facts).** The **keystone**: largest
-   extensibility unlock (12-file → 1-row), every Reader's PRIMARY, prerequisite for RP-3/RP-4/RP-6;
-   now guarded by RP-11's snapshots. Bring the `frames.test.ts` drift-guard and the
-   `paths.ts`/`useCanvasA11y.ts` predicates as deletion-test evidence. **RP-9** (typed per-target
-   renderer registry, §5.1) lands with or just after RP-2 as the render-half safety net — it is what
-   makes a forgotten renderer a _build_ error.
+3. **RP-2 — Component Descriptor / Registry (+ Node-kind facts).** ✅ **IMPLEMENTED** (2026-06-22,
+   ADR-0014). The **keystone**: largest extensibility unlock (12-file → 1-row), every Reader's PRIMARY,
+   prerequisite for RP-3/RP-4/RP-6; guarded by RP-11's snapshots (which stayed unchanged — zero emitter
+   touch).
+   - **Where:** new `src/editor/descriptors.ts` — `DESCRIPTORS: { [T in Node['type']]: Descriptor<T> }`
+     (mapped type → a missing row is a _compile_ error; `create: () => Extract<Node,{type:T}>` →
+     create/union parity **by construction**). Fields: `label, icon, group, emailSafe, create,
+styleKeys, controls`. **No `kind`** — container-ness stays union-derived (`'children' in node`,
+     `isContainer` untouched).
+   - **Collapsed:** `PALETTE` → a projection (bare type projects the descriptor; named variants — the two
+     Buttons, Heading/Text, Grid's "(2-col)" — override only id/label/icon/create); `frames.ts`
+     `EMAIL_UNSAFE_TYPES` **derived** from `emailSafe` (the `['Grid']` literal gone); `useCanvasA11y`
+     `describe()` reads `descriptor.label`. The `frames.test.ts` Palette-vs-EMAIL_UNSAFE **drift-guard is
+     deleted** (one home → nothing to drift), replaced by `descriptors.test.ts`.
+   - **Deferred to consumers:** `controls`/`styleKeys` are declared (static spec) but the Inspector still
+     renders inline — **RP-6** consumes them via `resolveEditModel`, **RP-4** grows the Text `styleKeys`.
+   - **Verified:** 209 tests pass, descriptors.ts + palette.ts at **100%** lines, typecheck (mapped-type
+     completeness) / lint / format clean, golden snapshots unchanged. New ADR-0014.
+   - **RP-9 NOT bundled** (render-half safety net — `Record<LeafType, Renderer>` per target so a forgotten
+     renderer is a _build_ error): kept separate per ADR-0014 (it's a library registry, must not import
+     the editor-runtime descriptor). It is the natural **next** step — "with or just after RP-2".
 4. **RP-3 + RP-4 — the typography spine** (DTCG composite Heading styles + Free-form-text primitive
    binding, the two co-primary halves of Capability B). Tightly scoped, highly visible (kill the
    triplicated `'1.25'`/`'700'`). **First move is the ~1 hr alias-survives-`expand` spike** before any

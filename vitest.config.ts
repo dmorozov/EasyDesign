@@ -24,6 +24,8 @@ export default defineConfig({
         'src/editor/history.ts',
         'src/editor/node-tree.ts',
         'src/editor/paths.ts',
+        'src/editor/descriptors.ts',
+        'src/editor/palette.ts',
       ],
       exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/generators/index.ts'],
       // Headroom below the current run (98.9 / 90.9 / 100 / 100) so the gate catches

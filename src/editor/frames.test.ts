@@ -10,14 +10,13 @@ import {
   deleteFrame,
   insertHint,
   isEmailFrameClean,
-  isNodeEmailSafe,
   moveFrame,
   nextSlot,
   resizeFrame,
   TARGET_PROFILES,
   type FrameTarget,
 } from './frames';
-import { PALETTE, type PaletteItem } from './palette';
+import { type PaletteItem } from './palette';
 
 const item = (emailSafe: boolean): PaletteItem => ({
   id: 'x',
@@ -170,13 +169,5 @@ describe('isEmailFrameClean — the import-time email audit (ADR-0006)', () => {
   it('is defensive over malformed/partial imported IR (never throws)', () => {
     expect(isEmailFrameClean('email', null)).toBe(true);
     expect(isEmailFrameClean('email', { children: 'nope' })).toBe(true);
-  });
-});
-
-describe('the type-level email rule stays in sync with the Palette', () => {
-  it('isNodeEmailSafe(item type) === item.emailSafe for every Palette item', () => {
-    for (const item of PALETTE) {
-      expect(isNodeEmailSafe(item.create().type)).toBe(item.emailSafe);
-    }
   });
 });

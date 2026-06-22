@@ -1,6 +1,8 @@
 import { type IconName } from '../design-system';
 import { type Node } from '../ir/types';
 
+import { DESCRIPTORS } from './descriptors';
+
 /** A draggable Component Palette entry. `create()` mints a fresh IR node. */
 export interface PaletteItem {
   id: string;
@@ -15,79 +17,64 @@ export interface PaletteItem {
   create: () => Node;
 }
 
-// A tiny neutral placeholder so a dropped Image renders something.
-const placeholder =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='120'%3E" +
-  "%3Crect width='200' height='120' fill='%23e5e7eb'/%3E%3C/svg%3E";
+type NodeType = Node['type'];
 
-export const PALETTE: PaletteItem[] = [
+// A palette entry is a node TYPE — projected wholesale from its descriptor (RP-2) — or a named VARIANT
+// of one (the two Buttons, the Heading-vs-Text split) that overrides id/label/icon/create. The type-level
+// facts (group, email-safety, and the default icon/label/create) always come from the descriptor, so the
+// per-item `emailSafe` duplication that frames.test used to guard is gone: there is one source.
+type PaletteSpec =
+  | NodeType
+  | { type: NodeType; id: string; label?: string; icon?: IconName; create?: () => Node };
+
+const PALETTE_SPECS: readonly PaletteSpec[] = [
+  'Stack',
+  'Row',
+  { type: 'Grid', id: 'grid', label: 'Grid (2-col)' },
   {
-    id: 'stack',
-    label: 'Stack',
-    icon: 'stack',
-    group: 'layout',
-    emailSafe: true,
-    create: () => ({ type: 'Stack', style: { gap: 'space.md' }, children: [] }),
-  },
-  {
-    id: 'row',
-    label: 'Row',
-    icon: 'row',
-    group: 'layout',
-    emailSafe: true,
-    create: () => ({ type: 'Row', style: { gap: 'space.md' }, children: [] }),
-  },
-  {
-    id: 'grid',
-    label: 'Grid (2-col)',
-    icon: 'grid',
-    group: 'layout',
-    emailSafe: false,
-    create: () => ({
-      type: 'Grid',
-      props: { columns: 2 },
-      style: { gap: 'space.md' },
-      children: [],
-    }),
-  },
-  {
+    type: 'Text',
     id: 'heading',
     label: 'Heading',
     icon: 'heading',
-    group: 'content',
-    emailSafe: true,
     create: () => ({ type: 'Text', props: { content: 'Heading', variant: 'h2' } }),
   },
+  { type: 'Text', id: 'text' }, // the default Text (body) — label/icon/create come from the descriptor
   {
-    id: 'text',
-    label: 'Text',
-    icon: 'text',
-    group: 'content',
-    emailSafe: true,
-    create: () => ({ type: 'Text', props: { content: 'Body text', variant: 'body' } }),
-  },
-  {
+    type: 'Button',
     id: 'button-primary',
     label: 'Button (primary)',
-    icon: 'button',
-    group: 'content',
-    emailSafe: true,
     create: () => ({ type: 'Button', props: { content: 'Button', variant: 'primary' } }),
   },
   {
+    type: 'Button',
     id: 'button-secondary',
     label: 'Button (secondary)',
-    icon: 'button',
-    group: 'content',
-    emailSafe: true,
     create: () => ({ type: 'Button', props: { content: 'Button', variant: 'secondary' } }),
   },
-  {
-    id: 'image',
-    label: 'Image',
-    icon: 'image',
-    group: 'content',
-    emailSafe: true,
-    create: () => ({ type: 'Image', props: { src: placeholder, alt: 'image', width: 200 } }),
-  },
+  'Image',
 ];
+
+function project(spec: PaletteSpec): PaletteItem {
+  if (typeof spec === 'string') {
+    const d = DESCRIPTORS[spec];
+    return {
+      id: spec.toLowerCase(),
+      label: d.label,
+      icon: d.icon,
+      group: d.group,
+      emailSafe: d.emailSafe,
+      create: d.create,
+    };
+  }
+  const d = DESCRIPTORS[spec.type];
+  return {
+    id: spec.id,
+    label: spec.label ?? d.label,
+    icon: spec.icon ?? d.icon,
+    group: d.group, // group + email-safety are TYPE facts — never per-variant
+    emailSafe: d.emailSafe,
+    create: spec.create ?? d.create,
+  };
+}
+
+export const PALETTE: PaletteItem[] = PALETTE_SPECS.map(project);
