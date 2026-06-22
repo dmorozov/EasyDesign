@@ -6,6 +6,7 @@
 // one <mj-column> per child (the Row -> two-column mapping), carrying the surface
 // background so the card reads continuous. See docs/walking-skeleton.md findings.
 import { type Frame, type Node, type StyleMap, type TokenRef } from '../ir/types';
+import { type LeafNode, type LeafType } from '../ir/walk';
 
 // The literal resolver (dot-ref -> '16px') is supplied by the caller — the Design-Token Model's
 // catalog.withOverrides (D2). MJML keeps only its bespoke FLATTEN (ADR-0008), never token resolution.
@@ -84,20 +85,21 @@ function renderImage(lit: Lit, node: Extract<Node, { type: 'Image' }>, depth: nu
   return `${indent(depth)}<mj-image ${attrs} />`;
 }
 
+// Per-leaf-type MJML renderers, keyed off the shared LeafType union (RP-9) — a forgotten leaf is a
+// COMPILE error here too, not the old runtime throw. MJML keeps its bespoke section/column structure
+// (ADR-0008); only the leaf dispatch is registry-driven.
+const MJML_LEAVES: {
+  [K in LeafType]: (lit: Lit, node: Extract<Node, { type: K }>, depth: number) => string;
+} = {
+  Text: renderText,
+  Button: renderButton,
+  Image: renderImage,
+};
+
 function renderLeaf(lit: Lit, node: Node, depth: number): string {
-  switch (node.type) {
-    case 'Text':
-      return renderText(lit, node, depth);
-    case 'Button':
-      return renderButton(lit, node, depth);
-    case 'Image':
-      return renderImage(lit, node, depth);
-    case 'Stack':
-    case 'Row':
-    case 'Column':
-    case 'Grid':
-      throw new Error(`renderLeaf received non-leaf node "${node.type}"`);
-  }
+  // A container reaching the leaf flattener means the MJML section model was violated (ADR-0006/0008).
+  if ('children' in node) throw new Error(`renderLeaf received non-leaf node "${node.type}"`);
+  return (MJML_LEAVES[node.type] as (l: Lit, n: LeafNode, d: number) => string)(lit, node, depth);
 }
 
 // --- Flattener ------------------------------------------------------------

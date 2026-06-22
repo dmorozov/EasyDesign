@@ -61,16 +61,18 @@ const reactEmitter: Emitter<string, number> = {
     }
     return `${p}<div style={${styleLiteral(decls)}}>\n${children.join('\n')}\n${p}</div>`;
   },
-  text(node, depth) {
-    const tag = node.props.variant === 'h2' ? 'h2' : 'p';
-    return `${pad(depth)}<${tag} style={${styleLiteral(textDecls(node))}}>${jsxText(node.props.content)}</${tag}>`;
-  },
-  button(node, depth) {
-    return `${pad(depth)}<a href="#" style={${styleLiteral(buttonDecls(node))}}>${jsxText(node.props.content)}</a>`;
-  },
-  image(node, depth) {
-    const { src, alt } = node.props;
-    return `${pad(depth)}<img src="${jsxAttr(src)}" alt="${jsxAttr(alt)}" style={${styleLiteral(imageDecls(node))}} />`;
+  leaf: {
+    Text(node, depth) {
+      const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+      return `${pad(depth)}<${tag} style={${styleLiteral(textDecls(node))}}>${jsxText(node.props.content)}</${tag}>`;
+    },
+    Button(node, depth) {
+      return `${pad(depth)}<a href="#" style={${styleLiteral(buttonDecls(node))}}>${jsxText(node.props.content)}</a>`;
+    },
+    Image(node, depth) {
+      const { src, alt } = node.props;
+      return `${pad(depth)}<img src="${jsxAttr(src)}" alt="${jsxAttr(alt)}" style={${styleLiteral(imageDecls(node))}} />`;
+    },
   },
   descend(depth) {
     return depth + 1;

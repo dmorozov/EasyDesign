@@ -33,3 +33,18 @@ Target = one `Emitter`. MJML changes stay isolated to `mjml.ts`. The promotion o
 behavior: HTML, React, MJML, and the SSR canvas stayed byte-identical on the sample; Angular changed
 only by reordering Button style declarations to match the shared β order (cosmetic, no render
 difference) — the consolidation of a pre-existing inconsistency between the generators.
+
+**Amended (RP-9, 2026-06-22): leaves dispatch through a typed registry, so a missing leaf renderer is a
+compile error in _every_ target.** The `Emitter`'s three named leaf methods (`text`/`button`/`image`)
+were **not** keyed off the union — adding a leaf node type forced a new `walkNode` case but left the
+five adapters (html / react / angular / canvas / editor) silently satisfying the unchanged interface (a
+probe confirmed only `walk.ts`, `mjml.ts`, and the RP-2 descriptor failed to compile; the five emitters
+did not). They are now one **`leaf: LeafRenderers<T, C>`** field — a mapped type
+`{ [K in LeafType]: (node, ctx) => T }` over `LeafType = Exclude<Node, ContainerNode>['type']` (derived
+from the union). `walkNode` dispatches `'children' in node ? container : emit.leaf[node.type](node)`, so
+adding a leaf needs **zero** `walkNode` change and instead fails to compile at each adapter's `leaf`
+record until the renderer is supplied (re-probe: all eight sites now error). The container half is
+unchanged. MJML stays bespoke but shares the same `LeafType` for its own `MJML_LEAVES` record, so a
+forgotten email leaf compile-fails too — its container-reaches-the-flattener throw is kept as a runtime
+guardrail (ADR-0006), now behind a `'children' in node` check. One narrowing cast bridges TS's
+correlated-union gap in `walkNode` and `renderLeaf`. Output byte-identical (golden net unchanged).

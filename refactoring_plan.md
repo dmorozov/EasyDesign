@@ -187,17 +187,17 @@ Not required for B: RP-5 (drag-drop intent), RP-7 (persistence/reconciliation), 
 Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the implementation order
 — see §4 for sequencing. Priority: ★★★ keystone / ★★ high / ★ independent debt.
 
-| ID   | Title                                                                  | Priority | Unlocks                                | Origin                       |
-| ---- | ---------------------------------------------------------------------- | -------- | -------------------------------------- | ---------------------------- |
-| RP-1 | Frame layout-tree editing module                                       | ★★       | A + B (editing/write side), foundation | state review                 |
-| RP-2 | Component Descriptor / Registry (+ Node-kind facts)                    | ★★★      | A + B keystone                         | research synthesis (NEW)     |
-| RP-3 | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
-| RP-4 | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
-| RP-5 | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
-| RP-6 | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
-| RP-7 | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
-| RP-8 | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
-| RP-9 | Typed per-target renderer exhaustiveness (`Record<LeafType,Renderer>`) | ★★       | A (render-half safety)                 | completeness §5.1 (promoted) |
+| ID      | Title                                                                  | Priority | Unlocks                                | Origin                       |
+| ------- | ---------------------------------------------------------------------- | -------- | -------------------------------------- | ---------------------------- |
+| RP-1    | Frame layout-tree editing module                                       | ★★       | A + B (editing/write side), foundation | state review                 |
+| RP-2    | Component Descriptor / Registry (+ Node-kind facts)                    | ★★★      | A + B keystone                         | research synthesis (NEW)     |
+| RP-3    | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
+| RP-4    | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
+| RP-5    | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
+| RP-6    | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
+| RP-7    | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
+| RP-8    | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
+| RP-9 ✅ | Typed per-target renderer exhaustiveness (`Record<LeafType,Renderer>`) | ★★       | A (render-half safety)                 | completeness §5.1 (promoted) |
 
 ---
 
@@ -691,9 +691,8 @@ styleKeys, controls`. **No `kind`** — container-ness stays union-derived (`'ch
      renders inline — **RP-6** consumes them via `resolveEditModel`, **RP-4** grows the Text `styleKeys`.
    - **Verified:** 209 tests pass, descriptors.ts + palette.ts at **100%** lines, typecheck (mapped-type
      completeness) / lint / format clean, golden snapshots unchanged. New ADR-0014.
-   - **RP-9 NOT bundled** (render-half safety net — `Record<LeafType, Renderer>` per target so a forgotten
-     renderer is a _build_ error): kept separate per ADR-0014 (it's a library registry, must not import
-     the editor-runtime descriptor). It is the natural **next** step — "with or just after RP-2".
+   - **RP-9 — ✅ IMPLEMENTED 2026-06-22** (landed just after RP-2, as planned; kept a **separate** library
+     concern per ADR-0014 — not in the descriptor). See the §5.1 record below.
 4. **RP-3 + RP-4 — the typography spine** (DTCG composite Heading styles + Free-form-text primitive
    binding, the two co-primary halves of Capability B). Tightly scoped, highly visible (kill the
    triplicated `'1.25'`/`'700'`). **First move is the ~1 hr alias-survives-`expand` spike** before any
@@ -720,13 +719,17 @@ orchestration. Of the dimensions first flagged here, **RP-9** (typed renderer ex
 **RP-11** (golden-output net) are now **promoted** into §3/§4. **Two genuine gaps remain (RP-10, RP-12)**,
 plus a secondary import-audit confirmation:
 
-1. **Typed per-target renderer exhaustiveness (the silent-emitter gap itself).** RP-2's descriptor
-   fixes the _facts_, but nobody has examined making the **`Emitter<T,C>` adapters compile-exhaustive**
-   — e.g. a `Record<LeafType, Renderer>` registry per target so a missing leaf renderer is a
-   _compile_ error in every Export Target, not a runtime throw (`mjml.ts:99`) or a blank canvas. This
-   is the deepest fix for Capability A's silent-failure problem and sits _underneath_ RP-2. **Now a
-   named candidate (RP-9)** — promoted into §2's Capability-A map and the §3 candidate table as the
-   render-half safety lever.
+1. **Typed per-target renderer exhaustiveness (RP-9). ✅ IMPLEMENTED 2026-06-22 (ADR-0008 amended).**
+   The silent-emitter gap is closed: the `Emitter<T,C>`'s three named leaf methods became one
+   **`leaf: LeafRenderers<T, C>`** field — a mapped type `{ [K in LeafType]: (node, ctx) => T }` over
+   `LeafType = Exclude<Node, ContainerNode>['type']` (derived from the union). `walkNode` dispatches
+   `'children' in node ? container : emit.leaf[node.type](node)`, so a missing leaf renderer is now a
+   _compile_ error at **each** adapter's `leaf` record — not a runtime throw (`mjml.ts:99`) or a blank
+   canvas. **Empirically verified by a probe:** a temporary `Divider` leaf errored in only **3** files
+   before (walk/mjml/descriptor) but **8** after — every previously-silent target (html / react /
+   angular / canvas / editor) now fails to compile, plus mjml (its own `MJML_LEAVES` record, container
+   throw kept as a runtime guardrail). Output byte-identical (golden net unchanged). Kept a **library**
+   concern, separate from RP-2's editor-runtime descriptor (ADR-0007/0014).
 2. **`allowed-children` / structural validity (RP-10) — deferred until the first _compound_ Component,
    mandatory then.** The IR has **no constraint layer** — any node nests in any container. Simple
    leaves (Divider/Spacer/Badge) don't care; but the first _compound_ RAC Component (`Tabs` must contain

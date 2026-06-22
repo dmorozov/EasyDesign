@@ -29,9 +29,11 @@ const canvasEmitter: Emitter<ReactElement, void> = {
         : children.map((c, i) => <Fragment key={i}>{c}</Fragment>);
     return layoutElement(node, body);
   },
-  text: (node) => <Text variant={node.props.variant}>{node.props.content}</Text>,
-  button: (node) => <Button variant={node.props.variant}>{node.props.content}</Button>,
-  image: (node) => <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />,
+  leaf: {
+    Text: (node) => <Text variant={node.props.variant}>{node.props.content}</Text>,
+    Button: (node) => <Button variant={node.props.variant}>{node.props.content}</Button>,
+    Image: (node) => <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />,
+  },
   descend() {
     /* void context: the canvas threads no per-node state */
   },

@@ -127,26 +127,28 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
         </EditableShell>
       );
     },
-    text(node, ctx) {
-      return (
-        <EditableShell frameId={frameId} path={ctx} node={node}>
-          <Text variant={node.props.variant}>{node.props.content}</Text>
-        </EditableShell>
-      );
-    },
-    button(node, ctx) {
-      return (
-        <EditableShell frameId={frameId} path={ctx} node={node}>
-          <Button variant={node.props.variant}>{node.props.content}</Button>
-        </EditableShell>
-      );
-    },
-    image(node, ctx) {
-      return (
-        <EditableShell frameId={frameId} path={ctx} node={node}>
-          <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />
-        </EditableShell>
-      );
+    leaf: {
+      Text(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Text variant={node.props.variant}>{node.props.content}</Text>
+          </EditableShell>
+        );
+      },
+      Button(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Button variant={node.props.variant}>{node.props.content}</Button>
+          </EditableShell>
+        );
+      },
+      Image(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />
+          </EditableShell>
+        );
+      },
     },
     descend(ctx, index) {
       return [...ctx, index];

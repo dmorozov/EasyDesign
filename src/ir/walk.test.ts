@@ -63,17 +63,19 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
         log.push(`${shape.kind}:${node.type}@${depth}`);
         return `[${children.join(',')}]`;
       },
-      text: (node, depth) => {
-        log.push(`${node.type}@${depth}`);
-        return 'T';
-      },
-      button: (node, depth) => {
-        log.push(`${node.type}@${depth}`);
-        return 'B';
-      },
-      image: (node, depth) => {
-        log.push(`${node.type}@${depth}`);
-        return 'I';
+      leaf: {
+        Text: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'T';
+        },
+        Button: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'B';
+        },
+        Image: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'I';
+        },
       },
       descend: (depth) => depth + 1,
     };

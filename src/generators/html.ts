@@ -41,16 +41,18 @@ const htmlEmitter: Emitter<string, void> = {
         : children.join('');
     return `<div style="${inlineStyle(decls)}">${inner}</div>`;
   },
-  text(node) {
-    const tag = node.props.variant === 'h2' ? 'h2' : 'p';
-    return `<${tag} style="${inlineStyle(textDecls(node))}">${escapeText(node.props.content)}</${tag}>`;
-  },
-  button(node) {
-    return `<a href="#" style="${inlineStyle(buttonDecls(node))}">${escapeText(node.props.content)}</a>`;
-  },
-  image(node) {
-    const { src, alt } = node.props;
-    return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+  leaf: {
+    Text(node) {
+      const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+      return `<${tag} style="${inlineStyle(textDecls(node))}">${escapeText(node.props.content)}</${tag}>`;
+    },
+    Button(node) {
+      return `<a href="#" style="${inlineStyle(buttonDecls(node))}">${escapeText(node.props.content)}</a>`;
+    },
+    Image(node) {
+      const { src, alt } = node.props;
+      return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+    },
   },
   descend() {
     /* void context: nothing to thread */

@@ -34,9 +34,22 @@ export type ContainerShape =
 
 /** The four container node types (those with `children`). */
 export type ContainerNode = Extract<Node, { children: Node[] }>;
+/** The leaf node types — those WITHOUT children. DERIVED from the union, so adding a leaf grows it;
+ *  every target's `leaf` renderer record then fails to compile until the new leaf is handled (RP-9). */
+export type LeafNode = Exclude<Node, ContainerNode>;
+export type LeafType = LeafNode['type'];
 export type TextNode = Extract<Node, { type: 'Text' }>;
 export type ButtonNode = Extract<Node, { type: 'Button' }>;
 export type ImageNode = Extract<Node, { type: 'Image' }>;
+
+/**
+ * Per-leaf-type renderers — a Record over the LeafType union, each narrowed to its own node variant.
+ * Keying off the union is what makes a forgotten leaf a COMPILE error in every Export Target (RP-9),
+ * instead of a runtime throw or a blank render: a target that omits a key fails to satisfy `Emitter`.
+ */
+export type LeafRenderers<T, C> = {
+  [K in LeafType]: (node: Extract<Node, { type: K }>, ctx: C) => T;
+};
 
 /**
  * A target adapter. `T` = output dialect (string | ReactElement). `C` = the
@@ -47,13 +60,12 @@ export type ImageNode = Extract<Node, { type: 'Image' }>;
  *  - children are walked in document order; `children[i]` is child i's result.
  *  - an empty container is `container(node, shape, [], ctx)` — there is no separate
  *    "empty" path; only the editor cares, and it inspects `children.length`.
- *  - leaves never recurse; the three leaf methods are total over Text|Button|Image.
+ *  - leaves never recurse; `leaf` is total over the LeafType union by construction.
  */
 export interface Emitter<T, C> {
   container(node: ContainerNode, shape: ContainerShape, children: T[], ctx: C): T;
-  text(node: TextNode, ctx: C): T;
-  button(node: ButtonNode, ctx: C): T;
-  image(node: ImageNode, ctx: C): T;
+  /** Per-leaf-type renderers, keyed off the LeafType union (RP-9). */
+  leaf: LeafRenderers<T, C>;
   /** Derive child i's context from the parent's. (void: noop; path: [...ctx, i]) */
   descend(ctx: C, index: number): C;
 }
@@ -92,22 +104,14 @@ export function shapeOf(node: ContainerNode): ContainerShape {
   }
 }
 
-/** Walk a node, producing T. The deep module: the 7-way dispatch lives here, once. */
+/** Walk a node, producing T. The deep module: the container/leaf dispatch lives here, once. */
 export function walkNode<T, C>(node: Node, ctx: C, emit: Emitter<T, C>): T {
-  switch (node.type) {
-    case 'Stack':
-    case 'Column':
-    case 'Row':
-    case 'Grid': {
-      const shape = shapeOf(node);
-      const children = node.children.map((child, i) => walkNode(child, emit.descend(ctx, i), emit));
-      return emit.container(node, shape, children, ctx);
-    }
-    case 'Text':
-      return emit.text(node, ctx);
-    case 'Button':
-      return emit.button(node, ctx);
-    case 'Image':
-      return emit.image(node, ctx);
+  if ('children' in node) {
+    const shape = shapeOf(node);
+    const children = node.children.map((child, i) => walkNode(child, emit.descend(ctx, i), emit));
+    return emit.container(node, shape, children, ctx);
   }
+  // Leaf: keyed dispatch over the LeafType union (RP-9). The cast bridges TS's correlated-union gap —
+  // `node` and `emit.leaf[node.type]` are both narrowed to the same leaf, but TS can't prove they align.
+  return (emit.leaf[node.type] as (n: LeafNode, c: C) => T)(node, ctx);
 }

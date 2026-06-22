@@ -53,16 +53,18 @@ const angularEmitter: Emitter<string, void> = {
         : children.join('\n');
     return `<div style="${styleStr}">\n${indent(inner, '  ')}\n</div>`;
   },
-  text(node) {
-    const tag = node.props.variant === 'h2' ? 'h2' : 'p';
-    return `<${tag} style="${inlineStyle(textDecls(node))}">${escText(node.props.content)}</${tag}>`;
-  },
-  button(node) {
-    return `<a style="${inlineStyle(buttonDecls(node))}">${escText(node.props.content)}</a>`;
-  },
-  image(node) {
-    const { src, alt } = node.props;
-    return `<img src="${escAttr(src)}" alt="${escAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+  leaf: {
+    Text(node) {
+      const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+      return `<${tag} style="${inlineStyle(textDecls(node))}">${escText(node.props.content)}</${tag}>`;
+    },
+    Button(node) {
+      return `<a style="${inlineStyle(buttonDecls(node))}">${escText(node.props.content)}</a>`;
+    },
+    Image(node) {
+      const { src, alt } = node.props;
+      return `<img src="${escAttr(src)}" alt="${escAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+    },
   },
   descend() {
     /* void context: indentation is bottom-up */
