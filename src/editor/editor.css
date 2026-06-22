@@ -520,6 +520,10 @@ body {
 .ed-drop-after {
   bottom: -2px;
 }
+/* A drop the email rule forbids (RP-5): the indicator turns danger-colored, never accent. */
+.ed-drop-blocked {
+  background: var(--danger);
+}
 .ed-empty-hint {
   padding: var(--space-6);
   border: var(--border-w) dashed var(--border-strong);

@@ -13,16 +13,21 @@ import {
 } from '@dnd-kit/core';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 
-import { type Node } from '../ir/types';
 import { catalog } from '../theme/design-tokens';
 
 import { Board } from './Board';
-import { canInsertComponent } from './frames';
+import {
+  resolveDropIntent,
+  type DragSource,
+  type DropGeometry,
+  type DropIntent,
+  type DropZone,
+} from './drop-intent';
 import { type PaletteItem } from './palette';
 import { Palette } from './Palette';
-import { isContainer, nodeAt, type NodePath } from './paths';
+import { nodeAt, type NodePath } from './paths';
 import { RightRail } from './RightRail';
-import { useEditor, type DropMode, type DropTarget, type EditorFrame } from './store';
+import { useEditor, type EditorFrame } from './store';
 import { Toolbar } from './Toolbar';
 import { usePersistence } from './usePersistence';
 
@@ -65,49 +70,47 @@ const deepestPointerWithin: CollisionDetection = (args) => {
   return [...hits].sort((a, b) => collisionDepth(b) - collisionDepth(a));
 };
 
-// Turn a drop target (node + before/after/inside) into a parent + insertion index.
-function resolveDrop(
-  target: DropTarget,
-  overNode: Node | undefined,
-): { parentPath: NodePath; index: number } | null {
-  if (target.mode === 'inside') {
-    const len = overNode && 'children' in overNode ? overNode.children.length : 0;
-    return { parentPath: target.path, index: len };
-  }
-  const last = target.path.at(-1);
-  if (last === undefined) return null; // root has no siblings
-  return {
-    parentPath: target.path.slice(0, -1),
-    index: target.mode === 'before' ? last : last + 1,
-  };
+type ResolveOver = { rect: { top: number; height: number }; data: { current?: unknown } } | null;
+type ResolveActive = { data: { current?: unknown } } | null;
+
+// ── dnd-kit → pure adapters ──────────────────────────────────────────────────────────────────
+// The framework boundary: drop-intent.ts stays free of dnd-kit shapes, so these tiny readers are
+// the ONLY code that knows the event layout. `readZone` does the Frame lookup + `nodeAt` (the
+// hovered node), so the module receives a resolved node and never touches `frames`.
+function readSource(active: ResolveActive): DragSource | null {
+  const data = active?.data.current as ActiveData | undefined;
+  if (!data) return null;
+  if (data.kind === 'insert') return data.item ? { kind: 'insert', item: data.item } : null;
+  return { kind: 'move', fromPath: data.path };
 }
 
-type ResolveOver = { rect: { top: number; height: number }; data: { current?: unknown } } | null;
-
-// Compute the drop target (node + before/after/inside) from the live pointer position.
-// Called from BOTH drag-move (for the indicator) and drag-end (so a drop works even if
-// move events were sparse) — never read transient state set elsewhere.
-function computeTarget(
-  frames: EditorFrame[],
-  over: ResolveOver,
-  pointerStartY: number,
-  deltaY: number,
-): DropTarget | null {
+function readZone(frames: EditorFrame[], over: ResolveOver): DropZone | null {
   const data = over?.data.current as DropData | undefined;
-  if (!over || !data) return null;
+  if (!data) return null;
   const frame = frames.find((f) => f.id === data.frameId);
   const node = frame ? nodeAt(frame.root, data.path) : undefined;
-  if (!node) return null;
-  const container = isContainer(node);
-  const empty = container && 'children' in node && node.children.length === 0;
-  const y = pointerStartY + deltaY;
-  const rel = over.rect.height > 0 ? (y - over.rect.top) / over.rect.height : 0.5;
-  let mode: DropMode;
-  if (empty) mode = 'inside';
-  else if (container) mode = rel < 0.25 ? 'before' : rel > 0.75 ? 'after' : 'inside';
-  else mode = rel < 0.5 ? 'before' : 'after';
-  if (data.path.length === 0 && mode !== 'inside') mode = 'inside';
-  return { frameId: data.frameId, path: data.path, mode };
+  if (!frame || !node) return null;
+  return { frameId: data.frameId, path: data.path, node, medium: frame.target };
+}
+
+// Resolve a live drag (over + active + pointer geometry) into an intent — used by BOTH drag-move
+// (for the indicator) and drag-end (so a drop works even if move events were sparse). Never reads
+// transient state set elsewhere; the email rule + placement maths all live in drop-intent.ts.
+function resolveIntent(
+  frames: EditorFrame[],
+  over: ResolveOver,
+  active: ResolveActive,
+  pointerStartY: number,
+  deltaY: number,
+): DropIntent | null {
+  const source = readSource(active);
+  if (!source) return null;
+  const geom: DropGeometry = {
+    pointerY: pointerStartY + deltaY,
+    rectTop: over?.rect.top ?? 0,
+    rectHeight: over?.rect.height ?? 0,
+  };
+  return resolveDropIntent(readZone(frames, over), source, geom);
 }
 
 export function Editor(): ReactElement {
@@ -155,26 +158,20 @@ export function Editor(): ReactElement {
   };
 
   const onDragMove = (event: DragMoveEvent) => {
-    setDropTarget(computeTarget(frames, event.over, pointerY.current, event.delta.y));
+    const intent = resolveIntent(frames, event.over, event.active, pointerY.current, event.delta.y);
+    setDropTarget(intent?.target ?? null);
   };
 
   const onDragEnd = (event: DragEndEvent) => {
     setActiveLabel(null);
-    const target = computeTarget(frames, event.over, pointerY.current, event.delta.y);
+    const intent = resolveIntent(frames, event.over, event.active, pointerY.current, event.delta.y);
     setDropTarget(null);
-    const active = event.active.data.current as ActiveData | undefined;
-    if (!active || !target) return;
-    const frame = frames.find((f) => f.id === target.frameId);
-    if (!frame) return;
-    const resolved = resolveDrop(target, nodeAt(frame.root, target.path));
-    if (!resolved) return;
-    if (active.kind === 'insert') {
-      if (!active.item) return;
-      if (!canInsertComponent(frame, active.item)) return; // email restriction (ADR-0006)
-      insertAt(target.frameId, resolved.parentPath, resolved.index, active.item.create());
-    } else {
-      moveNode(target.frameId, active.path, resolved.parentPath, resolved.index);
+    if (intent?.kind === 'insert') {
+      insertAt(intent.target.frameId, intent.parentPath, intent.index, intent.item.create());
+    } else if (intent?.kind === 'move') {
+      moveNode(intent.target.frameId, intent.fromPath, intent.parentPath, intent.index);
     }
+    // null / 'rejected' → dispatch nothing (a rejected drop already showed as blocked).
   };
 
   const onDragCancel = () => {

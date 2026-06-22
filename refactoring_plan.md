@@ -193,7 +193,7 @@ Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the
 | RP-2    | Component Descriptor / Registry (+ Node-kind facts)                    | ★★★      | A + B keystone                         | research synthesis (NEW)     |
 | RP-3 ✅ | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
 | RP-4 ✅ | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
-| RP-5    | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
+| RP-5 ✅ | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
 | RP-6 ✅ | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
 | RP-7 ✅ | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
 | RP-8    | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
@@ -499,6 +499,12 @@ keys and richer categories).
 
 **Priority:** ★ · **Sequence:** independent · **Unlocks:** editor correctness + drop feedback.
 
+> ✅ **IMPLEMENTED 2026-06-22** — new pure `src/editor/drop-intent.ts` (`computeMode` / `placeAt` /
+> `resolveDropIntent`); `Editor.tsx`'s `computeTarget`/`resolveDrop`/late-email-guard collapse to a
+> thin dnd-kit→pure boundary adapter + slim handlers. The email rule now resolves _during_ the drag,
+> so a blocked drop shows a danger-colored indicator (`DropTarget.blocked`) instead of silently
+> dropping. No new ADR (consumes RP-1's op shape + RP-2's email rule). See §4 step 7 for the record.
+
 **Files / sites:** `src/editor/Editor.tsx` (`computeTarget`, `resolveDrop`, `onDragEnd`).
 
 **Problem:** These pure-ish functions translate pointer geometry + dnd-kit event shapes into a tree
@@ -792,8 +798,36 @@ next` (the pure "adopt the store position only when it changed, else keep the ex
      decideSave (4 — prime/skip/save by reference). `frame-nodes.ts` added to the coverage allowlist
      (**100%**). **255 tests**, typecheck / lint / format clean, golden net byte-identical (no emitter
      touch), `npm run generate` green. **No ADR** (ADR-0012 already covers the persistence shape).
-7. **RP-5 — Drag-drop intent resolution.** Independent; valuable but touches neither named feature.
-   Do when the drop logic next needs to change.
+7. **RP-5 — Drag-drop intent resolution.** ✅ **IMPLEMENTED 2026-06-22.** The drop-intent logic that
+   was trapped in `Editor.tsx` — reachable only by mocking dnd-kit — is now a pure module, and the
+   late email guard (which let a blocked drop show a normal indicator, then silently drop nothing)
+   moved _into_ resolution so the indicator reflects rejection. Open questions resolved: the dnd-kit
+   shape is adapted at the **Editor boundary** (the module stays framework-free); "rejected" carries a
+   **reason** (`email-unsafe`) + a `blocked` flag the indicator reads.
+   - **Where:** new **`src/editor/drop-intent.ts`** — three pure fns: `computeMode(node, path, geom)`
+     (the before/inside/after threshold maths + the empty-container & root-forces-inside rules, all
+     union-derived `'children' in node`), `placeAt(node, path, mode)` (placement → parent path +
+     index, the old `resolveDrop`), and `resolveDropIntent(zone, source, geom) → DropIntent | null`
+     (folds in the ONE email predicate `canInsertInTarget`, ADR-0006). `DropIntent` is a discriminated
+     union (`insert` / `move` / `rejected`), each carrying the `DropTarget` that drives the indicator;
+     `DropMode`/`DropTarget` **moved here from `store.ts`** (the module owns the drop vocabulary; the
+     store imports the type — one-directional, no cycle). A `move` is never email-rejected; structural
+     validity (move-into-own-subtree) stays in node-tree.ts (RP-1), which this op feeds exactly.
+   - **Editor.tsx:** `computeTarget`/`resolveDrop`/the inline `canInsertComponent` guard are gone,
+     replaced by a thin **dnd-kit→pure boundary** (`readSource`/`readZone` adapt `active`/`over`;
+     `readZone` does the Frame lookup + `nodeAt`, so the module gets a resolved node and never sees
+     `frames`). `onDragMove`/`onDragEnd` shrink to "resolve intent → set indicator / dispatch op."
+   - **Indicator reflects rejection:** `DropTarget.blocked` + a danger-colored outline/line
+     (`EditableNode.tsx` reads `blocked`; `.ed-drop-blocked` in `editor.css`) + a `not-allowed` cursor
+     — a blocked email drop is now visibly disallowed, not a silent no-op (the old bug).
+   - **Tests / verify:** new `drop-intent.test.ts` (16 — the threshold maths incl. boundaries &
+     degenerate rect, the empty/root rules, `placeAt` incl. the root-null guard, and the resolver's
+     insert/move/rejected branching incl. "the rule is the medium, not the item" and "move is never
+     email-rejected"). `drop-intent.ts` added to the coverage allowlist (96.6%/96.9%/100/100; the one
+     uncovered branch is the resolver's defensive `!placed` guard, unreachable since `computeMode`
+     forces the root to `inside`). **271 tests**, typecheck / lint / format clean, **golden net
+     byte-identical** (zero emitter touch), `npm run generate` green. **No new ADR** (consumes RP-1 +
+     RP-2 decisions; ADR-0010's `allowedChildren` will later add a second `RejectReason` here — §5.2).
 8. **RP-8 — MJML walk-seam alignment.** Last/optional; ADR-0008 cleanup; only bites when an
    _email-safe_ rich Component is added.
 

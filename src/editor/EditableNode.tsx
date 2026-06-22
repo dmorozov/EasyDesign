@@ -22,6 +22,8 @@ import { useCanvasA11y } from './useCanvasA11y';
 // visible and on-brand for the editor regardless of what the user themes their design to.
 const selectedOutline: CSSProperties = { outline: '2px solid var(--selection)', outlineOffset: 1 };
 const insideOutline: CSSProperties = { outline: '2px dashed var(--accent)', outlineOffset: 1 };
+// A drop the email rule forbids (RP-5): the same placement, shown disallowed (danger, not accent).
+const blockedOutline: CSSProperties = { outline: '2px dashed var(--danger)', outlineOffset: 1 };
 
 function DragHandle({ frameId, path }: { frameId: string; path: NodePath }): ReactElement {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -69,15 +71,21 @@ function EditableShell({
     id: `drop:${frameId}:${path.join('.')}`,
     data: { frameId, path },
   });
-  const mode = useEditor((s) =>
-    s.dropTarget?.frameId === frameId && samePath(s.dropTarget.path, path)
-      ? s.dropTarget.mode
-      : null,
+  const drop = useEditor((s) =>
+    s.dropTarget?.frameId === frameId && samePath(s.dropTarget.path, path) ? s.dropTarget : null,
   );
+  const mode = drop?.mode ?? null;
+  const blocked = drop?.blocked ?? false;
   const style: CSSProperties = {
     position: 'relative',
-    cursor: 'pointer',
-    ...(selected ? selectedOutline : mode === 'inside' ? insideOutline : {}),
+    cursor: blocked ? 'not-allowed' : 'pointer',
+    ...(selected
+      ? selectedOutline
+      : mode === 'inside'
+        ? blocked
+          ? blockedOutline
+          : insideOutline
+        : {}),
   };
   return (
     <div
@@ -98,9 +106,13 @@ function EditableShell({
       }}
     >
       {path.length > 0 && <DragHandle frameId={frameId} path={path} />}
-      {mode === 'before' && <div className="ed-drop-line ed-drop-before" />}
+      {mode === 'before' && (
+        <div className={`ed-drop-line ed-drop-before${blocked ? ' ed-drop-blocked' : ''}`} />
+      )}
       {children}
-      {mode === 'after' && <div className="ed-drop-line ed-drop-after" />}
+      {mode === 'after' && (
+        <div className={`ed-drop-line ed-drop-after${blocked ? ' ed-drop-blocked' : ''}`} />
+      )}
     </div>
   );
 }

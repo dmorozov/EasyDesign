@@ -12,6 +12,7 @@ import {
   type EditorDocument,
   type EditorFrame,
 } from './document';
+import { type DropTarget } from './drop-intent';
 import * as Frames from './frames';
 import {
   emptyHistory,
@@ -30,13 +31,6 @@ export type SaveStatus = 'saved' | 'saving';
 
 /** Which right-rail panel is showing (chrome UI state — not part of the document/undo). */
 export type RightTab = 'inspector' | 'design' | 'export';
-
-export type DropMode = 'before' | 'after' | 'inside';
-export interface DropTarget {
-  frameId: string;
-  path: NodePath;
-  mode: DropMode;
-}
 
 interface EditorState {
   // ── Denormalised present (the live document body; top-level so component selectors stay simple) ──
