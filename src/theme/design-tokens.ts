@@ -9,7 +9,17 @@
 // chrome :root tokens — ADR-0007 — because it only ever reads the user token graph).
 import rawCatalog from './generated/tokens.catalog.json';
 
-export type Category = 'color' | 'space' | 'radius' | 'font';
+// The fine-grained token categories (RP-4 split the coarse `font` bucket so a "pick weight" picker
+// sources only weights). Mirrors `TokenCategory` in token-category.d.mts — the catalog is built from it.
+export type Category =
+  | 'color'
+  | 'space'
+  | 'radius'
+  | 'fontFamily'
+  | 'fontSize'
+  | 'fontWeight'
+  | 'lineHeight'
+  | 'letterSpacing';
 
 /** A resolved Design Token that describes itself. `ref` (dot) is the canonical key. */
 export interface Token {
@@ -19,16 +29,24 @@ export interface Token {
   readonly literal: string; // '#ffffff' — resolved hex/px (for email + swatches)
 }
 
-/** The container style keys, each with the Category its ref must reference. Stated ONCE here
- *  (consolidates the old styleFromTokens + CONTAINER_STYLE_PROP). Flat = "container style keys";
- *  leaf-exclusion is the Inspector's container-gate, not this table. Evolve to per-node-type only
- *  when a node needs different keys (e.g. Text -> color/fontSize). */
-export type StyleKey = 'background' | 'padding' | 'borderRadius' | 'gap';
-export const STYLE_KEYS: Record<StyleKey, Category> = {
+/** Every token-bound style key, each with the Category its ref must reference (RP-4). This is the
+ *  key→category fact ONLY — WHICH keys a given node type exposes is the descriptor's `styleKeys`
+ *  (RP-2), and the Inspector composes the two. Text's `fontSize`/`fontWeight` are free-form bindings
+ *  (CONTEXT.md: pick from the Type scale, never a raw value). */
+export type StyleKey =
+  | 'background'
+  | 'padding'
+  | 'borderRadius'
+  | 'gap'
+  | 'fontSize'
+  | 'fontWeight';
+export const STYLE_KEY_CATEGORY: Record<StyleKey, Category> = {
   background: 'color',
   padding: 'space',
   borderRadius: 'radius',
   gap: 'space',
+  fontSize: 'fontSize',
+  fontWeight: 'fontWeight',
 };
 
 export interface Catalog {

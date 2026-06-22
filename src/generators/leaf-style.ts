@@ -7,7 +7,8 @@
 // they delegate β to src/components (ADR-0005), so β has one home per side, not three.
 import { type Align, type Justify, type StyleMap } from '../ir/types';
 import { type ButtonNode, type ContainerShape, type ImageNode, type TextNode } from '../ir/walk';
-import { catalog, STYLE_KEYS } from '../theme/design-tokens';
+import { catalog, STYLE_KEY_CATEGORY } from '../theme/design-tokens';
+import { TEXT_STYLE_BINDING, type TextStyle } from '../theme/generated/typography';
 
 export interface Decl {
   readonly prop: string; // camelCase: 'borderRadius', 'flexDirection'
@@ -64,20 +65,30 @@ export function containerDecls(style: StyleMap | undefined): Decl[] {
   if (!style) return [];
   const out: Decl[] = [];
   for (const [key, ref] of Object.entries(style)) {
-    if (key in STYLE_KEYS) out.push({ prop: key, value: catalog.resolveVar(ref) });
+    if (key in STYLE_KEY_CATEGORY) out.push({ prop: key, value: catalog.resolveVar(ref) });
   }
   return out;
 }
 
+/** The semantic tag for a Text style: real headings get <h1/h2/h3>, the rest a <p> (RP-3 a11y). */
+export function textTag(variant: TextStyle): 'h1' | 'h2' | 'h3' | 'p' {
+  return variant === 'h1' || variant === 'h2' || variant === 'h3' ? variant : 'p';
+}
+
+// Typography is fully tokenized (RP-3): the named Text style resolves through TEXT_STYLE_BINDING to
+// primitive refs, and a free-form `fontSize`/`fontWeight` on the node OVERRIDES the style's default
+// (still a Type-scale ref, never a raw value). No hard-coded literals remain.
 export function textDecls(node: TextNode): Decl[] {
-  const h2 = node.props.variant === 'h2';
+  const binding = TEXT_STYLE_BINDING[node.props.variant];
+  const sizeRef = node.style?.fontSize ?? binding.fontSize;
+  const weightRef = node.style?.fontWeight ?? binding.fontWeight;
   return [
     { prop: 'margin', value: '0' },
     { prop: 'fontFamily', value: 'var(--font-family)' },
-    { prop: 'fontSize', value: h2 ? 'var(--font-h2)' : 'var(--font-body)' },
-    { prop: 'lineHeight', value: h2 ? '1.25' : 'var(--font-line)' },
+    { prop: 'fontSize', value: catalog.resolveVar(sizeRef) },
+    { prop: 'lineHeight', value: catalog.resolveVar(binding.lineHeight) },
     { prop: 'color', value: 'var(--color-text)' },
-    ...(h2 ? [{ prop: 'fontWeight', value: '700' }] : []),
+    { prop: 'fontWeight', value: catalog.resolveVar(weightRef) },
   ];
 }
 
@@ -88,8 +99,8 @@ const BUTTON_BASE: Decl[] = [
   { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
   { prop: 'borderRadius', value: 'var(--radius-lg)' },
   { prop: 'fontFamily', value: 'var(--font-family)' },
-  { prop: 'fontSize', value: 'var(--font-body)' },
-  { prop: 'fontWeight', value: '600' },
+  { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
+  { prop: 'fontWeight', value: catalog.resolveVar('font.weight.semibold') }, // RP-3: was hard-coded 600
 ];
 
 export function buttonDecls(node: ButtonNode): Decl[] {

@@ -131,7 +131,9 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
       Text(node, ctx) {
         return (
           <EditableShell frameId={frameId} path={ctx} node={node}>
-            <Text variant={node.props.variant}>{node.props.content}</Text>
+            <Text variant={node.props.variant} style={node.style}>
+              {node.props.content}
+            </Text>
           </EditableShell>
         );
       },

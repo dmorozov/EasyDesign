@@ -3,6 +3,8 @@
 // `style` values are token references in dot notation (e.g. "color.surface"),
 // resolved to var(--color-surface) for web and to literals for email.
 
+import { type TextStyle } from '../theme/generated/typography';
+
 export type TokenRef = string; // dot path into the token graph, e.g. "space.md"
 export type StyleMap = Record<string, TokenRef>;
 
@@ -40,7 +42,7 @@ export type Node =
       style?: StyleMap;
       children: Node[];
     }
-  | { type: 'Text'; props: { content: string; variant: 'h2' | 'body' }; style?: StyleMap }
+  | { type: 'Text'; props: { content: string; variant: TextStyle }; style?: StyleMap }
   | {
       type: 'Button';
       props: { content: string; variant: 'primary' | 'secondary' };

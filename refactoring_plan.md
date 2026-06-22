@@ -5,7 +5,7 @@ a follow-up extensibility/typography research pass._
 
 ## Why this document exists
 
-The architecture is settled (fourteen ADRs) and the editor MVP works end-to-end. The next phase is
+The architecture is settled (fifteen ADRs) and the editor MVP works end-to-end. The next phase is
 **building more functionality on top** — concretely:
 
 - **Capability A — add more React Aria Components** to the Component Palette / editor / exporters
@@ -191,8 +191,8 @@ Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the
 | ------- | ---------------------------------------------------------------------- | -------- | -------------------------------------- | ---------------------------- |
 | RP-1    | Frame layout-tree editing module                                       | ★★       | A + B (editing/write side), foundation | state review                 |
 | RP-2    | Component Descriptor / Registry (+ Node-kind facts)                    | ★★★      | A + B keystone                         | research synthesis (NEW)     |
-| RP-3    | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
-| RP-4    | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
+| RP-3 ✅ | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
+| RP-4 ✅ | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
 | RP-5    | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
 | RP-6    | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
 | RP-7    | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
@@ -359,6 +359,10 @@ visibility (fill/email conditions). `kind` is _not_ a field — container-ness i
 
 **Priority:** ★★★ · **Sequence:** 3rd · **Unlocks:** B (primary).
 
+> ✅ **IMPLEMENTED 2026-06-22 (ADR-0015)** — composite `text.*` styles (interop) + codegen'd
+> `TEXT_STYLE_BINDING`; renderers resolve to primitive `var()`/literals; MJML line-height→px. The
+> hard-coded `1.25`/`700`/`600` are gone. See §4 step 4.
+
 **Files / sites:** `src/theme/tokens.json:18-23` (add weight/line/composite tokens),
 `src/theme/design-tokens.ts:12,27` (`Category` / `STYLE_KEYS` — shared with RP-4),
 `src/generators/leaf-style.ts:72-93` (`textDecls`/`buttonDecls`),
@@ -436,6 +440,10 @@ a blocker); `font-family` stack quoting in MJML.
 ### RP-4 — Design-Token Model growth: per-node-type style keys
 
 **Priority:** ★★ · **Sequence:** co-primary with RP-3 · **Unlocks:** B (free-form-text half).
+
+> ✅ **IMPLEMENTED 2026-06-22 (ADR-0015)** — `STYLE_KEYS` → `STYLE_KEY_CATEGORY` + descriptor
+> `styleKeys` (Text → `fontSize`/`fontWeight`); fine-grained `categoryOf` by path; store style-gate
+> descriptor-driven; free-form size/weight pickers land. `CATEGORY_META`/ThemePanel section → RP-6.
 
 **Files / sites:** `src/theme/design-tokens.ts:12` (`Category`), `:26-32` (`STYLE_KEYS` flat map),
 `src/theme/token-category.mjs` (`categoryOf`), `src/editor/Inspector.tsx:41-49` (`STYLE_LABEL` /
@@ -693,10 +701,26 @@ styleKeys, controls`. **No `kind`** — container-ness stays union-derived (`'ch
      completeness) / lint / format clean, golden snapshots unchanged. New ADR-0014.
    - **RP-9 — ✅ IMPLEMENTED 2026-06-22** (landed just after RP-2, as planned; kept a **separate** library
      concern per ADR-0014 — not in the descriptor). See the §5.1 record below.
-4. **RP-3 + RP-4 — the typography spine** (DTCG composite Heading styles + Free-form-text primitive
-   binding, the two co-primary halves of Capability B). Tightly scoped, highly visible (kill the
-   triplicated `'1.25'`/`'700'`). **First move is the ~1 hr alias-survives-`expand` spike** before any
-   token restructure. Depends on RP-2 + the shared additive primitive base.
+4. **RP-3 + RP-4 — the typography spine.** ✅ **IMPLEMENTED 2026-06-22 (ADR-0015).** DTCG composite
+   Text styles + Free-form-text primitive binding — both co-primary halves of Capability B. The
+   triplicated `'1.25'`/`'700'`/`'600'` literals are gone.
+   - **Spike (gate, done first):** confirmed a composite's alias survives `expand` → web
+     `var(--font-size-lg)`, email literal. Approach then refined to a codegen'd **binding** (cleaner —
+     see ADR-0015): composites stay the DTCG-standard authoring + interop + codegen source; the render
+     resolves to **primitives** via `TEXT_STYLE_BINDING`.
+   - **Model:** `tokens.json` grew the primitive Type scale (`font.size/weight/lineHeight/letterSpacing`)
+     - composite `text.*` styles aliasing them; a custom SD format codegens
+       `generated/typography.ts` (`TextStyle` union, `FontSize/FontWeight` refs, `TEXT_STYLE_BINDING`).
+       `categoryOf` split fine-grained (RP-4); `STYLE_KEYS` → `STYLE_KEY_CATEGORY` + descriptor `styleKeys`
+       (Text → `fontSize`/`fontWeight`); store style-gate now descriptor-driven.
+   - **Render:** `leaf-style`/`mjml`/`primitives.tsx`/`Button.tsx` interpret the binding (web `var()`,
+     email literal) + free-form overrides; IR `variant` → `TextStyle`; **MJML line-height → px** (Outlook
+     fix). Button `600` → `font.weight.semibold` ref.
+   - **Verified:** 211 tests, 100% lines / typecheck / lint / format; golden net updated (reviewed
+     typography diffs); `npm run generate` SSR self-check green (canvas copies). **No RP-12 bump** —
+     `variant` widened (h2/body still valid) + additive style keys ⇒ saved docs load unchanged.
+   - **Deferred to RP-6:** the heading-style picker (switch `variant`), `CATEGORY_META` + ThemePanel
+     Type-scale section, the full `resolveEditModel`. Free-form size/weight pickers DID land (RP-4 model).
 5. **RP-6 — Inspector selection-editing model.** Consumes RP-2's `controls`/`styleKeys`, RP-3's
    Heading bindings, and RP-4's free-form style keys; unlocks the _editing_ half of both A and B. Do
    after so it reads finished tables.

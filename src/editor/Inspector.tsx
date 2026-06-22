@@ -9,9 +9,10 @@ import {
   SegmentedControl,
   Select,
 } from '../design-system';
-import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
-import { catalog, STYLE_KEYS, type StyleKey } from '../theme/design-tokens';
+import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
+import { catalog, STYLE_KEY_CATEGORY, type StyleKey } from '../theme/design-tokens';
 
+import { DESCRIPTORS } from './descriptors';
 import { TARGET_PROFILES } from './frames';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
@@ -45,11 +46,14 @@ const STYLE_LABEL: Record<StyleKey, string> = {
   padding: 'Padding',
   borderRadius: 'Border radius',
   gap: 'Gap',
+  fontSize: 'Font size',
+  fontWeight: 'Font weight',
 };
-const STYLE_KEY_LIST = Object.keys(STYLE_KEYS) as StyleKey[];
+const STYLE_KEY_LIST = Object.keys(STYLE_KEY_CATEGORY) as StyleKey[];
 const leaf = (ref: string): string => ref.split('.').pop() ?? ref;
 
-// Built once (the catalog is static): a Select option list per style key. "Default" (value '') clears.
+// Built once (the catalog is static): a Select option list per style key, sourced from the key's
+// Category (RP-4 — fontSize → the Type scale, not the whole font bucket). "Default" (value '') clears.
 interface Opt {
   value: string;
   label: string;
@@ -60,17 +64,24 @@ const STYLE_OPTIONS: Record<StyleKey, Opt[]> = Object.fromEntries(
     [
       { value: '', label: 'Default' },
       ...catalog
-        .byCategory(STYLE_KEYS[key])
+        .byCategory(STYLE_KEY_CATEGORY[key])
         .map((t) => ({ value: t.ref, label: `${leaf(t.ref)} · ${t.literal}` })),
     ],
   ]),
 ) as Record<StyleKey, Opt[]>;
 
-// MJML email export only honours background/padding, and only on the root Stack (mjml.ts
-// renderCardSections) — it ignores border-radius/gap and any nested-container style. So an email Frame
-// offers the picker ONLY for what export will keep, avoiding live-preview-vs-export divergence (ADR-0006).
-const stylableKeys = (target: 'web' | 'email', path: NodePath): StyleKey[] =>
-  target === 'web' ? STYLE_KEY_LIST : path.length === 0 ? ['background', 'padding'] : [];
+// Which style keys a selected node exposes (RP-4): descriptor-driven (a container gets bg/padding/
+// radius/gap, a Text leaf gets fontSize/fontWeight). One medium rule remains: MJML only honours
+// background/padding, and only on the root Stack (mjml.ts renderCardSections), so an email *container*
+// is narrowed to what export keeps — typography keys are honoured everywhere and stay. (RP-6 folds
+// this into resolveEditModel.)
+const stylableKeys = (node: Node, target: 'web' | 'email', path: NodePath): StyleKey[] => {
+  const keys = DESCRIPTORS[node.type].styleKeys;
+  if (target === 'email' && 'children' in node) {
+    return path.length === 0 ? keys.filter((k) => k === 'background' || k === 'padding') : [];
+  }
+  return [...keys];
+};
 
 /** Edits the selected node: text content, container layout (distribute/justify/align/wrap), token-bound
  *  container style (background/padding/border-radius/gap), and delete — or the Frame panel (rename /
@@ -177,7 +188,7 @@ export function Inspector(): ReactElement {
   // wrap have no free space to act on — hide them to avoid a control that does nothing.
   const rowDistribute = container?.type === 'Row' ? (container.props?.distribute ?? 'fit') : null;
   const isFillRow = rowDistribute === 'fill';
-  const styleKeys = container ? stylableKeys(frame.target, selectedPath) : [];
+  const styleKeys = stylableKeys(node, frame.target, selectedPath);
 
   return (
     <div className="ed-inspector">
@@ -255,7 +266,7 @@ export function Inspector(): ReactElement {
             <Select
               key={key}
               label={STYLE_LABEL[key]}
-              value={container?.style?.[key] ?? ''}
+              value={node.style?.[key] ?? ''}
               options={STYLE_OPTIONS[key]}
               onChange={(e) => {
                 setNodeStyle(selectedFrameId, selectedPath, key, e.target.value);

@@ -10,8 +10,8 @@ const base: CSSProperties = {
   padding: 'var(--space-sm) var(--space-md)',
   borderRadius: 'var(--radius-lg)',
   fontFamily: 'var(--font-family)',
-  fontSize: 'var(--font-body)',
-  fontWeight: 600,
+  fontSize: 'var(--font-size-base)',
+  fontWeight: 'var(--font-weight-semibold)', // RP-3: was hard-coded 600
   cursor: 'pointer',
   borderStyle: 'solid',
   borderWidth: 0,

@@ -13,6 +13,7 @@ import {
   imageDecls,
   structuralDecls,
   textDecls,
+  textTag,
 } from './leaf-style';
 
 const INDENT = '  ';
@@ -63,7 +64,7 @@ const reactEmitter: Emitter<string, number> = {
   },
   leaf: {
     Text(node, depth) {
-      const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+      const tag = textTag(node.props.variant);
       return `${pad(depth)}<${tag} style={${styleLiteral(textDecls(node))}}>${jsxText(node.props.content)}</${tag}>`;
     },
     Button(node, depth) {

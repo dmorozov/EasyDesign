@@ -103,7 +103,7 @@ export const DESCRIPTORS: Descriptors = {
     group: 'content',
     emailSafe: true,
     create: () => ({ type: 'Text', props: { content: 'Body text', variant: 'body' } }),
-    styleKeys: [],
+    styleKeys: ['fontSize', 'fontWeight'], // RP-4: free-form text picks size/weight from the Type scale
     controls: ['content'],
   },
   Button: {

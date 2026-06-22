@@ -14,7 +14,19 @@
   --space-lg: 24px;
   --radius-lg: 12px;
   --font-family: Helvetica, Arial, sans-serif;
-  --font-h2: 24px;
-  --font-body: 16px;
-  --font-line: 1.5;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-line-height-tight: 1.25;
+  --font-line-height-normal: 1.5;
+  --font-line-height-relaxed: 1.625;
+  --font-letter-spacing-normal: 0px;
+  --font-letter-spacing-tight: -0.5px;
 }

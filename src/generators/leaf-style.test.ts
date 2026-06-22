@@ -59,16 +59,30 @@ describe('containerDecls — token-bound container styles', () => {
 // (token resolution moved to the Design-Token Model — see design-tokens.test.ts `resolveVar`.)
 
 describe('leaf β — the CSS vocabulary, stated once', () => {
-  it('a primary button binds the brand tokens', () => {
+  it('a primary button binds the brand tokens + the semibold weight token (RP-3: was 600)', () => {
     const decls = buttonDecls({ type: 'Button', props: { content: 'x', variant: 'primary' } });
     expect(decls).toContainEqual({ prop: 'background', value: 'var(--color-brand)' });
     expect(decls).toContainEqual({ prop: 'color', value: 'var(--color-on-brand)' });
+    expect(decls).toContainEqual({ prop: 'fontWeight', value: 'var(--font-weight-semibold)' });
   });
 
-  it('an h2 is bold at the heading font size', () => {
+  it('an h2 resolves the style binding to Type-scale vars — no raw literals remain (RP-3)', () => {
     const decls = textDecls({ type: 'Text', props: { content: 'x', variant: 'h2' } });
-    expect(decls).toContainEqual({ prop: 'fontWeight', value: '700' });
-    expect(decls).toContainEqual({ prop: 'fontSize', value: 'var(--font-h2)' });
+    expect(decls).toContainEqual({ prop: 'fontSize', value: 'var(--font-size-2xl)' });
+    expect(decls).toContainEqual({ prop: 'fontWeight', value: 'var(--font-weight-bold)' });
+    expect(decls).toContainEqual({ prop: 'lineHeight', value: 'var(--font-line-height-tight)' });
+  });
+
+  it('a free-form fontSize/fontWeight overrides the style binding (RP-4)', () => {
+    const decls = textDecls({
+      type: 'Text',
+      props: { content: 'x', variant: 'body' },
+      style: { fontSize: 'font.size.xl', fontWeight: 'font.weight.bold' },
+    });
+    expect(decls).toContainEqual({ prop: 'fontSize', value: 'var(--font-size-xl)' });
+    expect(decls).toContainEqual({ prop: 'fontWeight', value: 'var(--font-weight-bold)' });
+    // line-height is the style's own (not free-form), still tokenized:
+    expect(decls).toContainEqual({ prop: 'lineHeight', value: 'var(--font-line-height-normal)' });
   });
 
   it('an image omits max-width when it has no intrinsic width', () => {

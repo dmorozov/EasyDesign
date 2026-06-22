@@ -12,6 +12,7 @@ import {
   imageDecls,
   structuralDecls,
   textDecls,
+  textTag,
 } from './leaf-style';
 
 function dash(prop: string): string {
@@ -55,7 +56,7 @@ const angularEmitter: Emitter<string, void> = {
   },
   leaf: {
     Text(node) {
-      const tag = node.props.variant === 'h2' ? 'h2' : 'p';
+      const tag = textTag(node.props.variant);
       return `<${tag} style="${inlineStyle(textDecls(node))}">${escText(node.props.content)}</${tag}>`;
     },
     Button(node) {

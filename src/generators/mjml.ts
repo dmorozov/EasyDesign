@@ -7,6 +7,7 @@
 // background so the card reads continuous. See docs/walking-skeleton.md findings.
 import { type Frame, type Node, type StyleMap, type TokenRef } from '../ir/types';
 import { type LeafNode, type LeafType } from '../ir/walk';
+import { TEXT_STYLE_BINDING } from '../theme/generated/typography';
 
 // The literal resolver (dot-ref -> '16px') is supplied by the caller — the Design-Token Model's
 // catalog.withOverrides (D2). MJML keeps only its bespoke FLATTEN (ADR-0008), never token resolution.
@@ -36,12 +37,18 @@ function indent(depth: number): string {
 // --- Leaf renderers -------------------------------------------------------
 
 function renderText(lit: Lit, node: Extract<Node, { type: 'Text' }>, depth: number): string {
-  const isH2 = node.props.variant === 'h2';
+  // Typography resolves through the binding (RP-3); a free-form fontSize/fontWeight overrides it.
+  const binding = TEXT_STYLE_BINDING[node.props.variant];
+  const fontSize = lit(node.style?.fontSize ?? binding.fontSize);
+  const fontWeight = lit(node.style?.fontWeight ?? binding.fontWeight);
+  // Outlook treats decimal-unitless line-height as a percentage and rounds it (a live bug); resolve it
+  // to px (size × ratio) so MJML's mso-line-height-rule:exactly makes it deterministic (RP-3).
+  const lineHeight = `${Math.round(parseFloat(fontSize) * parseFloat(lit(binding.lineHeight)))}px`;
   const attrs = [
     `font-family="${escapeAttr(lit('font.family'))}"`,
-    `font-size="${isH2 ? lit('font.h2') : lit('font.body')}"`,
-    `line-height="${isH2 ? '1.25' : lit('font.line')}"`,
-    `font-weight="${isH2 ? '700' : '400'}"`,
+    `font-size="${fontSize}"`,
+    `line-height="${lineHeight}"`,
+    `font-weight="${fontWeight}"`,
     `color="${lit('color.text')}"`,
     `padding="0"`,
   ].join(' ');
@@ -52,8 +59,8 @@ function renderButton(lit: Lit, node: Extract<Node, { type: 'Button' }>, depth: 
   const common = [
     `href="#"`,
     `font-family="${escapeAttr(lit('font.family'))}"`,
-    `font-size="${lit('font.body')}"`,
-    `font-weight="600"`,
+    `font-size="${lit('font.size.base')}"`,
+    `font-weight="${lit('font.weight.semibold')}"`, // RP-3: was hard-coded 600
     `border-radius="${lit('radius.lg')}"`,
     `inner-padding="${lit('space.sm')} ${lit('space.md')}"`,
     `align="left"`,

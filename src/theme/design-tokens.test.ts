@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { catalog, createCatalog, STYLE_KEYS, type Token } from './design-tokens';
+import { catalog, createCatalog, STYLE_KEY_CATEGORY, type Token } from './design-tokens';
 
 describe('catalog — query + validation', () => {
   it('get returns the entry for a valid ref, undefined for a typo (= isValidRef)', () => {
@@ -50,18 +50,20 @@ describe('catalog — overrides + keying boundary', () => {
   });
 });
 
-describe('STYLE_KEYS — container style keys -> category', () => {
-  it('maps each bound key to its token category', () => {
-    expect(STYLE_KEYS).toEqual({
+describe('STYLE_KEY_CATEGORY — every style key -> its token category (RP-4)', () => {
+  it('maps each bound key to its category, incl. the free-form Text keys', () => {
+    expect(STYLE_KEY_CATEGORY).toEqual({
       background: 'color',
       padding: 'space',
       borderRadius: 'radius',
       gap: 'space',
+      fontSize: 'fontSize',
+      fontWeight: 'fontWeight',
     });
   });
 
   it("every style key's category is a real, non-empty catalog category", () => {
-    for (const category of Object.values(STYLE_KEYS)) {
+    for (const category of Object.values(STYLE_KEY_CATEGORY)) {
       expect(catalog.byCategory(category).length).toBeGreaterThan(0);
     }
   });

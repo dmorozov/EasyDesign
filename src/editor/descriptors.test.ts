@@ -22,18 +22,23 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
     }
   });
 
-  it('containers expose layout controls + style keys; leaves expose neither', () => {
+  it('containers expose layout controls + container style keys; leaves have no layout controls', () => {
     for (const type of TYPES) {
       const d = DESCRIPTORS[type];
       if ('children' in d.create()) {
-        expect(d.styleKeys.length).toBeGreaterThan(0);
+        expect(d.styleKeys).toContain('background');
         expect(d.controls).toContain('justify');
         expect(d.controls).not.toContain('content');
       } else {
-        expect(d.styleKeys).toHaveLength(0);
         expect(d.controls).not.toContain('justify');
       }
     }
+  });
+
+  it('Text exposes free-form typography style keys; the other leaves expose none (RP-4)', () => {
+    expect(DESCRIPTORS.Text.styleKeys).toEqual(['fontSize', 'fontWeight']);
+    expect(DESCRIPTORS.Button.styleKeys).toHaveLength(0);
+    expect(DESCRIPTORS.Image.styleKeys).toHaveLength(0);
   });
 
   it('only Row offers distribute; only non-Grid containers offer wrap; leaves offer content', () => {

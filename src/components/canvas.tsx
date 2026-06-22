@@ -30,7 +30,11 @@ const canvasEmitter: Emitter<ReactElement, void> = {
     return layoutElement(node, body);
   },
   leaf: {
-    Text: (node) => <Text variant={node.props.variant}>{node.props.content}</Text>,
+    Text: (node) => (
+      <Text variant={node.props.variant} style={node.style}>
+        {node.props.content}
+      </Text>
+    ),
     Button: (node) => <Button variant={node.props.variant}>{node.props.content}</Button>,
     Image: (node) => <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />,
   },

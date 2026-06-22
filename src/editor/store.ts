@@ -4,6 +4,7 @@ import { sampleCard } from '../ir/sample';
 import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
 import { type StyleKey } from '../theme/design-tokens';
 
+import { DESCRIPTORS } from './descriptors';
 import {
   loadFromLocal,
   type DocumentBody,
@@ -273,7 +274,9 @@ export const useEditor = create<EditorState>()((set) => {
       mutate(`style:${frameId}:${path.join('.')}:${key}`, (doc) => {
         const r = applyTreeEdit(doc, frameId, (root) => {
           const target = nodeAt(root, path);
-          if (!target || !('children' in target)) return null; // only containers honour style keys
+          // RP-4: the style-key gate is descriptor-driven — containers honour bg/padding/radius/gap,
+          // a Text leaf honours fontSize/fontWeight. (Was a blanket container-only gate.)
+          if (!target || !DESCRIPTORS[target.type].styleKeys.includes(key)) return null;
           return NodeTree.setStyle(root, path, key, ref);
         });
         return r ? { body: r.body } : null;

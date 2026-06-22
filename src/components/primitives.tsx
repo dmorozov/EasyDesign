@@ -1,34 +1,31 @@
-import { type CSSProperties, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-const headingStyle: CSSProperties = {
-  margin: 0,
-  fontFamily: 'var(--font-family)',
-  fontSize: 'var(--font-h2)',
-  lineHeight: 1.25,
-  color: 'var(--color-text)',
-  fontWeight: 700,
-};
+import { type StyleMap } from '../ir/types';
+import { type TextStyle } from '../theme/generated/typography';
 
-const bodyStyle: CSSProperties = {
-  margin: 0,
-  fontFamily: 'var(--font-family)',
-  fontSize: 'var(--font-body)',
-  lineHeight: 'var(--font-line)',
-  color: 'var(--color-text)',
-};
+import { textCssVars } from './tokens';
 
 export interface TextProps {
-  variant: 'h2' | 'body';
+  variant: TextStyle;
+  /** Free-form fontSize/fontWeight overrides (Type-scale refs); the rest comes from the style binding. */
+  style?: StyleMap | undefined;
   children: ReactNode;
 }
 
-/** Themed text. `h2` renders a heading; `body` renders a paragraph. */
-export function Text({ variant, children }: TextProps) {
-  return variant === 'h2' ? (
-    <h2 style={headingStyle}>{children}</h2>
-  ) : (
-    <p style={bodyStyle}>{children}</p>
-  );
+/** Themed text (RP-3). Real headings (h1/h2/h3) render as those tags for a11y; the rest as <p>. The
+ *  typography (size/weight/line-height) is fully tokenized via the named style's binding. */
+export function Text({ variant, style, children }: TextProps) {
+  const css = textCssVars(variant, style);
+  switch (variant) {
+    case 'h1':
+      return <h1 style={css}>{children}</h1>;
+    case 'h2':
+      return <h2 style={css}>{children}</h2>;
+    case 'h3':
+      return <h3 style={css}>{children}</h3>;
+    default:
+      return <p style={css}>{children}</p>;
+  }
 }
 
 export interface ImageProps {

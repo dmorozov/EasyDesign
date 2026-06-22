@@ -95,8 +95,8 @@ exports[`RP-11 golden net — IR → MJML (email-safe fixtures) > stack-flow-sty
   <mj-body background-color="#f3f4f6">
     <mj-section background-color="#ffffff" padding="24px 24px 16px">
       <mj-column>
-        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="24px" line-height="1.25" font-weight="700" color="#111827" padding="0">Title</mj-text>
-        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="16px" line-height="1.5" font-weight="400" color="#111827" padding="0">Subtitle</mj-text>
+        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="24px" line-height="30px" font-weight="700" color="#111827" padding="0">Title</mj-text>
+        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="16px" line-height="24px" font-weight="400" color="#111827" padding="0">Subtitle</mj-text>
         <mj-button href="#" font-family="Helvetica, Arial, sans-serif" font-size="16px" font-weight="600" border-radius="12px" inner-padding="8px 16px" align="left" background-color="#4f46e5" color="#ffffff">Go</mj-button>
       </mj-column>
     </mj-section>
@@ -115,8 +115,8 @@ exports[`RP-11 golden net — IR → MJML (email-safe fixtures) > text-variants 
   <mj-body background-color="#f3f4f6">
     <mj-section background-color="#ffffff" padding="24px 24px 16px">
       <mj-column>
-        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="24px" line-height="1.25" font-weight="700" color="#111827" padding="0">Heading</mj-text>
-        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="16px" line-height="1.5" font-weight="400" color="#111827" padding="0">Body copy goes here.</mj-text>
+        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="24px" line-height="30px" font-weight="700" color="#111827" padding="0">Heading</mj-text>
+        <mj-text font-family="Helvetica, Arial, sans-serif" font-size="16px" line-height="24px" font-weight="400" color="#111827" padding="0">Body copy goes here.</mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
@@ -135,17 +135,17 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column; gap:var(--space-sm)">
       <div style="display:flex; flex-direction:column; align-items:flex-start; flex-wrap:nowrap">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">start</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a>
       </div>
       <div style="display:flex; flex-direction:column; align-items:center">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">center</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a>
       </div>
       <div style="display:flex; flex-direction:column; align-items:flex-end">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">end</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a>
       </div>
       <div style="display:flex; flex-direction:column; align-items:stretch; flex-wrap:wrap">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">stretch</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">wrap</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">stretch</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">wrap</a>
       </div>
     </div>
   \`,
@@ -154,7 +154,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > align-wrap-matrix → html 1`] = `"<div style="display:flex; flex-direction:column; gap:var(--space-sm)"><div style="display:flex; flex-direction:column; align-items:flex-start; flex-wrap:nowrap"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">start</a></div><div style="display:flex; flex-direction:column; align-items:center"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">center</a></div><div style="display:flex; flex-direction:column; align-items:flex-end"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">end</a></div><div style="display:flex; flex-direction:column; align-items:stretch; flex-wrap:wrap"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">stretch</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">wrap</a></div></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > align-wrap-matrix → html 1`] = `"<div style="display:flex; flex-direction:column; gap:var(--space-sm)"><div style="display:flex; flex-direction:column; align-items:flex-start; flex-wrap:nowrap"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a></div><div style="display:flex; flex-direction:column; align-items:center"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a></div><div style="display:flex; flex-direction:column; align-items:flex-end"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a></div><div style="display:flex; flex-direction:column; align-items:stretch; flex-wrap:wrap"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">stretch</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">wrap</a></div></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > align-wrap-matrix → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -164,17 +164,17 @@ export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flexWrap: 'nowrap' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>start</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>start</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>center</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>center</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>end</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>end</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', flexWrap: 'wrap' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>stretch</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>wrap</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>stretch</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>wrap</a>
       </div>
     </div>
   );
@@ -193,8 +193,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column">
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Save</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Cancel</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Save</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Cancel</a>
       </div>
     </div>
   \`,
@@ -203,7 +203,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > buttons → html 1`] = `"<div style="display:flex; flex-direction:column"><div style="display:flex; flex-direction:row; gap:var(--space-md)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Save</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Cancel</a></div></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > buttons → html 1`] = `"<div style="display:flex; flex-direction:column"><div style="display:flex; flex-direction:row; gap:var(--space-md)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Save</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Cancel</a></div></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > buttons → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -213,8 +213,8 @@ export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flexDirection: 'row', gap: 'var(--space-md)' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Save</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Cancel</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Save</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Cancel</a>
       </div>
     </div>
   );
@@ -232,8 +232,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`
     <div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:var(--space-sm)">
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">A</a>
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
+      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a>
+      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
     </div>
   \`,
 })
@@ -241,7 +241,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > column-wrap → html 1`] = `"<div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:var(--space-sm)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">A</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > column-wrap → html 1`] = `"<div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:var(--space-sm)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > column-wrap → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -250,8 +250,8 @@ import * as React from 'react';
 export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
-      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>A</a>
-      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>B</a>
+      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>A</a>
+      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>B</a>
     </div>
   );
 }
@@ -268,8 +268,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`
     <div style="display:grid; grid-template-columns:repeat(3, 1fr); justify-content:center; align-items:flex-end; gap:var(--space-md); padding:var(--space-lg)">
-      <p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">One</p>
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Two</a>
+      <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">One</p>
+      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Two</a>
       <img src="https://cdn.example.com/banner.png" alt="Three" style="display:block; width:100%; max-width:80px; height:auto; border-radius:var(--radius-lg)">
     </div>
   \`,
@@ -278,7 +278,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > grid → html 1`] = `"<div style="display:grid; grid-template-columns:repeat(3, 1fr); justify-content:center; align-items:flex-end; gap:var(--space-md); padding:var(--space-lg)"><p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">One</p><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Two</a><img src="https://cdn.example.com/banner.png" alt="Three" style="display:block; width:100%; max-width:80px; height:auto; border-radius:var(--radius-lg)"></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > grid → html 1`] = `"<div style="display:grid; grid-template-columns:repeat(3, 1fr); justify-content:center; align-items:flex-end; gap:var(--space-md); padding:var(--space-lg)"><p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">One</p><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Two</a><img src="https://cdn.example.com/banner.png" alt="Three" style="display:block; width:100%; max-width:80px; height:auto; border-radius:var(--radius-lg)"></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > grid → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -287,8 +287,8 @@ import * as React from 'react';
 export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', justifyContent: 'center', alignItems: 'flex-end', gap: 'var(--space-md)', padding: 'var(--space-lg)' }}>
-      <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', lineHeight: 'var(--font-line)', color: 'var(--color-text)' }}>One</p>
-      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Two</a>
+      <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', lineHeight: 'var(--font-line-height-normal)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-regular)' }}>One</p>
+      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Two</a>
       <img src="https://cdn.example.com/banner.png" alt="Three" style={{ display: 'block', width: '100%', maxWidth: '80px', height: 'auto', borderRadius: 'var(--radius-lg)' }} />
     </div>
   );
@@ -343,24 +343,24 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column; gap:var(--space-sm)">
       <div style="display:flex; flex-direction:row; justify-content:flex-start">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">start</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:center">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">center</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:flex-end">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">end</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:space-between">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">space-between</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-between</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:space-around">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">space-around</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-around</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
     </div>
   \`,
@@ -369,7 +369,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > justify-matrix → html 1`] = `"<div style="display:flex; flex-direction:column; gap:var(--space-sm)"><div style="display:flex; flex-direction:row; justify-content:flex-start"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">start</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:center"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">center</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:flex-end"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">end</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:space-between"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">space-between</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:space-around"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">space-around</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > justify-matrix → html 1`] = `"<div style="display:flex; flex-direction:column; gap:var(--space-sm)"><div style="display:flex; flex-direction:row; justify-content:flex-start"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:center"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:flex-end"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:space-between"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-between</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div><div style="display:flex; flex-direction:row; justify-content:space-around"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-around</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a></div></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > justify-matrix → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -379,24 +379,24 @@ export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>start</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>start</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>center</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>center</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>end</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>end</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>space-between</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>space-between</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
       </div>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>space-around</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>space-around</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>x</a>
       </div>
     </div>
   );
@@ -416,11 +416,11 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     <div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); gap:var(--space-md)">
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
         <div style="display:flex; flex-direction:column; gap:var(--space-sm)">
-          <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Col head</h2>
-          <p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">col body</p>
+          <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Col head</h2>
+          <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">col body</p>
         </div>
         <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-sm)">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">x</a>
+          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">x</a>
           <img src="https://cdn.example.com/banner.png" alt="thumb" style="display:block; width:100%; max-width:60px; height:auto; border-radius:var(--radius-lg)">
         </div>
       </div>
@@ -431,7 +431,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > nested-deep → html 1`] = `"<div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); gap:var(--space-md)"><div style="display:flex; flex-direction:row; gap:var(--space-md)"><div style="display:flex; flex-direction:column; gap:var(--space-sm)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Col head</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">col body</p></div><div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-sm)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">x</a><img src="https://cdn.example.com/banner.png" alt="thumb" style="display:block; width:100%; max-width:60px; height:auto; border-radius:var(--radius-lg)"></div></div></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > nested-deep → html 1`] = `"<div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); gap:var(--space-md)"><div style="display:flex; flex-direction:row; gap:var(--space-md)"><div style="display:flex; flex-direction:column; gap:var(--space-sm)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Col head</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">col body</p></div><div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-sm)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">x</a><img src="https://cdn.example.com/banner.png" alt="thumb" style="display:block; width:100%; max-width:60px; height:auto; border-radius:var(--radius-lg)"></div></div></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > nested-deep → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -442,11 +442,11 @@ export default function Card(): React.ReactElement {
     <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', padding: 'var(--space-lg)', gap: 'var(--space-md)' }}>
       <div style={{ display: 'flex', flexDirection: 'row', gap: 'var(--space-md)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-          <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-h2)', lineHeight: '1.25', color: 'var(--color-text)', fontWeight: '700' }}>Col head</h2>
-          <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', lineHeight: 'var(--font-line)', color: 'var(--color-text)' }}>col body</p>
+          <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-2xl)', lineHeight: 'var(--font-line-height-tight)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-bold)' }}>Col head</h2>
+          <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', lineHeight: 'var(--font-line-height-normal)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-regular)' }}>col body</p>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 'var(--space-sm)' }}>
-          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>x</a>
+          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>x</a>
           <img src="https://cdn.example.com/banner.png" alt="thumb" style={{ display: 'block', width: '100%', maxWidth: '60px', height: 'auto', borderRadius: 'var(--radius-lg)' }} />
         </div>
       </div>
@@ -468,13 +468,13 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     <div style="display:flex; flex-direction:column">
       <div style="display:flex; flex-direction:row; gap:var(--space-sm)">
         <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">A</a>
+          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a>
         </div>
         <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
+          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
         </div>
         <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">C</a>
+          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">C</a>
         </div>
       </div>
     </div>
@@ -484,7 +484,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > row-fill → html 1`] = `"<div style="display:flex; flex-direction:column"><div style="display:flex; flex-direction:row; gap:var(--space-sm)"><div style="flex:1"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">A</a></div><div style="flex:1"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a></div><div style="flex:1"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">C</a></div></div></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > row-fill → html 1`] = `"<div style="display:flex; flex-direction:column"><div style="display:flex; flex-direction:row; gap:var(--space-sm)"><div style="flex:1"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a></div><div style="flex:1"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a></div><div style="flex:1"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">C</a></div></div></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > row-fill → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -495,13 +495,13 @@ export default function Card(): React.ReactElement {
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flexDirection: 'row', gap: 'var(--space-sm)' }}>
         <div style={{ flex: 1 }}>
-          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>A</a>
+          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>A</a>
         </div>
         <div style={{ flex: 1 }}>
-          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>B</a>
+          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>B</a>
         </div>
         <div style={{ flex: 1 }}>
-          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>C</a>
+          <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>C</a>
         </div>
       </div>
     </div>
@@ -521,8 +521,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column">
       <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:var(--space-md)">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Left</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Right</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Left</a>
+        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Right</a>
       </div>
     </div>
   \`,
@@ -531,7 +531,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > row-fit-justify → html 1`] = `"<div style="display:flex; flex-direction:column"><div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:var(--space-md)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Left</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Right</a></div></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > row-fit-justify → html 1`] = `"<div style="display:flex; flex-direction:column"><div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:var(--space-md)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Left</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Right</a></div></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > row-fit-justify → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -541,8 +541,8 @@ export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-md)' }}>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Left</a>
-        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Right</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Left</a>
+        <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Right</a>
       </div>
     </div>
   );
@@ -560,9 +560,9 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`
     <div style="display:flex; flex-direction:column; justify-content:center; align-items:stretch; background:var(--color-surface); padding:var(--space-lg); border-radius:var(--radius-lg); gap:var(--space-md)">
-      <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Title</h2>
-      <p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">Subtitle</p>
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Go</a>
+      <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Title</h2>
+      <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Subtitle</p>
+      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Go</a>
     </div>
   \`,
 })
@@ -570,7 +570,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > stack-flow-styled → html 1`] = `"<div style="display:flex; flex-direction:column; justify-content:center; align-items:stretch; background:var(--color-surface); padding:var(--space-lg); border-radius:var(--radius-lg); gap:var(--space-md)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Title</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">Subtitle</p><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-body); font-weight:600; background:var(--color-brand); color:var(--color-on-brand)">Go</a></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > stack-flow-styled → html 1`] = `"<div style="display:flex; flex-direction:column; justify-content:center; align-items:stretch; background:var(--color-surface); padding:var(--space-lg); border-radius:var(--radius-lg); gap:var(--space-md)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Title</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Subtitle</p><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Go</a></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > stack-flow-styled → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -579,9 +579,9 @@ import * as React from 'react';
 export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', background: 'var(--color-surface)', padding: 'var(--space-lg)', borderRadius: 'var(--radius-lg)', gap: 'var(--space-md)' }}>
-      <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-h2)', lineHeight: '1.25', color: 'var(--color-text)', fontWeight: '700' }}>Title</h2>
-      <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', lineHeight: 'var(--font-line)', color: 'var(--color-text)' }}>Subtitle</p>
-      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', fontWeight: '600', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Go</a>
+      <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-2xl)', lineHeight: 'var(--font-line-height-tight)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-bold)' }}>Title</h2>
+      <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', lineHeight: 'var(--font-line-height-normal)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-regular)' }}>Subtitle</p>
+      <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Go</a>
     </div>
   );
 }
@@ -598,8 +598,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`
     <div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); gap:var(--space-md)">
-      <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Heading</h2>
-      <p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">Body copy goes here.</p>
+      <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Heading</h2>
+      <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Body copy goes here.</p>
     </div>
   \`,
 })
@@ -607,7 +607,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > text-variants → html 1`] = `"<div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); gap:var(--space-md)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-h2); line-height:1.25; color:var(--color-text); font-weight:700">Heading</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-body); line-height:var(--font-line); color:var(--color-text)">Body copy goes here.</p></div>"`;
+exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > text-variants → html 1`] = `"<div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); gap:var(--space-md)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Heading</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Body copy goes here.</p></div>"`;
 
 exports[`RP-11 golden net — IR → web targets (full IR vocabulary) > text-variants → react 1`] = `
 "// AUTO-GENERATED by EasyDesign — do not edit by hand.
@@ -616,8 +616,8 @@ import * as React from 'react';
 export default function Card(): React.ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', padding: 'var(--space-lg)', gap: 'var(--space-md)' }}>
-      <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-h2)', lineHeight: '1.25', color: 'var(--color-text)', fontWeight: '700' }}>Heading</h2>
-      <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-body)', lineHeight: 'var(--font-line)', color: 'var(--color-text)' }}>Body copy goes here.</p>
+      <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-2xl)', lineHeight: 'var(--font-line-height-tight)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-bold)' }}>Heading</h2>
+      <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', lineHeight: 'var(--font-line-height-normal)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-regular)' }}>Body copy goes here.</p>
     </div>
   );
 }

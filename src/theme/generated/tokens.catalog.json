@@ -61,26 +61,98 @@
   },
   {
     "ref": "font.family",
-    "category": "font",
+    "category": "fontFamily",
     "cssVarName": "--font-family",
     "literal": "Helvetica, Arial, sans-serif"
   },
   {
-    "ref": "font.h2",
-    "category": "font",
-    "cssVarName": "--font-h2",
-    "literal": "24px"
+    "ref": "font.size.sm",
+    "category": "fontSize",
+    "cssVarName": "--font-size-sm",
+    "literal": "14px"
   },
   {
-    "ref": "font.body",
-    "category": "font",
-    "cssVarName": "--font-body",
+    "ref": "font.size.base",
+    "category": "fontSize",
+    "cssVarName": "--font-size-base",
     "literal": "16px"
   },
   {
-    "ref": "font.line",
-    "category": "font",
-    "cssVarName": "--font-line",
+    "ref": "font.size.lg",
+    "category": "fontSize",
+    "cssVarName": "--font-size-lg",
+    "literal": "18px"
+  },
+  {
+    "ref": "font.size.xl",
+    "category": "fontSize",
+    "cssVarName": "--font-size-xl",
+    "literal": "20px"
+  },
+  {
+    "ref": "font.size.2xl",
+    "category": "fontSize",
+    "cssVarName": "--font-size-2xl",
+    "literal": "24px"
+  },
+  {
+    "ref": "font.size.3xl",
+    "category": "fontSize",
+    "cssVarName": "--font-size-3xl",
+    "literal": "30px"
+  },
+  {
+    "ref": "font.weight.regular",
+    "category": "fontWeight",
+    "cssVarName": "--font-weight-regular",
+    "literal": "400"
+  },
+  {
+    "ref": "font.weight.medium",
+    "category": "fontWeight",
+    "cssVarName": "--font-weight-medium",
+    "literal": "500"
+  },
+  {
+    "ref": "font.weight.semibold",
+    "category": "fontWeight",
+    "cssVarName": "--font-weight-semibold",
+    "literal": "600"
+  },
+  {
+    "ref": "font.weight.bold",
+    "category": "fontWeight",
+    "cssVarName": "--font-weight-bold",
+    "literal": "700"
+  },
+  {
+    "ref": "font.lineHeight.tight",
+    "category": "lineHeight",
+    "cssVarName": "--font-line-height-tight",
+    "literal": "1.25"
+  },
+  {
+    "ref": "font.lineHeight.normal",
+    "category": "lineHeight",
+    "cssVarName": "--font-line-height-normal",
     "literal": "1.5"
+  },
+  {
+    "ref": "font.lineHeight.relaxed",
+    "category": "lineHeight",
+    "cssVarName": "--font-line-height-relaxed",
+    "literal": "1.625"
+  },
+  {
+    "ref": "font.letterSpacing.normal",
+    "category": "letterSpacing",
+    "cssVarName": "--font-letter-spacing-normal",
+    "literal": "0px"
+  },
+  {
+    "ref": "font.letterSpacing.tight",
+    "category": "letterSpacing",
+    "cssVarName": "--font-letter-spacing-tight",
+    "literal": "-0.5px"
   }
 ]
