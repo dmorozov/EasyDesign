@@ -32,11 +32,34 @@ export type ContainerShape =
       readonly align: Align | null;
     };
 
-/** The four container node types (those with `children`). */
-export type ContainerNode = Extract<Node, { children: Node[] }>;
+/** Every container node type (those with a `children` array). */
+export type ContainerNode = Extract<Node, { children: readonly Node[] }>;
 /** The container type names — derived from the union, so adding a container type grows it. MJML's
  *  bespoke flattener keys its card-child dispatch off this to stay compile-exhaustive (RP-8). */
 export type ContainerType = ContainerNode['type'];
+
+/**
+ * COMPONENT containers (RP-10 / ADR-0016): containers that render as a specific Component — a RAC
+ * RadioGroup, not a layout box — so they bypass `shapeOf`/`container()` and dispatch through
+ * `emit.component`, exactly parallel to how leaves dispatch through `emit.leaf`. The rest are LAYOUT
+ * containers (Stack/Row/Column/Grid), which share the one shape-driven `container()` renderer.
+ */
+export type ComponentContainerType = 'RadioGroup';
+export type ComponentContainerNode = Extract<Node, { type: ComponentContainerType }>;
+export type LayoutContainerNode = Exclude<ContainerNode, ComponentContainerNode>;
+export type LayoutContainerType = LayoutContainerNode['type'];
+
+/** Which container types are component-containers — a Record (not a Set) so adding one is a compile
+ *  error here AND at every walk adapter's `component` record (the §1 "locality ≠ safety" lever). */
+export const COMPONENT_CONTAINERS: Record<ComponentContainerType, true> = { RadioGroup: true };
+
+/** A container that renders via a layout shape (Stack/Row/Column/Grid), not as a Component. A real type
+ *  guard so consumers that read layout props (e.g. the Inspector model) narrow without a cast, and stay
+ *  correct as more component containers are added (a future data grid joins by union, not by edit here). */
+export function isLayoutContainer(node: Node): node is LayoutContainerNode {
+  return 'children' in node && !(node.type in COMPONENT_CONTAINERS);
+}
+
 /** The leaf node types — those WITHOUT children. DERIVED from the union, so adding a leaf grows it;
  *  every target's `leaf` renderer record then fails to compile until the new leaf is handled (RP-9). */
 export type LeafNode = Exclude<Node, ContainerNode>;
@@ -55,6 +78,16 @@ export type LeafRenderers<T, C> = {
 };
 
 /**
+ * Per-component-container renderers — a Record over `ComponentContainerType`, each given its already-
+ * walked children. Same compile-time guarantee as `leaf`: a target that omits one fails to satisfy
+ * `Emitter`. Children are the rendered `T[]` (the walk has already recursed), so the renderer only
+ * supplies the Component wrapper (a `<RadioGroup>`/`<fieldset>` around the rendered Radios).
+ */
+export type ComponentRenderers<T, C> = {
+  [K in ComponentContainerType]: (node: Extract<Node, { type: K }>, children: T[], ctx: C) => T;
+};
+
+/**
  * A target adapter. `T` = output dialect (string | ReactElement). `C` = the
  * per-node context the caller threads down (void for html, NodePath for the
  * editor, a depth number for react/angular).
@@ -66,15 +99,19 @@ export type LeafRenderers<T, C> = {
  *  - leaves never recurse; `leaf` is total over the LeafType union by construction.
  */
 export interface Emitter<T, C> {
-  container(node: ContainerNode, shape: ContainerShape, children: T[], ctx: C): T;
+  /** LAYOUT containers (Stack/Row/Column/Grid) → a styled box driven by `shape`. */
+  container(node: LayoutContainerNode, shape: ContainerShape, children: T[], ctx: C): T;
+  /** COMPONENT containers (RadioGroup) → a specific Component wrapper, keyed off the union (RP-10). */
+  component: ComponentRenderers<T, C>;
   /** Per-leaf-type renderers, keyed off the LeafType union (RP-9). */
   leaf: LeafRenderers<T, C>;
   /** Derive child i's context from the parent's. (void: noop; path: [...ctx, i]) */
   descend(ctx: C, index: number): C;
 }
 
-/** Resolve the α facts for a container. The ONLY place these rules live. */
-export function shapeOf(node: ContainerNode): ContainerShape {
+/** Resolve the α facts for a LAYOUT container. The ONLY place these rules live. (Component containers
+ *  bypass this — they render via `emit.component`, not a layout shape.) */
+export function shapeOf(node: LayoutContainerNode): ContainerShape {
   switch (node.type) {
     case 'Stack':
     case 'Column':
@@ -107,12 +144,18 @@ export function shapeOf(node: ContainerNode): ContainerShape {
   }
 }
 
-/** Walk a node, producing T. The deep module: the container/leaf dispatch lives here, once. */
+/** Walk a node, producing T. The deep module: the container/component/leaf dispatch lives here, once. */
 export function walkNode<T, C>(node: Node, ctx: C, emit: Emitter<T, C>): T {
   if ('children' in node) {
-    const shape = shapeOf(node);
     const children = node.children.map((child, i) => walkNode(child, emit.descend(ctx, i), emit));
-    return emit.container(node, shape, children, ctx);
+    // Component container (RadioGroup) → its own renderer; layout container → the shared shape renderer.
+    // The casts bridge TS's correlated-union gap (the `in` check narrows the value, not the type).
+    if (node.type in COMPONENT_CONTAINERS) {
+      const render = emit.component[node.type as ComponentContainerType];
+      return render(node as ComponentContainerNode, children, ctx);
+    }
+    const layout = node as LayoutContainerNode;
+    return emit.container(layout, shapeOf(layout), children, ctx);
   }
   // Leaf: keyed dispatch over the LeafType union (RP-9). The cast bridges TS's correlated-union gap —
   // `node` and `emit.leaf[node.type]` are both narrowed to the same leaf, but TS can't prove they align.

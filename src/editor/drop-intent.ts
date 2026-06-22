@@ -16,6 +16,7 @@
 // stays in node-tree.ts (RP-1) — this module emits exactly the op that module consumes.
 import { type Node } from '../ir/types';
 
+import { canContain } from './descriptors';
 import { canInsertInTarget, type FrameTarget } from './frames';
 import { type PaletteItem } from './palette';
 import { type NodePath } from './paths';
@@ -33,19 +34,22 @@ export interface DropTarget {
 }
 
 /** The dragged thing, adapted from dnd-kit's `active.data` at the Editor boundary: a Palette item
- *  being inserted, or an existing node being moved (its source path within the Frame). */
+ *  being inserted, or an existing node being moved (its source path within the Frame). `childType` is
+ *  the dragged node's type — the allowed-children rule (RP-10) reads it to vet the target parent. */
 export type DragSource =
-  | { kind: 'insert'; item: PaletteItem }
-  | { kind: 'move'; fromPath: NodePath };
+  | { kind: 'insert'; item: PaletteItem; childType: Node['type'] }
+  | { kind: 'move'; fromPath: NodePath; childType: Node['type'] };
 
 /** The hovered drop zone, adapted from dnd-kit's `over` at the Editor boundary. `node` is the
- *  already-resolved hovered node (the Editor does the `nodeAt`); `medium` is its Frame's target,
- *  read by the email rule. */
+ *  already-resolved hovered node (the Editor does the `nodeAt`); `medium` is its Frame's target, read
+ *  by the email rule; `parentType` is the hovered node's PARENT type (undefined at the root), used by
+ *  the allowed-children rule when a drop lands `before`/`after` (its parent, not the hovered node). */
 export interface DropZone {
   frameId: string;
   path: NodePath;
   node: Node;
   medium: FrameTarget;
+  parentType?: Node['type'];
 }
 
 /** Pointer position vs. the hovered node's rect (`pointerY` already folds dnd-kit's activator-Y +
@@ -56,9 +60,10 @@ export interface DropGeometry {
   rectHeight: number;
 }
 
-/** Why a drop was refused. Today only the email-safety rule (ADR-0006) rejects; structural
- *  impossibilities (move into own subtree) are a silent no-op owned by node-tree.ts, not a rejection. */
-export type RejectReason = 'email-unsafe';
+/** Why a drop was refused: the email-safety rule (ADR-0006), or the allowed-children rule (RP-10 — a
+ *  Radio outside a RadioGroup, etc.). Move-into-own-subtree is NOT here: it's a silent structural no-op
+ *  owned by node-tree.ts, not a user-facing rejection. */
+export type RejectReason = 'email-unsafe' | 'invalid-child';
 
 /** A resolved drag. Every variant carries `target` (the placement that drives the indicator); the
  *  rest tells drag-end what to dispatch. `rejected` is the same placement with `target.blocked` set. */
@@ -109,9 +114,11 @@ export function placeAt(
 
 /**
  * Resolve a drag into an actionable intent. `null` when there is no valid hover (or a placement that
- * can't resolve). An insert into an email Frame is checked against the ONE email predicate
- * (`canInsertInTarget`, ADR-0006) and `rejected` (with `blocked`) when the Component isn't email-safe;
- * a move is never email-rejected (it can't introduce a new type). The emitted op matches node-tree.ts.
+ * can't resolve). Two rules can `reject` (each shown via `target.blocked`): the allowed-children rule
+ * (RP-10 — the actual parent for the placement must accept the dragged type, e.g. a Radio only into a
+ * RadioGroup) applies to BOTH insert and move; the email rule (ADR-0006) applies to insert only. The
+ * actual parent is the hovered node for `inside`, else its parent (`zone.parentType`). A move is never
+ * email-rejected (it introduces no new type). The emitted op matches node-tree.ts.
  */
 export function resolveDropIntent(
   zone: DropZone | null,
@@ -123,6 +130,12 @@ export function resolveDropIntent(
   const placed = placeAt(zone.node, zone.path, mode);
   if (!placed) return null;
   const target: DropTarget = { frameId: zone.frameId, path: zone.path, mode };
+
+  // Allowed-children (RP-10): the node that will actually become the parent must accept this type.
+  const parentType = mode === 'inside' ? zone.node.type : zone.parentType;
+  if (parentType !== undefined && !canContain(parentType, source.childType)) {
+    return { kind: 'rejected', target: { ...target, blocked: true }, reason: 'invalid-child' };
+  }
 
   if (source.kind === 'insert') {
     if (!canInsertInTarget(zone.medium, source.item)) {

@@ -10,6 +10,9 @@ import {
   containerDecls,
   type Decl,
   imageDecls,
+  legendDecls,
+  radioDecls,
+  radioGroupDecls,
   structuralDecls,
   textDecls,
   textTag,
@@ -54,6 +57,13 @@ const angularEmitter: Emitter<string, void> = {
         : children.join('\n');
     return `<div style="${styleStr}">\n${indent(inner, '  ')}\n</div>`;
   },
+  component: {
+    RadioGroup(node, children) {
+      const legend = `<legend style="${inlineStyle(legendDecls())}">${escText(node.props.label)}</legend>`;
+      const inner = [legend, ...children].join('\n');
+      return `<fieldset style="${inlineStyle(radioGroupDecls(node.style))}">\n${indent(inner, '  ')}\n</fieldset>`;
+    },
+  },
   leaf: {
     Text(node) {
       const tag = textTag(node.props.variant);
@@ -65,6 +75,10 @@ const angularEmitter: Emitter<string, void> = {
     Image(node) {
       const { src, alt } = node.props;
       return `<img src="${escAttr(src)}" alt="${escAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+    },
+    Radio(node) {
+      const input = `<input type="radio" value="${escAttr(node.props.value)}">`;
+      return `<label style="${inlineStyle(radioDecls())}">${input}${escText(node.props.label)}</label>`;
     },
   },
   descend() {

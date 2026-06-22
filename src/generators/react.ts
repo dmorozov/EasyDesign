@@ -11,6 +11,9 @@ import {
   containerDecls,
   type Decl,
   imageDecls,
+  legendDecls,
+  radioDecls,
+  radioGroupDecls,
   structuralDecls,
   textDecls,
   textTag,
@@ -62,6 +65,13 @@ const reactEmitter: Emitter<string, number> = {
     }
     return `${p}<div style={${styleLiteral(decls)}}>\n${children.join('\n')}\n${p}</div>`;
   },
+  component: {
+    RadioGroup(node, children, depth) {
+      const p = pad(depth);
+      const legend = `${pad(depth + 1)}<legend style={${styleLiteral(legendDecls())}}>${jsxText(node.props.label)}</legend>`;
+      return `${p}<fieldset style={${styleLiteral(radioGroupDecls(node.style))}}>\n${legend}\n${children.join('\n')}\n${p}</fieldset>`;
+    },
+  },
   leaf: {
     Text(node, depth) {
       const tag = textTag(node.props.variant);
@@ -73,6 +83,10 @@ const reactEmitter: Emitter<string, number> = {
     Image(node, depth) {
       const { src, alt } = node.props;
       return `${pad(depth)}<img src="${jsxAttr(src)}" alt="${jsxAttr(alt)}" style={${styleLiteral(imageDecls(node))}} />`;
+    },
+    Radio(node, depth) {
+      const input = `<input type="radio" value="${jsxAttr(node.props.value)}" />`;
+      return `${pad(depth)}<label style={${styleLiteral(radioDecls())}}>${input} ${jsxText(node.props.label)}</label>`;
     },
   },
   descend(depth) {

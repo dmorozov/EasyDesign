@@ -63,6 +63,12 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
         log.push(`${shape.kind}:${node.type}@${depth}`);
         return `[${children.join(',')}]`;
       },
+      component: {
+        RadioGroup: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+      },
       leaf: {
         Text: (node, depth) => {
           log.push(`${node.type}@${depth}`);
@@ -75,6 +81,10 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
         Image: (node, depth) => {
           log.push(`${node.type}@${depth}`);
           return 'I';
+        },
+        Radio: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'R';
         },
       },
       descend: (depth) => depth + 1,
@@ -97,5 +107,51 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
     expect(log).toEqual(['Text@1', 'Button@2', 'flow:Row@1', 'flow:Stack@0']);
     // the emitter assembles bottom-up from the returned child values
     expect(out).toBe('[T,[B]]');
+  });
+
+  it('a component container (RadioGroup) dispatches through emit.component, NOT container (RP-10)', () => {
+    const log: string[] = [];
+    const recorder: Emitter<string, number> = {
+      container: (node, shape, children, depth) => {
+        log.push(`container:${shape.kind}:${node.type}@${depth}`);
+        return `[${children.join(',')}]`;
+      },
+      component: {
+        RadioGroup: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+      },
+      leaf: {
+        Text: () => 'T',
+        Button: () => 'B',
+        Image: () => 'I',
+        Radio: (_node, depth) => {
+          log.push(`Radio@${depth}`);
+          return 'R';
+        },
+      },
+      descend: (depth) => depth + 1,
+    };
+
+    const tree: Node = {
+      type: 'Stack',
+      children: [
+        {
+          type: 'RadioGroup',
+          props: { label: 'Pick' },
+          children: [
+            { type: 'Radio', props: { value: 'a', label: 'A' } },
+            { type: 'Radio', props: { value: 'b', label: 'B' } },
+          ],
+        },
+      ],
+    };
+
+    const out = walkNode<string, number>(tree, 0, recorder);
+
+    // The RadioGroup goes through component() (no shape), its Radios through the leaf path — in order.
+    expect(log).toEqual(['Radio@2', 'Radio@2', 'component:RadioGroup@1', 'container:flow:Stack@0']);
+    expect(out).toBe('[<R,R>]');
   });
 });

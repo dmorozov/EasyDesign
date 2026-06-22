@@ -58,7 +58,7 @@ export function Inspector(): ReactElement {
   const selectedFrameId = useEditor((s) => s.selectedFrameId);
   const selectedPath = useEditor((s) => s.selectedPath);
   const frames = useEditor((s) => s.frames);
-  const updateText = useEditor((s) => s.updateText);
+  const setTextProp = useEditor((s) => s.setTextProp);
   const setVariant = useEditor((s) => s.setVariant);
   const setLayout = useEditor((s) => s.setLayout);
   const deleteNode = useEditor((s) => s.deleteNode);
@@ -155,15 +155,18 @@ export function Inspector(): ReactElement {
         <Badge tone="accent">{TARGET_PROFILES[frame.target].label}</Badge>
       </div>
 
-      {model.content !== undefined && (
+      {model.text && (
         <PanelSection title="Content">
-          <Input
-            label="Text"
-            value={model.content}
-            onChange={(e) => {
-              updateText(selectedFrameId, selectedPath, e.target.value);
-            }}
-          />
+          {model.text.map((field) => (
+            <Input
+              key={field.key}
+              label={field.label}
+              value={field.value}
+              onChange={(e) => {
+                setTextProp(selectedFrameId, selectedPath, field.key, e.target.value);
+              }}
+            />
+          ))}
         </PanelSection>
       )}
 

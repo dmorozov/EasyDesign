@@ -875,8 +875,9 @@ RP-5/RP-7/RP-8 are independent debt with no feature gate.
 
 The candidates cover node-type facts, props modeling, the token graph, typography, and the untested
 orchestration. Of the dimensions first flagged here, **RP-9** (typed renderer exhaustiveness) and
-**RP-11** (golden-output net) are now **promoted** into §3/§4. **Two genuine gaps remain (RP-10, RP-12)**,
-plus a secondary import-audit confirmation:
+**RP-11** (golden-output net) were **promoted** into §3/§4 and shipped; **RP-10** (allowed-children)
+shipped 2026-06-22 with the first compound Component. **Only RP-12 (schema migration) remains, deferred
+by decision:**
 
 1. **Typed per-target renderer exhaustiveness (RP-9). ✅ IMPLEMENTED 2026-06-22 (ADR-0008 amended).**
    The silent-emitter gap is closed: the `Emitter<T,C>`'s three named leaf methods became one
@@ -889,19 +890,32 @@ plus a secondary import-audit confirmation:
    angular / canvas / editor) now fails to compile, plus mjml (its own `MJML_LEAVES` record, container
    throw kept as a runtime guardrail). Output byte-identical (golden net unchanged). Kept a **library**
    concern, separate from RP-2's editor-runtime descriptor (ADR-0007/0014).
-2. **`allowed-children` / structural validity (RP-10) — deferred until the first _compound_ Component,
-   mandatory then.** The IR has **no constraint layer** — any node nests in any container. Simple
-   leaves (Divider/Spacer/Badge) don't care; but the first _compound_ RAC Component (`Tabs` must contain
-   `Tab`s; `RadioGroup → Radio`; `Select → Item`) makes this a **correctness requirement** — without it
-   the user drops a `Radio` into a `Grid`, exports, and gets a broken/invalid tree. **Not a standalone
-   module:** it's an `allowedChildren`/`slots` **field on RP-2's descriptor**, read by two consumers —
-   **RP-5** (drag-intent rejects an invalid drop, carrying a reason for the indicator) and a
-   **generalized import audit** (`isEmailFrameClean` → `isFrameValid(descriptor, root)`, one path that
-   then rejects email-unsafe _and_ structurally-invalid trees). **Hybrid compile/runtime** — the one
-   place pure build-time safety isn't reachable: narrowing the children union
-   (`{ type:'RadioGroup'; children: RadioNode[] }`) compile-checks hand-authored IR + the generators,
-   but the editor builds trees at runtime (`insertChild` takes a generic `Node`), so the drag-insert
-   path needs the descriptor's **runtime** validator.
+2. **`allowed-children` / structural validity (RP-10). ✅ IMPLEMENTED 2026-06-22 (ADR-0016).** Triggered,
+   as predicted, by the **first compound Component — `RadioGroup → Radio`** (the requested PoC). Two
+   seams landed, both deliberately general (the anticipated next compound, a **data grid**, plugs in
+   with no edit to either):
+   - **Render — a component-container walk seam.** Containers split into LAYOUT (Stack/Row/Column/Grid →
+     the shared `container()`/`shapeOf`, now narrowed to `LayoutContainerNode`) and COMPONENT (RadioGroup
+     → a new **`emit.component: ComponentRenderers<T,C>`** mapped record, parallel to `emit.leaf`).
+     `walkNode` dispatches `node.type in COMPONENT_CONTAINERS ? component[type] : container(shapeOf)`, so a
+     forgotten component renderer compile-fails at every walk adapter (the compiler enumerated all 5 +
+     the new `Radio` leaf the moment the union grew). MJML stays bespoke (RadioGroup → `classifyCardChild`
+     `unsupported`; `Radio` → a throwing `MJML_LEAVES` entry, both email-unsafe).
+   - **Constraint — `allowedChildren` on the descriptor.** `RadioGroup → ['Radio']`; `RESTRICTED_CHILD_TYPES`
+     - `canContain(parent, child)` are descriptor-derived (one source). **Hybrid compile/runtime:** the IR
+       narrows `RadioGroup.children: RadioNode[]` (authored IR + generators compile-checked; `node-tree.ts`
+       stays generic via array covariance), while the runtime validator guards the editor — **RP-5**
+       drop-intent gained a `'invalid-child'` `RejectReason` (the parent that will actually hold the drop
+       must `canContain` the dragged type → a `blocked` indicator), and the import audit
+       **`isEmailFrameClean` → `isFrameValid`** now rejects email-unsafe **and** structurally-invalid trees
+       in one walk. `isContainer` went union-derived so RadioGroup counts.
+   - **PoC scope:** RadioGroup/Radio are insertable / draggable / deletable / faithfully rendered to all
+     web targets (golden `radiogroup` fixture) + the RAC canvas, and **editable** — the hardcoded
+     Inspector `content` control was generalised into a descriptor-declared, **type-checked
+     `textFields`** list + a generic `setTextProp` store action, so RadioGroup edits its **Group label**,
+     Radio its **Label**/**Value**, and Text/Button their content through one seam (the user drags more
+     Radios in — and ONLY into a RadioGroup — the flagship demo). **295 tests**, all gates green, existing
+     goldens byte-identical.
 3. **Export round-trip / golden-output regression net — the most important gap.** ✅ **CLOSED by
    RP-11** (2026-06-22, `src/generators/golden.test.ts` — see §4 step 1). The committed per-target
    snapshot corpus over the full IR vocabulary now catches any emitter regression as a reviewable

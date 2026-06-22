@@ -75,13 +75,18 @@ type ResolveActive = { data: { current?: unknown } } | null;
 
 // ── dnd-kit → pure adapters ──────────────────────────────────────────────────────────────────
 // The framework boundary: drop-intent.ts stays free of dnd-kit shapes, so these tiny readers are
-// the ONLY code that knows the event layout. `readZone` does the Frame lookup + `nodeAt` (the
-// hovered node), so the module receives a resolved node and never touches `frames`.
-function readSource(active: ResolveActive): DragSource | null {
+// the ONLY code that knows the event layout. `readZone` does the Frame lookup + `nodeAt` (the hovered
+// node + its parent type), so the module receives resolved values and never touches `frames`.
+function readSource(frames: EditorFrame[], active: ResolveActive): DragSource | null {
   const data = active?.data.current as ActiveData | undefined;
   if (!data) return null;
-  if (data.kind === 'insert') return data.item ? { kind: 'insert', item: data.item } : null;
-  return { kind: 'move', fromPath: data.path };
+  if (data.kind === 'insert') {
+    return data.item ? { kind: 'insert', item: data.item, childType: data.item.nodeType } : null;
+  }
+  // Move: the dragged node's type (for the allowed-children rule) comes from its source location.
+  const srcFrame = frames.find((f) => f.id === data.frameId);
+  const moved = srcFrame ? nodeAt(srcFrame.root, data.path) : undefined;
+  return moved ? { kind: 'move', fromPath: data.path, childType: moved.type } : null;
 }
 
 function readZone(frames: EditorFrame[], over: ResolveOver): DropZone | null {
@@ -90,7 +95,17 @@ function readZone(frames: EditorFrame[], over: ResolveOver): DropZone | null {
   const frame = frames.find((f) => f.id === data.frameId);
   const node = frame ? nodeAt(frame.root, data.path) : undefined;
   if (!frame || !node) return null;
-  return { frameId: data.frameId, path: data.path, node, medium: frame.target };
+  // The hovered node's PARENT type (undefined at the root) — for a before/after drop, the parent is
+  // what must accept the dragged type, not the hovered node itself (RP-10).
+  const parentType =
+    data.path.length > 0 ? nodeAt(frame.root, data.path.slice(0, -1))?.type : undefined;
+  return {
+    frameId: data.frameId,
+    path: data.path,
+    node,
+    medium: frame.target,
+    ...(parentType !== undefined ? { parentType } : {}),
+  };
 }
 
 // Resolve a live drag (over + active + pointer geometry) into an intent — used by BOTH drag-move
@@ -103,7 +118,7 @@ function resolveIntent(
   pointerStartY: number,
   deltaY: number,
 ): DropIntent | null {
-  const source = readSource(active);
+  const source = readSource(frames, active);
   if (!source) return null;
   const geom: DropGeometry = {
     pointerY: pointerStartY + deltaY,

@@ -55,7 +55,7 @@ interface EditorState {
   insertAt: (frameId: string, parentPath: NodePath, index: number, node: Node) => void;
   moveNode: (frameId: string, fromPath: NodePath, parentPath: NodePath, index: number) => void;
   setDropTarget: (target: DropTarget | null) => void;
-  updateText: (frameId: string, path: NodePath, content: string) => void;
+  setTextProp: (frameId: string, path: NodePath, key: string, value: string) => void;
   setVariant: (frameId: string, path: NodePath, variant: TextStyle) => void;
   setLayout: (
     frameId: string,
@@ -236,14 +236,18 @@ export const useEditor = create<EditorState>()((set) => {
         };
       }),
 
-    // The node-TYPE gate (Text/Button only) stays here as store sanitization (→ descriptor in RP-2);
-    // node-tree's updateProps does the blind props merge + clone.
-    updateText: (frameId, path, content) =>
-      mutate(`text:${frameId}:${path.join('.')}`, (doc) => {
+    // Set one free-text prop (Text/Button `content`, RadioGroup `label`, Radio `value`/`label`). The
+    // legal (type, key) pairs are the descriptor's `textFields` — the node-type gate is now descriptor-
+    // driven (RP-2), not a hardcoded Text/Button check. node-tree's updateProps does the blind merge +
+    // clone. Coalesced per (frame, path, key) so a flurry of keystrokes in ONE field is one undo step,
+    // but switching fields/nodes starts a fresh entry.
+    setTextProp: (frameId, path, key, value) =>
+      mutate(`prop:${frameId}:${path.join('.')}:${key}`, (doc) => {
         const r = applyTreeEdit(doc, frameId, (root) => {
           const target = nodeAt(root, path);
-          if (!target || (target.type !== 'Text' && target.type !== 'Button')) return null;
-          return NodeTree.updateProps(root, path, { content });
+          if (!target || !DESCRIPTORS[target.type].textFields?.some((f) => f.key === key))
+            return null;
+          return NodeTree.updateProps(root, path, { [key]: value });
         });
         return r ? { body: r.body } : null;
       }),

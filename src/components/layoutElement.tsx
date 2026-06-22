@@ -1,16 +1,17 @@
 import { type ReactElement, type ReactNode } from 'react';
 
-import { type ContainerNode } from '../ir/walk';
+import { type LayoutContainerNode } from '../ir/walk';
 
 import { Column, Grid, Row, Stack } from './Layout';
 
 /**
- * Maps a container Node to its React-Aria layout component, threading the layout
- * properties (justify/align/wrap, Grid columns). The single IR -> component
- * structural mapping (β's React home, ADR-0005), shared by the canvas renderer and
- * the editor — so the two React emitters never restate it.
+ * Maps a LAYOUT container Node to its React-Aria layout component, threading the layout
+ * properties (justify/align/wrap, Grid columns). The single IR -> component structural
+ * mapping (β's React home, ADR-0005), shared by the canvas renderer and the editor — so
+ * the two React emitters never restate it. Component containers (RadioGroup) render via
+ * their own component layer, not here (ADR-0016).
  */
-export function layoutElement(node: ContainerNode, children: ReactNode): ReactElement {
+export function layoutElement(node: LayoutContainerNode, children: ReactNode): ReactElement {
   switch (node.type) {
     case 'Stack':
       return (

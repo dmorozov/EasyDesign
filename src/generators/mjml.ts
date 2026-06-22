@@ -105,6 +105,11 @@ const MJML_LEAVES: {
   Text: renderText,
   Button: renderButton,
   Image: renderImage,
+  // Radio is email-unsafe (it only lives in a RadioGroup, which email Frames block — ADR-0006/0016).
+  // RP-9 still requires the entry; it throws as a guardrail and is never reached in a valid email tree.
+  Radio: () => {
+    throw new Error('MJML email cannot render a Radio (RadioGroup is email-unsafe, ADR-0016).');
+  },
 };
 
 function renderLeaf(lit: Lit, node: Node, depth: number): string {
@@ -135,6 +140,7 @@ export function classifyCardChild(node: Node): CardChild {
     case 'Stack':
     case 'Column':
     case 'Grid':
+    case 'RadioGroup':
       return { role: 'unsupported', type: node.type };
     default:
       // Exhaustiveness: `node` is `never` here. A new container type makes it non-never → a compile

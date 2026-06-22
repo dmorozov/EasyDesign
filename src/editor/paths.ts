@@ -3,10 +3,10 @@ import { type Node } from '../ir/types';
 /** A path from a Frame's root to a node: child indices, root = []. */
 export type NodePath = number[];
 
-const CONTAINER_TYPES = new Set<Node['type']>(['Stack', 'Row', 'Column', 'Grid']);
-
+/** Can this node hold children? Union-derived (`'children' in node`), so every container — layout
+ *  (Stack/Row/Column/Grid) AND component (RadioGroup) — counts, with no hand-maintained type list. */
 export function isContainer(node: Node): boolean {
-  return CONTAINER_TYPES.has(node.type);
+  return 'children' in node;
 }
 
 /** Resolve the node at `path`, or undefined if the path is invalid. */

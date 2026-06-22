@@ -26,6 +26,7 @@ function describe(node: Node, path: NodePath): string {
     return content ? `${where}${label}: ${content}` : `${where}${label}`;
   }
   if (node.type === 'Image') return `${where}${label}: ${node.props.alt || 'image'}`;
+  if (node.type === 'Radio') return `${where}${label}: ${node.props.label}`;
   return `${where}${label}`;
 }
 

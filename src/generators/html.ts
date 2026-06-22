@@ -10,6 +10,9 @@ import {
   containerDecls,
   type Decl,
   imageDecls,
+  legendDecls,
+  radioDecls,
+  radioGroupDecls,
   structuralDecls,
   textDecls,
   textTag,
@@ -42,6 +45,14 @@ const htmlEmitter: Emitter<string, void> = {
         : children.join('');
     return `<div style="${inlineStyle(decls)}">${inner}</div>`;
   },
+  component: {
+    // RadioGroup → a semantic <fieldset>/<legend> wrapping the rendered radios (RP-10). The canvas uses
+    // a real React-Aria RadioGroup; the exports emit plain semantic markup (consistent with the leaves).
+    RadioGroup(node, children) {
+      const legend = `<legend style="${inlineStyle(legendDecls())}">${escapeText(node.props.label)}</legend>`;
+      return `<fieldset style="${inlineStyle(radioGroupDecls(node.style))}">${legend}${children.join('')}</fieldset>`;
+    },
+  },
   leaf: {
     Text(node) {
       const tag = textTag(node.props.variant);
@@ -53,6 +64,10 @@ const htmlEmitter: Emitter<string, void> = {
     Image(node) {
       const { src, alt } = node.props;
       return `<img src="${escapeAttr(src)}" alt="${escapeAttr(alt)}" style="${inlineStyle(imageDecls(node))}">`;
+    },
+    Radio(node) {
+      const input = `<input type="radio" value="${escapeAttr(node.props.value)}">`;
+      return `<label style="${inlineStyle(radioDecls())}">${input}${escapeText(node.props.label)}</label>`;
     },
   },
   descend() {

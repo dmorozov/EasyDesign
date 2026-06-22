@@ -14,6 +14,7 @@
 // filtering + option/value resolution. Invariant enum option lists (justify/align/wrap/distribute) and
 // the named-style list stay as presenter constants — only the *dynamic* token options live in the model.
 import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
+import { isLayoutContainer } from '../ir/walk';
 import { catalog, STYLE_KEY_CATEGORY, type Category, type StyleKey } from '../theme/design-tokens';
 import { type TextStyle } from '../theme/generated/typography';
 
@@ -51,10 +52,18 @@ export interface TypographyModel {
   readonly weight?: TokenField;
 }
 
+/** One free-text prop edited as a labelled input (Text/Button `content`, RadioGroup `label`, Radio
+ *  `value`/`label`). The descriptor declares which props + labels; the resolver reads the values. */
+export interface TextField {
+  readonly key: string;
+  readonly label: string;
+  readonly value: string;
+}
+
 /** The structured, typed editing model. A present top-level field = an editable section. */
 export interface EditModel {
   readonly type: Node['type'];
-  readonly content?: string;
+  readonly text?: readonly TextField[];
   readonly layout?: LayoutModel;
   readonly typography?: TypographyModel;
   readonly style?: readonly TokenField[];
@@ -107,15 +116,21 @@ const tokenField = (node: Node, key: StyleKey): TokenField => ({
  * (only its depth matters — an email *root* keeps background/padding, deeper containers keep none).
  */
 export function resolveEditModel(medium: Medium, node: Node, path: NodePath): EditModel {
-  const { controls, styleKeys } = DESCRIPTORS[node.type];
+  const { controls, styleKeys, textFields } = DESCRIPTORS[node.type];
 
-  // Content (Text/Button) — the descriptor declares it; the value is read structurally.
-  const content = controls.includes('content') ? contentOf(node) : undefined;
+  // Free-text props (Text/Button content, RadioGroup label, Radio value/label) — the descriptor declares
+  // the keys (type-checked to this node) + labels; the values are read structurally.
+  const props = node.props as Record<string, unknown> | undefined;
+  const text = textFields?.map((f) => {
+    const v = props?.[f.key];
+    return { key: f.key, label: f.label, value: typeof v === 'string' ? v : '' };
+  });
 
-  // Layout (containers only). Each control is per-type (descriptor) and per-state (Row-`fill` hides
-  // justify/wrap, because every child grows equally so there is no free space for them to act on).
+  // Layout (LAYOUT containers only — a RadioGroup is a component container with no layout props). Each
+  // control is per-type (descriptor) and per-state (Row-`fill` hides justify/wrap, because every child
+  // grows equally so there is no free space for them to act on).
   let layout: LayoutModel | undefined;
-  if ('children' in node) {
+  if (isLayoutContainer(node)) {
     const distribute = node.type === 'Row' ? (node.props?.distribute ?? 'fit') : undefined;
     const isFillRow = distribute === 'fill';
     layout = {
@@ -159,14 +174,9 @@ export function resolveEditModel(medium: Medium, node: Node, path: NodePath): Ed
 
   return {
     type: node.type,
-    ...(content !== undefined ? { content } : {}),
+    ...(text?.length ? { text } : {}),
     ...(layout ? { layout } : {}),
     ...(typography ? { typography } : {}),
     ...(style ? { style } : {}),
   };
-}
-
-/** The `content` prop, read structurally (only Text/Button carry one — the descriptor gates presence). */
-function contentOf(node: Node): string | undefined {
-  return node.props && 'content' in node.props ? node.props.content : undefined;
 }

@@ -41,15 +41,15 @@ beforeEach(() => {
 
 describe('coalescing — consecutive same-key edits collapse into one undo step', () => {
   it('text edits on the same node coalesce (one entry, keyed by frame+path)', () => {
-    s().updateText('web-1', [0], 'a');
-    s().updateText('web-1', [0], 'ab');
-    s().updateText('web-1', [0], 'abc');
+    s().setTextProp('web-1', [0], 'content', 'a');
+    s().setTextProp('web-1', [0], 'content', 'ab');
+    s().setTextProp('web-1', [0], 'content', 'abc');
     expect(s().history.past).toHaveLength(1);
-    expect(s().history.lastKey).toBe('text:web-1:0');
+    expect(s().history.lastKey).toBe('prop:web-1:0:content'); // coalesce key = frame:path:propKey
   });
   it('text edits on different nodes do NOT coalesce', () => {
-    s().updateText('web-1', [0], 'a'); // heading
-    s().updateText('web-1', [1, 0], 'b'); // a grid cell
+    s().setTextProp('web-1', [0], 'content', 'a'); // heading
+    s().setTextProp('web-1', [1, 0], 'content', 'b'); // a grid cell
     expect(s().history.past).toHaveLength(2);
   });
   it('layout edits on the same container coalesce', () => {
@@ -71,10 +71,21 @@ describe('coalescing — consecutive same-key edits collapse into one undo step'
     expect(s().frames.find((f) => f.id === 'web-1')?.title).toBe('AB');
   });
   it('a discrete op between two same-key edits breaks the coalesce chain', () => {
-    s().updateText('web-1', [0], 'a'); // entry 1
+    s().setTextProp('web-1', [0], 'content', 'a'); // entry 1
     s().insertChild('web-1', [], text()); // entry 2 (null key resets lastCommitKey)
-    s().updateText('web-1', [0], 'ab'); // entry 3 — no longer coalesces
+    s().setTextProp('web-1', [0], 'content', 'ab'); // entry 3 — no longer coalesces
     expect(s().history.past).toHaveLength(3);
+  });
+});
+
+describe('setTextProp — writes only descriptor-declared text props (RP-10 gate)', () => {
+  it('is a no-op on a node type with no such text prop (the root Stack has no textFields)', () => {
+    s().setTextProp('web-1', [], 'content', 'x');
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('is a no-op for an undeclared key on a node that declares others (Text → only `content`)', () => {
+    s().setTextProp('web-1', [0], 'variant', 'h1'); // `variant` is not a text field
+    expect(s().history.past).toHaveLength(0);
   });
 });
 
@@ -124,12 +135,12 @@ describe('setFrameWidth — only a real resize makes history (ADR-0013)', () => 
 
 describe('Snapshot captures the document only', () => {
   it('a history entry has exactly { frames, themeOverrides }', () => {
-    s().updateText('web-1', [0], 'a');
+    s().setTextProp('web-1', [0], 'content', 'a');
     expect(Object.keys(s().history.past[0] ?? {}).sort()).toEqual(['frames', 'themeOverrides']);
   });
   it('undo restores the document and CLEARS Selection (selection is not in history)', () => {
     s().selectNode('web-1', [0]);
-    s().updateText('web-1', [0], 'changed');
+    s().setTextProp('web-1', [0], 'content', 'changed');
     expect(s().selectedFrameId).toBe('web-1');
     s().undo();
     expect(s().frames).toEqual(SEED);
@@ -140,7 +151,7 @@ describe('Snapshot captures the document only', () => {
 
 describe('undo / redo mechanics', () => {
   it('undo moves a snapshot to the redo stack; redo re-applies it', () => {
-    s().updateText('web-1', [0], 'changed');
+    s().setTextProp('web-1', [0], 'content', 'changed');
     s().undo();
     expect(s().history.past).toHaveLength(0);
     expect(s().history.future).toHaveLength(1);
@@ -151,10 +162,10 @@ describe('undo / redo mechanics', () => {
     expect(content('web-1', [0])).toBe('changed');
   });
   it('a new commit after undo clears the redo stack', () => {
-    s().updateText('web-1', [0], 'a');
+    s().setTextProp('web-1', [0], 'content', 'a');
     s().undo();
     expect(s().history.future).toHaveLength(1);
-    s().updateText('web-1', [0], 'b');
+    s().setTextProp('web-1', [0], 'content', 'b');
     expect(s().history.future).toHaveLength(0);
   });
   it('undo with empty history is a no-op', () => {
@@ -163,7 +174,7 @@ describe('undo / redo mechanics', () => {
     expect(s().history.past).toHaveLength(0);
   });
   it('redo with empty future is a no-op', () => {
-    s().updateText('web-1', [0], 'a');
+    s().setTextProp('web-1', [0], 'content', 'a');
     s().redo();
     expect(s().history.future).toHaveLength(0);
     expect(content('web-1', [0])).toBe('a');

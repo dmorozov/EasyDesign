@@ -118,6 +118,45 @@ export function buttonDecls(node: ButtonNode): Decl[] {
   return [...BUTTON_BASE, ...variant];
 }
 
+// RadioGroup / Radio (RP-10) β — the compound Component's CSS, shared by the three string targets.
+// The RAC canvas keeps its own β in src/components (ADR-0005); this is the export-markup side.
+
+/** The <fieldset> wrapper for a RadioGroup: a borderless vertical stack of options + its token style. */
+export function radioGroupDecls(style: StyleMap | undefined): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'column' },
+    { prop: 'gap', value: catalog.resolveVar('space.sm') },
+    { prop: 'border', value: 'none' },
+    { prop: 'margin', value: '0' },
+    { prop: 'padding', value: '0' },
+    ...containerDecls(style),
+  ];
+}
+
+/** The <legend> (the group's label). */
+export function legendDecls(): Decl[] {
+  return [
+    { prop: 'padding', value: '0' },
+    { prop: 'marginBottom', value: catalog.resolveVar('space.sm') },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontWeight', value: catalog.resolveVar('font.weight.semibold') },
+    { prop: 'color', value: 'var(--color-text)' },
+  ];
+}
+
+/** One radio option: a <label> wrapping the input + its text. */
+export function radioDecls(): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'gap', value: catalog.resolveVar('space.sm') },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
+    { prop: 'color', value: 'var(--color-text)' },
+  ];
+}
+
 export function imageDecls(node: ImageNode): Decl[] {
   const out: Decl[] = [
     { prop: 'display', value: 'block' },

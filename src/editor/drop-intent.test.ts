@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
+import { type Node, type RadioNode } from '../ir/types';
 
 import {
   computeMode,
   placeAt,
   resolveDropIntent,
+  type DragSource,
   type DropGeometry,
   type DropZone,
 } from './drop-intent';
@@ -35,6 +36,7 @@ const safeItem: PaletteItem = {
   icon: 'stack',
   group: 'layout',
   emailSafe: true,
+  nodeType: 'Stack',
   create: () => container(),
 };
 const unsafeItem: PaletteItem = {
@@ -43,8 +45,26 @@ const unsafeItem: PaletteItem = {
   icon: 'grid',
   group: 'layout',
   emailSafe: false,
+  nodeType: 'Grid',
   create: () => ({ type: 'Grid', props: { columns: 2 }, style: { gap: 'space.md' }, children: [] }),
 };
+const radioItem: PaletteItem = {
+  id: 'radio',
+  label: 'Radio',
+  icon: 'check',
+  group: 'content',
+  emailSafe: false,
+  nodeType: 'Radio',
+  create: () => ({ type: 'Radio', props: { value: 'o', label: 'O' } }),
+};
+
+// DragSource builders — `childType` comes from the item (insert) or is given (move).
+const ins = (item: PaletteItem): DragSource => ({ kind: 'insert', item, childType: item.nodeType });
+const mv = (fromPath: number[], childType: Node['type']): DragSource => ({
+  kind: 'move',
+  fromPath,
+  childType,
+});
 
 describe('computeMode — geometry + node → before/inside/after', () => {
   it('an empty container is always `inside` (nothing to sit beside), even near its top edge', () => {
@@ -104,12 +124,12 @@ describe('placeAt — placement (node + mode) → parent path + insertion index'
 
 describe('resolveDropIntent — the full intent (placement + op + email guard)', () => {
   it('no hovered zone → null (nothing to drop on)', () => {
-    expect(resolveDropIntent(null, { kind: 'insert', item: safeItem }, geomAt(0.5))).toBeNull();
+    expect(resolveDropIntent(null, ins(safeItem), geomAt(0.5))).toBeNull();
   });
 
   it('insert into a web container resolves to an `insert` op at the append index', () => {
     const zone: DropZone = { frameId: 'f1', path: [1], node: container([leaf()]), medium: 'web' };
-    const intent = resolveDropIntent(zone, { kind: 'insert', item: safeItem }, geomAt(0.5));
+    const intent = resolveDropIntent(zone, ins(safeItem), geomAt(0.5));
     expect(intent).toMatchObject({
       kind: 'insert',
       item: safeItem,
@@ -122,7 +142,7 @@ describe('resolveDropIntent — the full intent (placement + op + email guard)',
 
   it('insert BEFORE a leaf splices into its parent at the leaf index', () => {
     const zone: DropZone = { frameId: 'f1', path: [0, 2], node: leaf(), medium: 'web' };
-    const intent = resolveDropIntent(zone, { kind: 'insert', item: safeItem }, geomAt(0.1));
+    const intent = resolveDropIntent(zone, ins(safeItem), geomAt(0.1));
     expect(intent).toMatchObject({
       kind: 'insert',
       parentPath: [0],
@@ -133,7 +153,7 @@ describe('resolveDropIntent — the full intent (placement + op + email guard)',
 
   it('an email-unsafe Component over an EMAIL Frame is rejected and marked blocked (ADR-0006)', () => {
     const zone: DropZone = { frameId: 'e1', path: [0], node: container([]), medium: 'email' };
-    const intent = resolveDropIntent(zone, { kind: 'insert', item: unsafeItem }, geomAt(0.5));
+    const intent = resolveDropIntent(zone, ins(unsafeItem), geomAt(0.5));
     expect(intent).toEqual({
       kind: 'rejected',
       reason: 'email-unsafe',
@@ -143,20 +163,18 @@ describe('resolveDropIntent — the full intent (placement + op + email guard)',
 
   it('the SAME email-unsafe Component over a WEB Frame is allowed (the rule is the medium, not the item)', () => {
     const zone: DropZone = { frameId: 'f1', path: [0], node: container([]), medium: 'web' };
-    const intent = resolveDropIntent(zone, { kind: 'insert', item: unsafeItem }, geomAt(0.5));
+    const intent = resolveDropIntent(zone, ins(unsafeItem), geomAt(0.5));
     expect(intent?.kind).toBe('insert');
   });
 
   it('an email-SAFE Component over an email Frame is allowed', () => {
     const zone: DropZone = { frameId: 'e1', path: [0], node: container([]), medium: 'email' };
-    expect(resolveDropIntent(zone, { kind: 'insert', item: safeItem }, geomAt(0.5))?.kind).toBe(
-      'insert',
-    );
+    expect(resolveDropIntent(zone, ins(safeItem), geomAt(0.5))?.kind).toBe('insert');
   });
 
   it('a move resolves to a `move` op carrying the source path — and is NEVER email-rejected', () => {
     const zone: DropZone = { frameId: 'e1', path: [2], node: leaf(), medium: 'email' };
-    const intent = resolveDropIntent(zone, { kind: 'move', fromPath: [0, 1] }, geomAt(0.9));
+    const intent = resolveDropIntent(zone, mv([0, 1], 'Button'), geomAt(0.9));
     expect(intent).toMatchObject({
       kind: 'move',
       fromPath: [0, 1],
@@ -164,5 +182,62 @@ describe('resolveDropIntent — the full intent (placement + op + email guard)',
       index: 3, // after [2]
       target: { frameId: 'e1', path: [2], mode: 'after' },
     });
+  });
+});
+
+describe('resolveDropIntent — allowed-children rule (RP-10): the parent must accept the dragged type', () => {
+  const radio = (): RadioNode => ({ type: 'Radio', props: { value: 'a', label: 'A' } });
+  const radioGroup = (kids: RadioNode[] = []): Node => ({
+    type: 'RadioGroup',
+    props: { label: 'L' },
+    children: kids,
+  });
+  const grid = (kids: Node[] = []): Node => ({
+    type: 'Grid',
+    props: { columns: 2 },
+    children: kids,
+  });
+
+  it('a Radio dropped INSIDE a RadioGroup is allowed (the slot rule satisfied)', () => {
+    const zone: DropZone = { frameId: 'f', path: [0], node: radioGroup(), medium: 'web' };
+    expect(resolveDropIntent(zone, ins(radioItem), geomAt(0.5))?.kind).toBe('insert');
+  });
+
+  it('a Radio dropped INSIDE a Grid is rejected as invalid-child (the flagship RP-10 scenario)', () => {
+    const zone: DropZone = { frameId: 'f', path: [0], node: grid(), medium: 'web' };
+    expect(resolveDropIntent(zone, ins(radioItem), geomAt(0.5))).toMatchObject({
+      kind: 'rejected',
+      reason: 'invalid-child',
+      target: { blocked: true },
+    });
+  });
+
+  it('a Radio dropped INSIDE a Stack is rejected (a restricted child needs an explicit slot)', () => {
+    const zone: DropZone = { frameId: 'f', path: [0], node: container([]), medium: 'web' };
+    expect(resolveDropIntent(zone, ins(radioItem), geomAt(0.5))?.kind).toBe('rejected');
+  });
+
+  it('a Radio dropped BEFORE a Radio is vetted against its PARENT (RadioGroup) — allowed', () => {
+    const zone: DropZone = {
+      frameId: 'f',
+      path: [0, 1],
+      node: radio(),
+      medium: 'web',
+      parentType: 'RadioGroup',
+    };
+    expect(resolveDropIntent(zone, ins(radioItem), geomAt(0.1))?.kind).toBe('insert');
+  });
+
+  it('a non-Radio dropped into a RadioGroup is rejected (it admits only Radio — bidirectional)', () => {
+    const zone: DropZone = { frameId: 'f', path: [0], node: radioGroup([radio()]), medium: 'web' };
+    expect(resolveDropIntent(zone, mv([1, 0], 'Button'), geomAt(0.5))).toMatchObject({
+      kind: 'rejected',
+      reason: 'invalid-child',
+    });
+  });
+
+  it('MOVE enforces the rule too: a Radio moved into a Grid is rejected', () => {
+    const zone: DropZone = { frameId: 'f', path: [0], node: grid(), medium: 'web' };
+    expect(resolveDropIntent(zone, mv([1], 'Radio'), geomAt(0.5))?.kind).toBe('rejected');
   });
 });

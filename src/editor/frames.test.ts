@@ -9,7 +9,7 @@ import {
   createFrame,
   deleteFrame,
   insertHint,
-  isEmailFrameClean,
+  isFrameValid,
   moveFrame,
   nextSlot,
   resizeFrame,
@@ -24,6 +24,7 @@ const item = (emailSafe: boolean): PaletteItem => ({
   icon: 'stack',
   group: 'layout',
   emailSafe,
+  nodeType: 'Stack',
   create: () => ({ type: 'Stack', children: [] }),
 });
 const frame = (target: FrameTarget, over: Partial<EditorFrame> = {}): EditorFrame => ({
@@ -151,23 +152,43 @@ describe('TARGET_PROFILES — Preview-width presets per medium (ADR-0013)', () =
   });
 });
 
-describe('isEmailFrameClean — the import-time email audit (ADR-0006)', () => {
+describe('isFrameValid — the import audit: email-safety (ADR-0006) + allowed-children (RP-10)', () => {
   const grid: Node = { type: 'Grid', props: { columns: 2 }, children: [] };
   const text: Node = { type: 'Text', props: { content: 'hi', variant: 'body' } };
+  const radio: Node = { type: 'Radio', props: { value: 'a', label: 'A' } };
+  const radioGroup: Node = { type: 'RadioGroup', props: { label: 'Pick' }, children: [radio] };
 
-  it('web Frames are always clean (the rule is email-only)', () => {
-    expect(isEmailFrameClean('web', grid)).toBe(true);
+  it('a web Frame ignores the email rule (a Grid is fine on web)', () => {
+    expect(isFrameValid('web', grid)).toBe(true);
   });
   it('an all-email-safe email tree is clean', () => {
-    expect(isEmailFrameClean('email', { type: 'Stack', children: [text] })).toBe(true);
+    expect(isFrameValid('email', { type: 'Stack', children: [text] })).toBe(true);
   });
-  it('flags an email-unsafe node nested anywhere', () => {
+  it('flags an email-unsafe node nested anywhere (Grid, RadioGroup) in an email Frame', () => {
     expect(
-      isEmailFrameClean('email', { type: 'Stack', children: [{ type: 'Row', children: [grid] }] }),
+      isFrameValid('email', { type: 'Stack', children: [{ type: 'Row', children: [grid] }] }),
+    ).toBe(false);
+    expect(isFrameValid('email', { type: 'Stack', children: [radioGroup] })).toBe(false);
+  });
+
+  // RP-10 — structural validity applies to EVERY Frame (web included), not just email.
+  it('accepts a Radio inside a RadioGroup (the slot rule satisfied)', () => {
+    expect(isFrameValid('web', radioGroup)).toBe(true);
+  });
+  it('rejects a Radio dropped outside a RadioGroup — in a Grid (the flagship RP-10 scenario)', () => {
+    expect(isFrameValid('web', { type: 'Grid', props: { columns: 2 }, children: [radio] })).toBe(
+      false,
+    );
+    expect(isFrameValid('web', { type: 'Stack', children: [radio] })).toBe(false);
+  });
+  it('rejects a non-Radio child inside a RadioGroup (the constraint is bidirectional)', () => {
+    expect(
+      isFrameValid('web', { type: 'RadioGroup', props: { label: 'x' }, children: [text] }),
     ).toBe(false);
   });
-  it('is defensive over malformed/partial imported IR (never throws)', () => {
-    expect(isEmailFrameClean('email', null)).toBe(true);
-    expect(isEmailFrameClean('email', { children: 'nope' })).toBe(true);
+  it('is defensive over malformed/partial imported IR (never throws; unknown types permissive)', () => {
+    expect(isFrameValid('email', null)).toBe(true);
+    expect(isFrameValid('email', { children: 'nope' })).toBe(true);
+    expect(isFrameValid('web', { type: 'Mystery', children: [radio] })).toBe(true);
   });
 });

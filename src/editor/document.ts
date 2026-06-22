@@ -1,7 +1,7 @@
 import { type Frame, type Node } from '../ir/types';
 import { catalog } from '../theme/design-tokens';
 
-import { isEmailFrameClean, TARGET_PROFILES } from './frames';
+import { isFrameValid, TARGET_PROFILES } from './frames';
 
 // A Frame as the editor holds it: the IR plus its board position and Preview width (so both persist).
 export interface EditorFrame {
@@ -65,8 +65,9 @@ function isEditorFrame(value: unknown): value is EditorFrame {
     (f.width === undefined || typeof f.width === 'number') &&
     typeof f.root === 'object' &&
     f.root !== null &&
-    // ADR-0006: an email Frame's tree must be email-safe (the interactive guards can't vet imports).
-    isEmailFrameClean(f.target, f.root)
+    // The import audit (the interactive guards can't vet imports): an email Frame's tree must be
+    // email-safe (ADR-0006) AND every container must satisfy the allowed-children rule (RP-10/ADR-0016).
+    isFrameValid(f.target, f.root)
   );
 }
 

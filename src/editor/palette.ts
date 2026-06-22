@@ -14,6 +14,9 @@ export interface PaletteItem {
   /** The data the email rule reads (ADR-0006): `false` items are locked in email Frames. The rule
    *  itself lives in `frames.ts` (`canInsertComponent`/`canInsertInTarget`), not here. */
   emailSafe: boolean;
+  /** The node type this tile inserts (a variant's underlying type, e.g. 'Text' for "Heading"). The
+   *  drop validator reads it to enforce the allowed-children rule (RP-10) without minting a node. */
+  nodeType: Node['type'];
   create: () => Node;
 }
 
@@ -52,6 +55,10 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
     create: () => ({ type: 'Button', props: { content: 'Button', variant: 'secondary' } }),
   },
   'Image',
+  // RP-10: the compound Component + its slot leaf. Radio is draggable but lands ONLY in a RadioGroup
+  // (the drop validator rejects it elsewhere) — the proof of the allowed-children rule.
+  'RadioGroup',
+  'Radio',
 ];
 
 function project(spec: PaletteSpec): PaletteItem {
@@ -63,6 +70,7 @@ function project(spec: PaletteSpec): PaletteItem {
       icon: d.icon,
       group: d.group,
       emailSafe: d.emailSafe,
+      nodeType: spec,
       create: d.create,
     };
   }
@@ -73,6 +81,7 @@ function project(spec: PaletteSpec): PaletteItem {
     icon: spec.icon ?? d.icon,
     group: d.group, // group + email-safety are TYPE facts — never per-variant
     emailSafe: d.emailSafe,
+    nodeType: spec.type,
     create: spec.create ?? d.create,
   };
 }

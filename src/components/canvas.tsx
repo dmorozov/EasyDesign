@@ -6,6 +6,7 @@ import { type Emitter, walkNode } from '../ir/walk';
 import { Button } from './Button';
 import { layoutElement } from './layoutElement';
 import { Image, Text } from './primitives';
+import { Radio, RadioGroup } from './RadioGroup';
 
 /**
  * The canvas runtime — render IR as live React-Aria elements (ADR-0001/0005). It
@@ -29,6 +30,15 @@ const canvasEmitter: Emitter<ReactElement, void> = {
         : children.map((c, i) => <Fragment key={i}>{c}</Fragment>);
     return layoutElement(node, body);
   },
+  component: {
+    RadioGroup: (node, children) => (
+      <RadioGroup label={node.props.label} style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </RadioGroup>
+    ),
+  },
   leaf: {
     Text: (node) => (
       <Text variant={node.props.variant} style={node.style}>
@@ -37,6 +47,7 @@ const canvasEmitter: Emitter<ReactElement, void> = {
     ),
     Button: (node) => <Button variant={node.props.variant}>{node.props.content}</Button>,
     Image: (node) => <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />,
+    Radio: (node) => <Radio value={node.props.value}>{node.props.label}</Radio>,
   },
   descend() {
     /* void context: the canvas threads no per-node state */

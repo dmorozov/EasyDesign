@@ -65,3 +65,14 @@ cross-sibling leaf-run batching is non-compositional and does not belong in the 
 walk is never touched; only mjml.ts shares its types). `renderLeaf`'s container guard is retained as
 defense-in-depth for a container nested inside a Row column (a runtime-only constraint until RP-10's
 `allowedChildren` lands). Output byte-identical (golden net unchanged).
+
+**Amended (RP-10, 2026-06-22 — see ADR-0016): `walkNode` gained a third dispatch arm for COMPONENT
+containers.** Containers now split into LAYOUT containers (Stack/Row/Column/Grid → the shared
+shape-driven `container()`; `shapeOf` and `container`'s node param are narrowed to `LayoutContainerNode`)
+and COMPONENT containers (RadioGroup → a new **`emit.component: ComponentRenderers<T,C>`** record, a
+mapped type over `ComponentContainerType`, exactly parallel to `emit.leaf`). `walkNode` dispatches
+`node.type in COMPONENT_CONTAINERS ? component[type] : container(shapeOf)`, so a component container that
+renders as a real Component (not a box) needs no per-type branch in any adapter, and a forgotten
+`component` renderer is a compile error at every walk adapter. The walk still imports only `ir/types`;
+the Component markup stays in the adapters. MJML remains bespoke (a component container hits
+`classifyCardChild`'s `unsupported`). Full rationale + the allowed-children constraint layer: ADR-0016.

@@ -14,7 +14,7 @@ describe('resolveEditModel — leaves', () => {
     const node: Node = { type: 'Text', props: { content: 'Hi', variant: 'body' } };
     const m = resolveEditModel('web', node, [0]);
     expect(m.type).toBe('Text');
-    expect(m.content).toBe('Hi');
+    expect(m.text).toEqual([{ key: 'content', label: 'Text', value: 'Hi' }]);
     expect(m.typography?.heading).toBe('body');
     expect(m.typography?.size?.key).toBe('fontSize');
     expect(m.typography?.weight?.key).toBe('fontWeight');
@@ -43,19 +43,31 @@ describe('resolveEditModel — leaves', () => {
     expect(m.typography?.weight?.value).toBe(''); // unset → Default
   });
 
-  it('Button: content only — no typography, layout, or style', () => {
+  it('Button: a single Label text field — no typography, layout, or style', () => {
     const node: Node = { type: 'Button', props: { content: 'Go', variant: 'primary' } };
     const m = resolveEditModel('web', node, [0]);
-    expect(m.content).toBe('Go');
+    expect(m.text).toEqual([{ key: 'content', label: 'Label', value: 'Go' }]);
     expect(m.typography).toBeUndefined();
     expect(m.layout).toBeUndefined();
     expect(m.style).toBeUndefined();
   });
 
-  it('Image: nothing editable (no controls, no style keys)', () => {
+  it('Image: nothing editable (no controls, no text fields, no style keys)', () => {
     const node: Node = { type: 'Image', props: { src: 's', alt: 'a' } };
     const m = resolveEditModel('web', node, [0]);
     expect(m).toEqual({ type: 'Image' });
+  });
+
+  it('Radio: two text fields (label, value) in order; nothing else (RP-10)', () => {
+    const node: Node = { type: 'Radio', props: { value: 'pro', label: 'Pro plan' } };
+    const m = resolveEditModel('web', node, [0, 1]);
+    expect(m.text).toEqual([
+      { key: 'label', label: 'Label', value: 'Pro plan' },
+      { key: 'value', label: 'Value', value: 'pro' },
+    ]);
+    expect(m.layout).toBeUndefined();
+    expect(m.typography).toBeUndefined();
+    expect(m.style).toBeUndefined();
   });
 });
 
@@ -65,7 +77,7 @@ describe('resolveEditModel — containers (layout + style)', () => {
     const m = resolveEditModel('web', node, []);
     expect(m.layout).toEqual({ justify: 'start', align: 'stretch', wrap: 'nowrap' }); // no distribute
     expect(m.style?.map((f) => f.key)).toEqual(['background', 'padding', 'borderRadius', 'gap']);
-    expect(m.content).toBeUndefined();
+    expect(m.text).toBeUndefined();
     expect(m.typography).toBeUndefined();
   });
 
@@ -113,6 +125,14 @@ describe('resolveEditModel — containers (layout + style)', () => {
     expect(layout?.wrap).toBeUndefined();
     expect(layout?.distribute).toBeUndefined();
   });
+
+  it('RadioGroup (a component container) exposes its label text field, NOT a layout section (RP-10)', () => {
+    const node: Node = { type: 'RadioGroup', props: { label: 'Plan' }, children: [] };
+    const m = resolveEditModel('web', node, []);
+    expect(m.text).toEqual([{ key: 'label', label: 'Group label', value: 'Plan' }]);
+    expect(m.layout).toBeUndefined(); // it renders as a Component, not a layout box
+    expect(m.style).toBeUndefined();
+  });
 });
 
 describe('resolveEditModel — medium narrows container style (ADR-0006)', () => {
@@ -131,7 +151,7 @@ describe('resolveEditModel — medium narrows container style (ADR-0006)', () =>
   it('email does NOT narrow a Text node — its typography survives into MJML (RP-3 binding)', () => {
     const node: Node = { type: 'Text', props: { content: 'Hi', variant: 'h2' } };
     const m = resolveEditModel('email', node, [0]);
-    expect(m.content).toBe('Hi');
+    expect(m.text).toEqual([{ key: 'content', label: 'Text', value: 'Hi' }]);
     expect(m.typography?.heading).toBe('h2');
     expect(m.typography?.size?.key).toBe('fontSize');
   });

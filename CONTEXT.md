@@ -21,6 +21,14 @@ content. The kinds are **Stack**, **Row**, **Column**, and **Grid**; Components 
 the tree they sit in, never by absolute coordinates.
 _Avoid_: wrapper, container, frame
 
+**Compound Component**:
+A Component that holds its own children but, unlike a Layout element, accepts only a fixed
+**set of child kinds** (its _slots_) and renders as a specific Component rather than a layout box —
+e.g. a **RadioGroup** holds only **Radio** options. The slot rule is declared once and enforced both
+when building (a Radio may only be dropped into a RadioGroup; dropping it elsewhere is refused) and on
+import. The first one is RadioGroup → Radio; more (e.g. a data grid) follow the same shape.
+_Avoid_: container (means Layout element), widget, composite
+
 **Frame**:
 A top-level design unit on the Board whose contents form one layout tree, and the natural unit of
 export. Carries a **target medium**: a _web_ Frame exports to React, Angular, or static HTML

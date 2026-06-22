@@ -32,6 +32,15 @@ export interface RowProps extends FlowProps {
   distribute?: Distribute;
 }
 
+/** A single option inside a RadioGroup. A leaf whose ONLY valid parent is RadioGroup — the first
+ *  "slot" child (RP-10 / ADR-0016). The parent constraint is enforced by the descriptor's
+ *  `allowedChildren` at runtime and by `RadioGroup.children: RadioNode[]` at compile time. */
+export interface RadioNode {
+  type: 'Radio';
+  props: { value: string; label: string };
+  style?: StyleMap;
+}
+
 export type Node =
   | { type: 'Stack'; props?: FlowProps; style?: StyleMap; children: Node[] }
   | { type: 'Row'; props?: RowProps; style?: StyleMap; children: Node[] }
@@ -42,6 +51,12 @@ export type Node =
       style?: StyleMap;
       children: Node[];
     }
+  // RadioGroup is the first COMPOUND Component: a container that renders as a specific Component (a RAC
+  // RadioGroup, not a layout box) and whose children are CONSTRAINED to Radio. The narrowed
+  // `children: RadioNode[]` is RP-10's compile-time half (hand-authored IR + the generators can't put a
+  // non-Radio here); the editor's runtime drop validator (canContain) is the other half. ADR-0016.
+  | { type: 'RadioGroup'; props: { label: string }; style?: StyleMap; children: RadioNode[] }
+  | RadioNode
   | { type: 'Text'; props: { content: string; variant: TextStyle }; style?: StyleMap }
   | {
       type: 'Button';

@@ -4,7 +4,7 @@
 // call these through the `mutate()` funnel (which records history + persists) + reconcile selection/rightTab.
 import { type Node } from '../ir/types';
 
-import { DESCRIPTORS } from './descriptors';
+import { canContain, DESCRIPTORS } from './descriptors';
 import { type EditorFrame } from './document';
 import { type PaletteItem } from './palette';
 
@@ -87,15 +87,32 @@ export function isNodeEmailSafe(type: string): boolean {
   return !EMAIL_UNSAFE_TYPES.has(type);
 }
 
-/** True iff a Frame's whole tree is email-safe (web Frames are always clean). Defensive over the
- *  untrusted IR of an imported document — never throws on a malformed node. */
-export function isEmailFrameClean(target: FrameTarget, root: unknown): boolean {
-  if (target !== 'email') return true;
+/** True iff a Frame's whole tree is VALID: every node is email-safe (email Frames only, ADR-0006) AND
+ *  every container's children satisfy the allowed-children rule (RP-10 / ADR-0016) — so an imported or
+ *  hand-edited document can't smuggle in a Grid in an email Frame, or a Radio outside a RadioGroup.
+ *  Generalises the old email-only `isEmailFrameClean`. Defensive over untrusted IR — never throws on a
+ *  malformed node; an UNKNOWN type is permissive (it isn't ours to constrain). */
+export function isFrameValid(target: FrameTarget, root: unknown): boolean {
+  const emailMode = target === 'email';
   const ok = (node: unknown): boolean => {
     if (typeof node !== 'object' || node === null) return true;
     const n = node as { type?: unknown; children?: unknown };
-    if (typeof n.type === 'string' && !isNodeEmailSafe(n.type)) return false;
-    return !Array.isArray(n.children) || n.children.every(ok);
+    if (typeof n.type === 'string' && emailMode && !isNodeEmailSafe(n.type)) return false;
+    if (!Array.isArray(n.children)) return true;
+    const parent = n.type;
+    return n.children.every((child: unknown) => {
+      const childType = (child as { type?: unknown } | null)?.type;
+      if (
+        typeof parent === 'string' &&
+        typeof childType === 'string' &&
+        parent in DESCRIPTORS &&
+        childType in DESCRIPTORS &&
+        !canContain(parent as Node['type'], childType as Node['type'])
+      ) {
+        return false; // a KNOWN parent/child pair that violates the allowed-children rule
+      }
+      return ok(child);
+    });
   };
   return ok(root);
 }

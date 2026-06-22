@@ -251,6 +251,29 @@ const FIXTURES: readonly GoldenFixture[] = [
     },
   },
   {
+    // RP-10 / ADR-0016 — the compound Component: a RadioGroup (component container) of Radios. Web-only
+    // (email-unsafe). Locks the <fieldset>/<legend>/<label><input type="radio"> export markup.
+    name: 'radiogroup',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Stack',
+        style: { gap: 'space.md' },
+        children: [
+          {
+            type: 'RadioGroup',
+            props: { label: 'Plan' },
+            children: [
+              { type: 'Radio', props: { value: 'free', label: 'Free' } },
+              { type: 'Radio', props: { value: 'pro', label: 'Pro' } },
+            ],
+          },
+        ],
+      },
+    },
+  },
+  {
     // Recursion depth + mixed containers in one tree.
     name: 'nested-deep',
     emailSafe: false,

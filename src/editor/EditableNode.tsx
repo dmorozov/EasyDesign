@@ -10,6 +10,7 @@ import { type CSSProperties, Fragment, type ReactElement, type ReactNode } from 
 import { Button } from '../components/Button';
 import { layoutElement } from '../components/layoutElement';
 import { Image, Text } from '../components/primitives';
+import { Radio, RadioGroup } from '../components/RadioGroup';
 import { Icon } from '../design-system';
 import { type Node } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
@@ -139,6 +140,23 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
         </EditableShell>
       );
     },
+    component: {
+      RadioGroup(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Radio here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <RadioGroup label={node.props.label} style={node.style}>
+              {body}
+            </RadioGroup>
+          </EditableShell>
+        );
+      },
+    },
     leaf: {
       Text(node, ctx) {
         return (
@@ -160,6 +178,13 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
         return (
           <EditableShell frameId={frameId} path={ctx} node={node}>
             <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />
+          </EditableShell>
+        );
+      },
+      Radio(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Radio value={node.props.value}>{node.props.label}</Radio>
           </EditableShell>
         );
       },
