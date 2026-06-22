@@ -31,6 +31,27 @@ export function toDocument(body: DocumentBody): EditorDocument {
   return { version: 1, ...body };
 }
 
+/** What the auto-persist effect should do this run (RP-7), decided PURELY from the last body it saw
+ *  (by reference) and the current one — so the React effect that owns the side-effect (debounced save,
+ *  saveStatus) stays a thin wrapper and this decision is unit-testable:
+ *   - `prime` — the initial mount: record the body but DON'T save (we just loaded it).
+ *   - `skip`  — unchanged: React StrictMode's dev double-invoke, or a no-op `set` (same refs).
+ *   - `save`  — a genuine edit (the store hands out a NEW body object only on a real change).
+ *  Reference identity is the signal — a plain "first run" flag would be consumed by StrictMode's first
+ *  pass and let the second pass spuriously save the just-loaded document. */
+export type SaveDecision = 'prime' | 'skip' | 'save';
+interface SeenBody {
+  readonly frames: unknown;
+  readonly themeOverrides: unknown;
+}
+export function decideSave(lastSeen: SeenBody | null, current: SeenBody): SaveDecision {
+  if (lastSeen === null) return 'prime';
+  if (lastSeen.frames === current.frames && lastSeen.themeOverrides === current.themeOverrides) {
+    return 'skip';
+  }
+  return 'save';
+}
+
 function isEditorFrame(value: unknown): value is EditorFrame {
   if (typeof value !== 'object' || value === null) return false;
   const f = value as Record<string, unknown>;

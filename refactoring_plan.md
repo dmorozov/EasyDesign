@@ -195,7 +195,7 @@ Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the
 | RP-4 ✅ | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
 | RP-5    | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
 | RP-6 ✅ | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
-| RP-7    | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
+| RP-7 ✅ | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
 | RP-8    | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
 | RP-9 ✅ | Typed per-target renderer exhaustiveness (`Record<LeafType,Renderer>`) | ★★       | A (render-half safety)                 | completeness §5.1 (promoted) |
 
@@ -580,6 +580,10 @@ token-option resolution.
 
 **Priority:** ★ · **Sequence:** independent · **Unlocks:** test coverage.
 
+> ✅ **IMPLEMENTED 2026-06-22** — both subtle decisions extracted to pure, tested functions; the hooks
+> are now thin effect wrappers. `reconcileNodes`/`framesSignature`/`toRFNode` → new
+> `src/editor/frame-nodes.ts`; `decideSave` → `document.ts`. See §4 step 6 for the full record.
+
 **Files / sites:** `src/editor/usePersistence.ts`, `src/editor/useFrameNodes.ts`,
 `src/editor/document.ts` (only `parseDocument` is tested).
 
@@ -770,7 +774,24 @@ variant: TextStyle)` — Text-gated, routes through RP-1's `NodeTree.updateProps
      ship `line-height="NaNpx"` to email → `mjml.renderText` falls back to the binding ratio on a
      non-finite product (golden-safe). **Net: 242 tests, 100% stmts/funcs/lines + 96% branch on the
      covered set, all gates green;** `edit-model.ts` + `inspector-options.ts` added to the coverage allowlist.
-6. **RP-7 — Persistence/reconciliation pure decisions.** Independent; good test ROI; no blocker.
+6. **RP-7 — Persistence/reconciliation pure decisions.** ✅ **IMPLEMENTED 2026-06-22.** Both subtle,
+   React-only decisions are now pure `(input) → decision` functions the hooks call; the hooks are thin
+   effect wrappers, and the decisions are unit-tested directly (no jsdom). Open question resolved: the
+   reconcile decision **was** worth extracting — it is the load-bearing "don't fight the drag" rule.
+   - **Reconcile (`useFrameNodes`):** new **`src/editor/frame-nodes.ts`** — `toRFNode` (Frame → RF node),
+     `framesSignature` (the remount-free `id:x:y` change signal), and `reconcileNodes(prev, frames) →
+next` (the pure "adopt the store position only when it changed, else keep the existing node so a
+     live drag survives" rule), all moved verbatim. The hook is now `useNodesState` + a `signature`
+     subscription + a one-line reconcile effect.
+   - **Save (`usePersistence`):** new pure **`decideSave(lastSeen, current) → 'prime'|'skip'|'save'`**
+     in `document.ts` — the reference-identity decision that primes on mount (don't re-save the
+     just-loaded doc), skips StrictMode's double-invoke / no-op sets, and saves a genuine edit. The hook
+     keeps the `useRef` last-seen + the debounced side-effect, but the decision is now testable.
+   - **Tests / verify:** new `frame-nodes.test.ts` (9 — toRFNode projection, signature add/move/remove +
+     stability, reconcile keep-by-reference / adopt-on-change / mixed pass) + `document.test.ts`
+     decideSave (4 — prime/skip/save by reference). `frame-nodes.ts` added to the coverage allowlist
+     (**100%**). **255 tests**, typecheck / lint / format clean, golden net byte-identical (no emitter
+     touch), `npm run generate` green. **No ADR** (ADR-0012 already covers the persistence shape).
 7. **RP-5 — Drag-drop intent resolution.** Independent; valuable but touches neither named feature.
    Do when the drop logic next needs to change.
 8. **RP-8 — MJML walk-seam alignment.** Last/optional; ADR-0008 cleanup; only bites when an
