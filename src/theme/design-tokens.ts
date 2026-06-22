@@ -52,17 +52,21 @@ export const STYLE_KEY_CATEGORY: Record<StyleKey, Category> = {
 /** Presentation metadata per category, for the Design Palette (RP-4, landed with RP-6). A `Record` over
  *  the `Category` union → a new category is a COMPILE error here, so ThemePanel can auto-discover the
  *  category set from the Catalog yet present it in a deliberate order with a friendly label (no
- *  hard-coded `byCategory('color')`). `order` sorts the sections; lower is higher in the rail. */
-export const CATEGORY_META: Record<Category, { label: string; order: number }> = {
-  color: { label: 'Brand colors', order: 0 },
-  fontSize: { label: 'Type scale', order: 1 },
-  fontWeight: { label: 'Font weights', order: 2 },
-  lineHeight: { label: 'Line heights', order: 3 },
-  letterSpacing: { label: 'Letter spacing', order: 4 },
-  fontFamily: { label: 'Font family', order: 5 },
-  space: { label: 'Spacing', order: 6 },
-  radius: { label: 'Corner radius', order: 7 },
-};
+ *  hard-coded `byCategory('color')`). `order` sorts the sections; lower is higher in the rail.
+ *  `editable` gates whether the Palette shows an editor: `letterSpacing` tokens exist as a future
+ *  scale, but NO render path consumes them yet (control deferred — ADR-0015), so showing an input
+ *  would be a dead control that re-themes nothing — it stays `false` until a renderer reads it. */
+export const CATEGORY_META: Record<Category, { label: string; order: number; editable: boolean }> =
+  {
+    color: { label: 'Brand colors', order: 0, editable: true },
+    fontSize: { label: 'Type scale', order: 1, editable: true },
+    fontWeight: { label: 'Font weights', order: 2, editable: true },
+    lineHeight: { label: 'Line heights', order: 3, editable: true },
+    letterSpacing: { label: 'Letter spacing', order: 4, editable: false },
+    fontFamily: { label: 'Font family', order: 5, editable: true },
+    space: { label: 'Spacing', order: 6, editable: true },
+    radius: { label: 'Corner radius', order: 7, editable: true },
+  };
 
 export interface Catalog {
   /** Resolve a ref to its full entry, or undefined for an unknown/misspelled ref — this IS isValidRef. */
@@ -107,3 +111,13 @@ export function createCatalog(entries: readonly Token[]): Catalog {
 
 /** The singleton, bound to the generated catalog — what every caller imports. */
 export const catalog: Catalog = createCatalog(rawCatalog as readonly Token[]);
+
+/** The Design-Palette sections (RP-6): the `editable` categories that actually carry tokens, in
+ *  `CATEGORY_META.order`. A pure projection the ThemePanel maps over — extracted here so the section
+ *  set + ordering are unit-testable (the panel itself is React/E2E-only). `letterSpacing` is dropped
+ *  via `editable:false` so the Palette never shows a control that re-themes nothing. */
+export function paletteCategories(): Category[] {
+  return (Object.keys(CATEGORY_META) as Category[])
+    .filter((c) => CATEGORY_META[c].editable && catalog.byCategory(c).length > 0)
+    .sort((a, b) => CATEGORY_META[a].order - CATEGORY_META[b].order);
+}

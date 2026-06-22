@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { catalog, createCatalog, STYLE_KEY_CATEGORY, type Token } from './design-tokens';
+import {
+  catalog,
+  CATEGORY_META,
+  createCatalog,
+  paletteCategories,
+  STYLE_KEY_CATEGORY,
+  type Token,
+} from './design-tokens';
 
 describe('catalog — query + validation', () => {
   it('get returns the entry for a valid ref, undefined for a typo (= isValidRef)', () => {
@@ -66,6 +73,34 @@ describe('STYLE_KEY_CATEGORY — every style key -> its token category (RP-4)', 
     for (const category of Object.values(STYLE_KEY_CATEGORY)) {
       expect(catalog.byCategory(category).length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('CATEGORY_META + paletteCategories — the Design Palette sections (RP-6)', () => {
+  // Completeness over the Category union is compile-forced (CATEGORY_META is a Record<Category,…>).
+  // These pin the two invariants the type system can't: the sort is total, and the section projection
+  // is right (editable + has-tokens, ordered, excluding the dead letterSpacing control).
+  it('orders are unique so the section sort is deterministic', () => {
+    const orders = Object.values(CATEGORY_META).map((m) => m.order);
+    expect(new Set(orders).size).toBe(orders.length);
+  });
+
+  it('lists the editable categories that carry tokens, in order', () => {
+    expect(paletteCategories()).toEqual([
+      'color',
+      'fontSize',
+      'fontWeight',
+      'lineHeight',
+      'fontFamily',
+      'space',
+      'radius',
+    ]);
+  });
+
+  it('excludes letterSpacing — its tokens exist but no render path consumes them yet (no dead control)', () => {
+    expect(CATEGORY_META.letterSpacing.editable).toBe(false);
+    expect(catalog.byCategory('letterSpacing').length).toBeGreaterThan(0); // tokens DO exist…
+    expect(paletteCategories()).not.toContain('letterSpacing'); // …but the Palette hides the editor
   });
 });
 

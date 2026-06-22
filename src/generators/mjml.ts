@@ -42,8 +42,12 @@ function renderText(lit: Lit, node: Extract<Node, { type: 'Text' }>, depth: numb
   const fontSize = lit(node.style?.fontSize ?? binding.fontSize);
   const fontWeight = lit(node.style?.fontWeight ?? binding.fontWeight);
   // Outlook treats decimal-unitless line-height as a percentage and rounds it (a live bug); resolve it
-  // to px (size × ratio) so MJML's mso-line-height-rule:exactly makes it deterministic (RP-3).
-  const lineHeight = `${Math.round(parseFloat(fontSize) * parseFloat(lit(binding.lineHeight)))}px`;
+  // to px (size × ratio) so MJML's mso-line-height-rule:exactly makes it deterministic (RP-3). Guard the
+  // arithmetic: a malformed Theme/free-form override (a non-numeric font-size) would make the product
+  // NaN — fall back to the unitless ratio so email never ships `line-height="NaNpx"` (the flagship
+  // clean-output gate). Valid tokens always yield a finite px, so golden output is unchanged.
+  const px = Math.round(parseFloat(fontSize) * parseFloat(lit(binding.lineHeight)));
+  const lineHeight = Number.isFinite(px) ? `${px}px` : lit(binding.lineHeight);
   const attrs = [
     `font-family="${escapeAttr(lit('font.family'))}"`,
     `font-size="${fontSize}"`,

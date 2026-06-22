@@ -291,11 +291,30 @@ describe('setVariant — the heading-style picker (RP-6)', () => {
     expect(s().frames).toEqual(SEED);
     expect(s().history.past).toHaveLength(0);
   });
+  it('refuses an unknown frame (no-op, no history)', () => {
+    s().setVariant('nope', [0], 'h1');
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
   it('coalesces repeated picks on the same node into one undo step', () => {
     s().setVariant('web-1', [0], 'h1');
     s().setVariant('web-1', [0], 'h3');
     expect(s().history.past).toHaveLength(1);
     expect(variantOf('web-1', [0])).toBe('h3');
+  });
+});
+
+describe('setThemeOverride — clearing reverts to the base token (RP-6)', () => {
+  it('a blank value DELETES the override key (no stale "" that breaks canvas/MJML)', () => {
+    s().setThemeOverride('font.size.2xl', '28px');
+    expect(s().themeOverrides['font.size.2xl']).toBe('28px');
+    s().setThemeOverride('font.size.2xl', '');
+    expect('font.size.2xl' in s().themeOverrides).toBe(false);
+  });
+  it('clearing an unset token is a no-op (no history churn)', () => {
+    s().setThemeOverride('font.size.lg', '   ');
+    expect(s().themeOverrides['font.size.lg']).toBeUndefined();
+    expect(s().history.past).toHaveLength(0);
   });
 });
 

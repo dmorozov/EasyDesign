@@ -60,16 +60,20 @@ export interface EditModel {
   readonly style?: readonly TokenField[];
 }
 
-// The font-ish categories whose style keys belong in the Typography section (not the generic Style
-// section). Derived from the Catalog Category so a new typographic key sorts itself.
-const TYPOGRAPHIC: ReadonlySet<Category> = new Set<Category>([
-  'fontFamily',
-  'fontSize',
-  'fontWeight',
-  'lineHeight',
-  'letterSpacing',
-]);
-const isTypographic = (key: StyleKey): boolean => TYPOGRAPHIC.has(STYLE_KEY_CATEGORY[key]);
+// Which Catalog categories belong in the Typography section (vs the generic Style section). A
+// `Record<Category, boolean>` so a NEW category is a missing-key COMPILE error — the classification
+// can't silently drift (a new font-ish category must declare itself here, mirroring CATEGORY_META).
+const TYPOGRAPHIC: Record<Category, boolean> = {
+  color: false,
+  space: false,
+  radius: false,
+  fontFamily: true,
+  fontSize: true,
+  fontWeight: true,
+  lineHeight: true,
+  letterSpacing: true,
+};
+const isTypographic = (key: StyleKey): boolean => TYPOGRAPHIC[STYLE_KEY_CATEGORY[key]];
 
 const leaf = (ref: string): string => ref.split('.').pop() ?? ref;
 

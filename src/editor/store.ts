@@ -344,10 +344,19 @@ export const useEditor = create<EditorState>()((set) => {
         };
       }),
 
+    // Bind/clear a Theme token override (re-themes the canvas + email export). A blank value is NOT an
+    // override — it's a clear back to the base token; persisting '' would leave withOverrides resolving
+    // '' (→ `--x: ;` on the canvas, `font-size=""`/`line-height="NaNpx"` in MJML), so delete the key.
     setThemeOverride: (name, value) =>
-      mutate(`theme:${name}`, (doc) => ({
-        body: { ...doc, themeOverrides: { ...doc.themeOverrides, [name]: value } },
-      })),
+      mutate(`theme:${name}`, (doc) => {
+        if (value.trim() === '') {
+          if (!(name in doc.themeOverrides)) return null; // clearing an unset token: nothing to do
+          const rest = { ...doc.themeOverrides };
+          delete rest[name];
+          return { body: { ...doc, themeOverrides: rest } };
+        }
+        return { body: { ...doc, themeOverrides: { ...doc.themeOverrides, [name]: value } } };
+      }),
 
     moveFrame: (frameId, x, y) =>
       mutate(null, (doc) => {

@@ -92,4 +92,16 @@ describe('MJML guardrails (ADR-0006/0008)', () => {
     };
     expect(() => emitMJML(frame, catalog.withOverrides({}))).toThrow(/non-leaf/);
   });
+
+  it('a malformed type-scale override never ships line-height="NaNpx" (RP-6 guard)', () => {
+    // An h2 binds font.size.2xl; a non-numeric Theme override would make size×ratio NaN. The guard
+    // falls the line-height back to the unitless ratio so the email stays clean (the flagship gate).
+    const frame: Frame = {
+      target: 'email',
+      root: { type: 'Stack', children: [{ type: 'Text', props: { content: 'x', variant: 'h2' } }] },
+    };
+    const out = emitMJML(frame, catalog.withOverrides({ 'font.size.2xl': 'abc' }));
+    expect(out).not.toContain('NaN');
+    expect(out).toContain('line-height="1.25"'); // the binding's base ratio, not NaNpx
+  });
 });

@@ -754,9 +754,22 @@ variant: TextStyle)` — Text-gated, routes through RP-1's `NodeTree.updateProps
      re-themes the board live (the generic `buildOverrideCss`/`withOverrides` path already carried it).
    - **Tests:** new `edit-model.test.ts` (13 pure assertions — email-root narrowing, Row-`fill` hiding,
      Grid no-wrap, per-type controls, default resolution, option sourcing) + 3 `setVariant`
-     characterization tests. **229 tests pass**, typecheck (mapped-type completeness on `CATEGORY_META`
+     characterization tests. typecheck (mapped-type completeness on `CATEGORY_META`
      - `ControlKind`) / lint / format clean, **golden net byte-identical** (zero emitter touch), and
        `npm run generate`'s SSR self-check green. **No new ADR** — RP-6 consumes the RP-2/RP-3/RP-4 ADRs.
+   - **Hardened by an adversarial-review workflow (5 dimensions → refute each finding; 7 confirmed, 2
+     refuted).** Behaviour-preservation found nothing; the resolver core drew one low finding. Fixes:
+     (a) the layout pickers (`JUSTIFY/ALIGN/WRAP/DISTRIBUTE_OPTS`) were hand-authored arrays with no tie
+     to the IR unions (silent-drift seam) → extracted to a pure **`src/editor/inspector-options.ts`**,
+     **compile-forced** off `Record<Justify,string>` etc. (the heading-picker pattern), now unit-tested;
+     (b) `edit-model.ts` `TYPOGRAPHIC` set was hand-listed under a comment claiming derivation →
+     `Record<Category, boolean>` (compile-forced) + honest comment; (c) the ThemePanel **letterSpacing**
+     section was a dead control (no render path consumes it) → `CATEGORY_META.editable` flag + a pure
+     `paletteCategories()` that drops it; (d) a blank Theme override left a stale `''` (`--x: ;` / MJML
+     `NaNpx`) → `setThemeOverride` deletes the key on blank; (e) a malformed type-scale override could
+     ship `line-height="NaNpx"` to email → `mjml.renderText` falls back to the binding ratio on a
+     non-finite product (golden-safe). **Net: 242 tests, 100% stmts/funcs/lines + 96% branch on the
+     covered set, all gates green;** `edit-model.ts` + `inspector-options.ts` added to the coverage allowlist.
 6. **RP-7 — Persistence/reconciliation pure decisions.** Independent; good test ROI; no blocker.
 7. **RP-5 — Drag-drop intent resolution.** Independent; valuable but touches neither named feature.
    Do when the drop logic next needs to change.

@@ -25,6 +25,8 @@ export default defineConfig({
         'src/editor/node-tree.ts',
         'src/editor/paths.ts',
         'src/editor/descriptors.ts',
+        'src/editor/edit-model.ts',
+        'src/editor/inspector-options.ts',
         'src/editor/palette.ts',
       ],
       exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/generators/index.ts'],

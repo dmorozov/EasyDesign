@@ -10,62 +10,20 @@ import {
   Select,
 } from '../design-system';
 import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
-import { type StyleKey } from '../theme/design-tokens';
-import { TEXT_STYLE_BINDING, type TextStyle } from '../theme/generated/typography';
+import { type TextStyle } from '../theme/generated/typography';
 
 import { resolveEditModel, type TokenField } from './edit-model';
 import { TARGET_PROFILES } from './frames';
+import {
+  ALIGN_OPTS,
+  DISTRIBUTE_OPTS,
+  HEADING_OPTS,
+  JUSTIFY_OPTS,
+  STYLE_LABEL,
+  WRAP_OPTS,
+} from './inspector-options';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
-
-// ── Presenter constants — the INVARIANT option lists (not selection-dependent), kept out of the
-//    resolver per RP-6 (the resolver owns only the dynamic medium/state filtering + token options). ──
-const DISTRIBUTE_OPTS = [
-  { value: 'fit', label: 'Fit' },
-  { value: 'fill', label: 'Fill' },
-];
-const JUSTIFY_OPTS = [
-  { value: 'start', label: 'Start' },
-  { value: 'center', label: 'Center' },
-  { value: 'end', label: 'End' },
-  { value: 'space-between', label: 'Between' },
-  { value: 'space-around', label: 'Around' },
-];
-const ALIGN_OPTS = [
-  { value: 'start', label: 'Start' },
-  { value: 'center', label: 'Center' },
-  { value: 'end', label: 'End' },
-  { value: 'stretch', label: 'Stretch' },
-];
-const WRAP_OPTS = [
-  { value: 'nowrap', label: 'No wrap' },
-  { value: 'wrap', label: 'Wrap' },
-];
-
-// The named Text styles (RP-3). A compile-forced label per `TextStyle` (a new style won't slip through
-// unlabelled); the option order follows the binding's declaration order (h1→label).
-const HEADING_LABEL: Record<TextStyle, string> = {
-  h1: 'Heading 1',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  body: 'Body',
-  caption: 'Caption',
-  label: 'Label',
-};
-const HEADING_OPTS = (Object.keys(TEXT_STYLE_BINDING) as TextStyle[]).map((v) => ({
-  value: v,
-  label: HEADING_LABEL[v],
-}));
-
-// Friendly label per token-bound style key (presentation; the keys themselves come from the model).
-const STYLE_LABEL: Record<StyleKey, string> = {
-  background: 'Background',
-  padding: 'Padding',
-  borderRadius: 'Border radius',
-  gap: 'Gap',
-  fontSize: 'Font size',
-  fontWeight: 'Font weight',
-};
 
 /** One token-bound Select (a container style key or a free-form Text size/weight) — value + options are
  *  resolved by the edit-model; binding/clearing routes through `setNodeStyle` (RP-1/RP-4 gate). */

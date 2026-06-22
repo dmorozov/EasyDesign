@@ -1,7 +1,7 @@
 import { type ReactElement } from 'react';
 
 import { Input, PanelSection, Swatch } from '../design-system';
-import { catalog, CATEGORY_META, type Category } from '../theme/design-tokens';
+import { catalog, CATEGORY_META, paletteCategories } from '../theme/design-tokens';
 
 import { useEditor } from './store';
 
@@ -15,14 +15,12 @@ function humanize(ref: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-// The category sections to show, in CATEGORY_META order — AUTO-DISCOVERED from the Catalog (RP-4): every
-// category that actually carries tokens appears, so adding a token category (or a Type-scale section)
-// needs no edit here. Colors render as Swatches; the Type-scale primitives (size/weight/line-height/…)
-// as literal text fields — editing either re-themes the whole board live (ADR-0004 + the .ed-board
-// override scope, ADR-0007). Composite Text styles are not Catalog entries, so only primitives show.
-const SECTIONS = (Object.keys(CATEGORY_META) as Category[])
-  .filter((c) => catalog.byCategory(c).length > 0)
-  .sort((a, b) => CATEGORY_META[a].order - CATEGORY_META[b].order);
+// The category sections to show — AUTO-DISCOVERED + ordered by the pure `paletteCategories()` (RP-4/RP-6):
+// every `editable` category that carries tokens appears, so adding a token category (or a Type-scale
+// section) needs no edit here. Colors render as Swatches; the Type-scale primitives (size/weight/
+// line-height/…) as literal text fields — editing either re-themes the whole board live (ADR-0004 + the
+// .ed-board override scope, ADR-0007). Composite Text styles are not Catalog entries, so only primitives show.
+const SECTIONS = paletteCategories();
 
 /** The Design Palette: edit a Theme token once and re-theme every Frame live (ADR-0004). The sections
  *  and swatches come from the Design-Token Catalog (`byCategory` + `CATEGORY_META`) — no hard-coded
