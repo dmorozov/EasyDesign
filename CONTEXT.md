@@ -46,6 +46,21 @@ A named, semantic style value (a color, spacing step, radius, or typography sett
 once in the Theme and referenced by Components, so editing it re-themes everything at once.
 _Avoid_: variable, style prop
 
+**Type scale**:
+The ordered set of typographic Design Tokens in the Theme — font sizes, weights, and line-heights as
+named steps — shown in the Design Palette. Every Text style draws its values from this scale; nothing
+typographic is a raw literal, so editing a step re-themes every text Component (web and email) at once.
+_Avoid_: font sizes, type ramp (when you mean the token set specifically)
+
+**Text style**:
+The typographic role a text Component takes, in two kinds. A **Heading style** is a closed, themed,
+named set the user picks whole (a heading/body/label role, named by role — not by HTML tag); the user
+selects a style, never edits its parts. **Free-form text** lets the user choose size and weight
+themselves, but **constrained to the Type scale**, never an arbitrary value. Both resolve through the
+Theme, so a token edit re-themes them everywhere.
+_Avoid_: font style; variant (overloaded — was the old `h2 | body` literal); heading (when you mean
+the whole text-style system)
+
 **Design Palette**:
 The panel that displays the Theme as a live style guide (type scale, color swatches, sample
 Components) and is where the user edits Design Tokens.

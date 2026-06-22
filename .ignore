@@ -1,4 +1,14 @@
-  - #2 — Promote the IR + generators out of skeleton/ into the real package, and wrap the IR node types over React Aria components (the layer we deliberately stubbed).
-  - #3 — Build the editor: React Flow workspace + dnd-kit tree that produces this IR, with email-mode restriction enforced.
-  - #4 — Second sample stressing a two-column content email layout before the MJML mapper hardens.
+TODO:
 
+What's left:
+
+- Independent debt (touches neither named feature, "do when the code next changes"): RP-5 (drag-drop intent), RP-7 (persistence/reconcile), RP-8 (MJML walk-seam).
+- Resolved-but-deferred: RP-9 (rides under RP-2), RP-10 (allowed-children, until first compound component), RP-11 (golden net, step 1), RP-12 (IR migration, bump-and-reset).
+
+Next options:
+
+1. Start implementing — the critical path is ready. Begin with RP-11 (golden snapshots, pure scaffolding) or the RP-3 alias-expand spike to de-risk typography early.
+2. Grill RP-5 / RP-7 / RP-8 — independent debt, low leverage; can wait.
+3. Final consistency sweep — the plan's had heavy editing across the session; I can do a full read-through (or fan one out) to flag any lingering cross-reference drift before you
+   implement.
+4. Land here.

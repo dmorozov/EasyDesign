@@ -1,557 +1,811 @@
-# EasyDesign — Architecture Improvement Plan
+# Refactoring Plan — toward a well-tested, easily-extendable EasyDesign
 
-This plan surfaces **deepening opportunities**: places where a _shallow_ cluster of modules (interface
-nearly as complex as the implementation, logic copy-pasted across callers) should become a _deep_
-module (a lot of behaviour behind a small interface). The aim is **locality** (change/bugs/knowledge
-concentrate in one place) and **leverage** (callers and tests learn one interface, get a lot back),
-which together make the codebase testable and AI-navigable.
+_Last updated: 2026-06-21. Produced by `/improve-codebase-architecture` (architecture review) +
+a follow-up extensibility/typography research pass._
 
-It also folds in three requested features — **add/remove Frames**, **container style editing
-(gap/padding Design-Token pickers)**, and **canvas keyboard accessibility** — by showing which seam
-each one sits on. The headline finding: those features are currently _expensive_ precisely because
-they land on the shallow clusters below. Deepen first, and each feature becomes small.
+## Why this document exists
 
-**Vocabulary.** Architecture terms (Module, Interface, Implementation, Depth, **Seam**, Adapter,
-Leverage, Locality, the **deletion test**) follow `.claude/skills/improve-codebase-architecture/LANGUAGE.md`.
-Domain terms (Board, Frame, Component, **Layout element** = Stack/Row/Column/Grid, Theme, **Design
-Token**, Design Palette, Component Palette, Selection, **Export Target**) follow `CONTEXT.md`. Locked
-decisions are in `docs/adr/0001–0007`; nothing here re-litigates them (one guardrail _reinforces_ ADR-0002/0006).
+The architecture is settled (thirteen ADRs) and the editor MVP works end-to-end. The next phase is
+**building more functionality on top** — concretely:
 
-**Method.** Six read-only audit passes (generators, the React-Aria/canvas layer, the editor
-store/history/persistence, editor render+drag, editor panels, and a reskin-delta reconciliation)
-applied the **deletion test** to each suspected-shallow module: _imagine deleting it — does complexity
-vanish (pass-through, leave it) or reappear across N callers (it was earning its keep — make it deep)?_
-Every candidate below scored "reappears across N callers."
+- **Capability A — add more React Aria Components** to the Component Palette / editor / exporters
+  (today the palette is a small fixed set: Stack/Row/Column/Grid + Text/Button/Image).
+- **Capability B — a real typography system** (today it is literally `variant: 'h2' | 'body'` with
+  font sizes, weights, and line-heights hardcoded as raw literals — see §Appendix B).
 
-**Status note.** ✅ **`vitest` is now stood up** (2026-06-20) — `npm run test`, 24 specs across
-`src/ir/walk.test.ts`, `src/generators/leaf-style.test.ts`, `src/generators/generators.test.ts`
-(unit tests on the pure seam + β table, plus golden snapshots of all four generators on the sample).
-The largest payoff of these deepenings remains that the new modules are pure and unit-testable at
-their interface — the interface is the test surface.
+The goal of this refactor is **not** to add those features yet. It is to reshape the seams so that
+when we do, each addition is **a small, compiler-guarded, test-covered change** rather than a
+12-to-17-file scavenger hunt. Every candidate below is justified by the **deletion test** (would
+removing the module make complexity vanish, or reappear concentrated across N callers?) and measured
+by **depth** (a lot of behaviour behind a small interface), **locality** (change/bugs/knowledge
+concentrate in one place), and **leverage** (one implementation pays back across N call sites + M
+tests).
 
----
+## How to use this document
 
-## Status delta since the chrome reskin (2026-06-20)
+The plan is **eight candidates**, each written to be grilled and implemented **in its own session**.
+Every candidate section is self-contained: Files, Problem (in deep/shallow terms), Evidence
+(`file:line`), Proposed direction (plain English — the exact interface is left for the grilling
+session, _not_ pre-decided here), Benefits (locality / leverage / tests), Tests that become possible,
+Dependencies, ADR touchpoints, and Open questions to resolve during grilling.
 
-A full editor-**chrome** reskin landed _after_ the first draft of this plan (design system vendored at
-`src/design-system/`; the editor chrome rebuilt on it; `src/components/*` deliberately left untouched
-per ADR-0007). It does **not** invalidate D1–D4 — every deletion test still concentrates — but it
-changes some facts the plan relied on. Read this before trusting the file/symbol references below.
-
-- **Two-scoped Design Tokens (the golden rule, now structural).** Style Dictionary
-  (`src/theme/style-dictionary.config.mjs`) now emits the one DTCG graph **three** ways: `theme.css` at
-  `:root` (standalone export pages), `theme.scoped.css` at `.ed-board-content` (the live canvas), and
-  `tokens.literals.json` (MJML). DS **chrome** tokens own `:root` (`src/design-system/chrome.css`); the
-  **user** design Theme lives only under `.ed-board-content` (the class sits on `.ed-frame-body`,
-  `FrameNode.tsx:43`), so the two never collide (e.g. `--radius-lg` 12px user vs 10px chrome). The live
-  ThemePanel override now emits `.ed-board-content { … }` (`Editor.tsx:38` `buildOverrideCss`). **→ D2's
-  model must be scope-aware and own the user token graph only.**
-- **The right rail is now tabbed.** `src/editor/RightRail.tsx` + a `rightTab`/`setRightTab` store field
-  (`store.ts`) switch **Inspector / Design / Export**. `selectNode` and every insert/move force
-  `rightTab='inspector'` (`store.ts:136`); the Toolbar's "Export Code" sets `'export'`. `rightTab` is
-  chrome-only UI state, intentionally excluded from `Snapshot`/undo (`store.ts:13` comment). **→ both
-  requested UI features mount here; D4 must keep `rightTab` out of history.**
-- **The Inspector already exists.** `src/editor/Inspector.tsx` (DS `PanelSection`/`Input`/`Badge`) edits
-  the selected node and deletes it; `ThemePanel.tsx` is a working precedent for token-driven pickers (DS
-  `Swatch` rows). **→ container-style editing _extends_ this tab; it does not build a panel.**
-- **Stale references to correct.** `DocumentPanel.tsx` **never existed** — the debounced auto-save
-  `useEffect` lives in `src/editor/Toolbar.tsx:28-41` (Toolbar now documents itself as the persistence
-  owner and also owns undo/redo, dark toggle, JSON import/export/reset, and "Export Code"). The FrameNode
-  target switch is a DS `SegmentedControl` (`FrameNode.tsx:34`), **not** a dropdown. `ThemePanel`'s
-  `SWATCHES` is now a curated, **kebab-keyed** (`color-brand`) `{key,label}[]` rendered via DS `Swatch`,
-  not a dot-path list. The email-mode restriction now shows email-unsafe palette items as **locked** (DS
-  `PaletteItem disabled` + `disabledNote`) rather than hidden — so the old `paletteFor(target)` filter that
-  implemented hiding was dead code with zero callers, and the `emailSafe` JSDoc read "hidden in email
-  Frames". **Both removed/corrected in D3** — `paletteFor` is deleted and the rule now lives only in
-  `frames.ts` (`canInsertComponent`/`canInsertInTarget`).
-
-**Guardrail.** D1 touches `src/components/canvas.tsx`/`EditableNode.tsx`; the reskin left
-`src/components/*` design-system-free on purpose (export substrate, ADR-0007). Anything D1 extracts must
-import **no** design-system code — the seam stays inside `src/ir/` + `src/components/`.
+**Read §1 (the crux) and §2 (the map) first**, then grill candidates in the §4 recommended order.
+Architecture vocabulary follows `.claude/skills/improve-codebase-architecture/LANGUAGE.md`
+(module / interface / depth / seam / adapter / leverage / locality). Domain vocabulary follows
+`CONTEXT.md` (Frame, Component, Layout element, Node Walk, Design Token, Theme, Preview width,
+medium / email-safe, Export Target, Selection).
 
 ---
 
-## The deepening opportunities
+## 1. The crux (root cause, stated once)
 
-### D1 — The Node Walk: one deep traversal, per-target emitters
+EasyDesign has **two genuinely deep modules, and they are healthy** — but they own only two of the
+four things the IR node tree needs an owner for. **Two more modules are simply _missing_; their
+absence is the whole refactor.**
 
-> **✅ Implemented (2026-06-20, ADR-0008).** Promoted to `src/ir/walk.ts` (`walkNode` + `Emitter<T,C>`)
-> with β split into `src/generators/leaf-style.ts` (string targets) and `src/components/layoutElement.tsx`
-> (React). HTML/React/Angular, the canvas, and `EditableNode` are now adapters; MJML stays bespoke.
-> Behaviour preserved (HTML/React/MJML/canvas byte-identical; Angular only reordered Button decls). The
-> seam carried its first new feature — the **justify/align/wrap** layout properties — for ~one field +
-> one method per adapter. The description below is retained as the original rationale.
+**The two healthy modules — leave them alone:**
 
-- **Modules/files:** `src/generators/{html,react,angular}.ts` (`emitNode`/`renderNode` switches),
-  `src/components/canvas.tsx` (`CanvasNode`), `src/editor/EditableNode.tsx` (`NodeInner`), and the IR
-  vocabulary in `src/ir/types.ts`.
-- **Problem (friction).** The dispatch over the Layout-element/Component vocabulary
-  (`Stack/Row/Column/Grid/Text/Button/Image`) is re-stated in **six** places: the three web Export
-  Target generators (`html.ts:41`, `react.ts:52`, `angular.ts:57`), the MJML generator (`mjml.ts:103`
-  `renderLeaf` + the `renderCardSections` flattener), the `CanvasNode` preview renderer (`canvas.tsx:17`),
-  and `EditableNode`'s `NodeInner` (`EditableNode.tsx:114`). Each independently encodes the same
-  _decisions_ — "Stack is a flex-column", "Row wraps every child in `flex:1`", "Grid is
-  `grid-template-columns: repeat(n, 1fr)`", "Button binds brand colour" — tangled with each target's
-  _emission syntax_ (string vs JSX object vs Angular template vs React element). The `Row` `flex:1`
-  wrapper alone is copy-pasted **five** times (`html.ts:53`, `react.ts:67`, `angular.ts:68`,
-  `canvas.tsx:38`, `EditableNode.tsx:105`); MJML instead maps Row to its own sibling `<mj-section>` with
-  one `<mj-column>` per child, which is exactly why it must stay out of D1.
-- **Deletion test → CONCENTRATES.** Delete any one switch and that caller breaks while the identical
-  decision tree still sits in the other five — duplication, not a pass-through. The decision ("what _is_
-  a Stack, structurally") is one thing said six times.
-- **Solution (the deep module + its seam).** Extract a `walkNode(node, emitter)` traversal plus an
-  `Emitter<T>` interface (one method per node type) into `src/ir/walk.ts`. The traversal — dispatch,
-  recursion, and the `Row` `flex:1` contract — lives **once**. Each caller becomes a small **adapter**
-  implementing only its emission syntax: `Emitter<string>` for HTML/Angular, `Emitter<ReactElement>` for
-  `CanvasNode`, and `EditableNode` wraps the same traversal with its editing chrome (drop targets,
-  selection outline, drag handle). The **seam** is the `Emitter<T>` interface.
-- **The reskin is corroborating evidence the seam is real.** It edited only `EditableNode`'s chrome — the
-  drag handle now renders `<Icon.dots size={12}/>` (`EditableNode.tsx:88`) and the selection/drop outlines
-  use chrome tokens `var(--selection)`/`var(--accent)` (lines 21-25) instead of the user's `--color-brand`
-  — and left `NodeInner`'s switch (lines 114-140), the children-in-node recursion (line 94), and the Row
-  `flex:1` special-case (lines 101-110) **fully intact**. The chrome already peels off the traversal
-  cleanly, so extracting `walkNode` + an `Emitter<ReactElement>` adapter is lower-risk than first assumed.
-- **Benefits.** _Locality:_ the IR's structural contract is stated once; a new Layout element is one
-  traversal case + one method per adapter instead of a six-file hunt. _Leverage:_ `EditableNode` collapses
-  from ~140 lines of mixed traversal+chrome to "wrap each child"; `CanvasNode` becomes trivial. _Tests:_
-  the traversal is a pure spec tested once, rather than re-asserting "Button binds brand colour" three
-  times across generators.
-- **Guardrail — MJML stays bespoke (do NOT fold into D1).** The MJML generator resolves Design Tokens to
-  **literals** via `makeLit` (not `var(--…)`) and **flattens** the Stack into sibling `mj-section`s — a
-  leaf run becomes one section, a nested Row becomes its own section (`renderCardSections`/
-  `renderRowSection`, `mjml.ts:122-184`), and `renderLeaf` actively throws on container nodes
-  (`mjml.ts:115`). It solves a genuinely different problem; deleting its bespoke walk exposes no
-  duplication, only breaks email. Keep it as its own emitter with its own resolver (ADR-0006). _Worth an
-  ADR_ so a future review doesn't try to unify it.
-- **Guardrail — no DS in the substrate.** The extracted traversal and the `Emitter<ReactElement>` adapter
-  must import nothing from `src/design-system/` (ADR-0007); the chrome stays in `EditableNode`'s wrapper.
-- **Unlocks:** cheap new Layout elements/Components; **canvas-a11y** — node-level roving
-  `tabIndex`/`role`/`aria-label` finally has one place to live: the single `EditableNode` wrapper div
-  (`EditableNode.tsx:60`) the traversal creates (the DS handle already carries `aria-label='Move node'`,
-  but node-level attributes still have nowhere to attach today).
+- **The Node Walk** (`src/ir/walk.ts`, ADR-0008) owns **structural traversal** — one 7-way `walkNode`
+  switch + one `shapeOf` switch + a 5-method `Emitter<T,C>` interface, shared by
+  HTML/React/Angular/canvas/editor. Delete it and the structural dispatch reappears across all five
+  renderers.
+- **The Design-Token Model / Catalog** (`src/theme/design-tokens.ts`, D2 / ADR-0004) owns **theming
+  resolution** — one queryable catalog (`get` / `byCategory` / `resolveVar` / `resolveLiteral` /
+  `withOverrides`) over the Style-Dictionary output, dual-compiled to CSS vars (web) and literals
+  (email). Deep and clean — but it must _grow_ (additive primitive tokens — see RP-3/RP-4).
 
-### D2 — The Design-Token Model: a queryable Theme module
+**The two missing modules — this refactor builds them:**
 
-> **✅ Implemented (2026-06-20).** `src/theme/design-tokens.ts` (`catalog`: `get`/`byCategory`/`resolveVar`/
-> `resolveLiteral`/`withOverrides`/`fromKebab` + `STYLE_KEYS`) over a build-generated `tokens.catalog.json`
-> (4th Style-Dictionary output; `categoryOf` shared via `token-category.mjs`). All five cruxes shipped as
-> decided: build-step catalog (a); Model owns literal resolution, `literals.ts` deleted (b); **dot keying
-> collapsed atomically** with the 3-leg gate — `buildOverrideCss`→`cssVarName`, MJML via `withOverrides`,
-> `fromKebab` load-shim — and `color.onBrand` canonicalized (c); scope-blind (d); flat `STYLE_KEYS` (e).
-> Consolidated `tokenVar`×2 + `styleFromTokens`/`CONTAINER_STYLE_PROP` + `makeLit`; ThemePanel now shows
-> all 6 colors via `byCategory`. Generators **byte-identical** (snapshots held); the `onBrand` `.replace`
-> bug is closed by construction. Verified live: re-theme, MJML override, kebab→dot migration. The
-> description below is retained as the original rationale.
+| Axis         | Owns                                                                                 | Status                | Candidate |
+| ------------ | ------------------------------------------------------------------------------------ | --------------------- | --------- |
+| traversal    | which children recurse, the Stack/Row/Column/Grid α-facts                            | healthy               | ADR-0008  |
+| theming      | dot-ref → CSS var / literal, dual output                                             | healthy               | ADR-0004  |
+| **identity** | per-_type_ facts: kind, email-safety, label, icon, defaultProps, controls, styleKeys | **missing → smeared** | **RP-2**  |
+| **editing**  | per-_operation_ tree mutations: insert / move / delete / setProps / setStyle         | **missing → smeared** | **RP-1**  |
 
-- **Modules/files:** new `src/theme/design-tokens.ts` (the seam) over `src/theme/tokens.json`. Today the
-  knowledge is smeared across `src/components/tokens.ts` (`tokenVar` + `styleFromTokens`), each web
-  generator's resolver (`tokenToVar` + `STYLE_PROP_TO_CSS` in `html.ts`, plus the react/angular twins),
-  `src/editor/literals.ts`, `src/editor/ThemePanel.tsx` (`SWATCHES`), `src/editor/palette.ts` (`create()`
-  defaults), `src/editor/store.ts` (`webRoot`), and `src/ir/sample.ts`. New token-scope authorities the
-  model must respect: `src/theme/style-dictionary.config.mjs` (the three emits) and
-  `src/editor/Editor.tsx:38-42` (`buildOverrideCss`).
-- **Problem (friction).** Design-Token knowledge is **stringly-typed, scattered, and now spread across two
-  keyings**.
-  - (a) The dot-path→`var(--…)` resolution is re-implemented in the three web generators _and_
-    `components/tokens.ts` (`.replace(/\./g,'-')` copied each time — `tokens.ts:7`, `html.ts:7`).
-  - (b) _Which_ Design Tokens exist and their **category** (colour / space / radius / typography) is
-    hardcoded in **incompatible forms**: `palette.ts`/`webRoot` (`store.ts:76-96`)/`sample.ts` use
-    **dot-paths** (`gap: 'space.md'` ×3); `ThemePanel`'s `SWATCHES` (`ThemePanel.tsx:8-13`) uses **kebab
-    keys** (`color-brand`, a curated 4-of-6 subset) that double as `themeOverrides` keys and `baseLiterals`
-    lookups.
-  - (c) _Which style keys a node type accepts_ is filtered independently in every generator
-    (`STYLE_PROP_TO_CSS`, `html.ts:11-16`) and in `styleFromTokens` (`tokens.ts:12-20`).
-  - (d) Nothing **validates** a ref — `'color.surfce'` silently emits a broken `var()` for web and throws
-    only at MJML runtime.
-- **The reskin added a hard new fact the model must absorb.** The user Theme no longer owns `:root`. DS
-  chrome tokens own `:root` (`chrome.css`); the user Theme is scoped to **`.ed-board-content`** via the
-  second Style Dictionary output (`theme.scoped.css`), and live overrides emit `.ed-board-content { --… }`
-  (`buildOverrideCss`). So `resolveVar(ref)` for the canvas resolves **under `.ed-board-content`** while
-  standalone exports keep `:root` (`theme.css`). The model must own the **user** token graph **only** and
-  never touch the chrome aliases. The literal `'.ed-board-content'` selector is itself hardcoded in three
-  places (SD config, `buildOverrideCss`, the FrameNode class) — the model should own that constant so a
-  rescope is one edit. **No module can answer "which Design Tokens are spacings?"** — the exact question
-  container-style editing must ask.
-- **Deletion test → CONCENTRATES.** Delete the hardcoded lists/resolvers and the knowledge reappears in ≥7
-  files, each rebuilding it across two keyings; a typo'd ref has no single place to be caught.
-- **Solution (the deep module + its seam).** One Design-Token Model over `tokens.json`, exposing:
-  `byCategory('space'|'color'|'radius'|…)`, `isValidRef(ref)`, `resolveVar(ref)` (dot-path→kebab var name,
-  with a documented contract that it is consumed under `.ed-board-content` in-editor / `:root` standalone),
-  `toVarName`/`refFromVarName` (killing the ad-hoc kebab conversions and the hand-maintained `SWATCHES`
-  keying), and `stylableKeys(nodeType)` (allowed style keys + each key's category). Web generators and
-  `components/tokens.ts` share `resolveVar`; the email **adapter** keeps its literal resolver (D1
-  guardrail); `ThemePanel`, `palette.ts`, and the **existing** Inspector tab (`RightRail` → `Inspector.tsx`)
-  _query_ the model. **Invariant:** the model is the user token graph; it must not expose or touch chrome
-  tokens (the golden rule, now structural rather than a convention). The **seam** sits between the IR's
-  `StyleMap` contract and the targets/UI.
-- **Benefits.** _Locality:_ names, categories, defaults, valid keys, and the dot-path↔kebab boundary are
-  one module; adding a token in Style Dictionary makes it instantly queryable in both scopes and lets
-  `ThemePanel` render `byCategory('color')` instead of hand-listing kebab keys (so adding `muted` to the
-  Design Palette is a one-line token add). _Leverage:_ the existing Inspector tab builds gap/padding
-  pickers from `stylableKeys(node.type)` + `byCategory('space')`, dispatching a history-coalesced
-  `setNodeStyle`. _Tests:_ pure functions — assert every hardcoded default (`palette.ts`, `sample.ts`,
-  `webRoot`) resolves, every `SWATCHES` kebab key exists in `tokens.literals.json`, and no chrome alias
-  leaks — so a renamed token fails the suite instead of rendering blank.
-- **Unlocks:** **container-style-editing** (now landing on the real Inspector tab); runtime IR validation
-  on load; per-Frame overrides; a fuller Design Palette later (drop the curated `SWATCHES` subset).
-- **Test it. ✅ Done.** `src/theme/design-tokens.test.ts` (get-as-validation, `byCategory`, `resolveVar`
-  camelCase-correctness, `resolveLiteral`, `withOverrides`, `fromKebab`, `STYLE_KEYS`, the `createCatalog`
-  fixture seam) + `src/theme/token-category.test.ts`; both modules added to `coverage.include`. Suite at
-  43 tests / 99% stmts / 92% branch.
+The two missing modules are keyed on **different axes** — identity on the node _type_, editing on the
+_operation_ — which is why RP-1 depends on nothing and RP-2 is the keystone the read-side hangs off.
+They are two single-responsibility modules, not two faces of one.
 
-#### D2 design cruxes (to grill later)
+**(1) The identity smear (RP-2).** Every fact about a node _type_ that isn't structural traversal
+leaks out of `walk.ts` into ~12 shallow sites that each re-encode the type list — _is-container?
+is-email-safe? label? icon? default props? which Inspector controls? which style keys?_ — re-derived
+inline at `paths.ts`, `frames.ts`, `palette.ts`, `Inspector.tsx`, `useCanvasA11y.ts`, and the five
+emitters. Of these, **only two are compiler-enforced** (`walkNode`/`shapeOf` in `walk.ts`,
+`structuralDecls` in `leaf-style.ts`). **Adding a Component = touch ~15 files, silently miss ~8** (no
+compile error; it renders blank or drops out of email silently).
 
-These are the open interface decisions for the Design-Token Model — captured here to grill in a later
-session. (A "Design It Twice" run produced four candidate interfaces + a comparison — digest after the
-cruxes.) **Post-D1 reality:** the dot→CSS resolver is already down to **two** `var` copies
-(`components/tokens.ts:7`, `leaf-style.ts:18`) plus MJML's `makeLit` literal path — D1 merged the three
-generator resolvers. The headline gap is that **no module can answer "which Design Tokens are
-spacings?"**, which is what blocks the gap/padding pickers. Candidate interface surface: `byCategory(cat)`
-· `categoryOf(ref)` · `isValidRef(ref)` · `resolveVar(ref)` · `resolveLiteral(ref)?` · `styleKeys()`.
+> **Locality is not safety.** Collapsing 12 sites to "one descriptor row" is a _locality_ win; it does
+> **not**, by itself, turn _silent_ into _compiler-caught_ — a forgotten row or an unwired per-target
+> renderer is still silent. Safety comes from **keying the descriptor off the union**: type it
+> `Record<Node['type'], Descriptor>` so a missing row is a _build_ error, and back the per-target
+> renderers with `Record<LeafType, Renderer>` (the §5.1 / RP-9 completeness lever) so a forgotten
+> renderer is a _build_ error too. **Boundary rule:** the descriptor owns only facts the type system
+> _cannot_ express (label, icon, emailSafe, defaultProps, controls, styleKeys); structural facts
+> (container-ness, children-shape, axis) stay **union-derived** — never a hand-authored `kind` field
+> that can drift from `walk.ts`. The descriptor _complements_ the deep module, it never _mirrors_ it.
 
-- **(a) Catalog source. ✅ RESOLVED (grilled 2026-06-20) — BUILD-STEP generated catalog.** Extend Style
-  Dictionary to emit `tokens.catalog.json` — an array of `{ref (dot), category, cssVarName, literal}`
-  keyed by the dot-ref — and the Model indexes that (no runtime DTCG parse). **Deciding premise:** the
-  token graph will likely grow DTCG aliases / semantic tokens (e.g. `color.primary: {color.brand}`),
-  which runtime-parse would have to re-resolve itself; SD already resolves them. Build-step is also what
-  makes (c)'s `onBrand` fix correct — SD owns the camelCase-aware `name/kebab`, so the catalog's
-  `cssVarName` (`--color-on-brand`) can't drift and we never hand-roll `.replace`. **Confirms & enables
-  (c):** the catalog is keyed by the dot-ref (= (c)'s identity), and kebab lives only as the SD-derived
-  `cssVarName` field. _Sub-decisions locked:_ (i) the catalog **subsumes `tokens.literals.json`** — it
-  carries `literal` per entry, so `literals.ts` + `literalsWithOverrides` collapse into
-  `catalog.withOverrides` (this **is** (c)'s regression-gate leg 2); net generated files stay 3→3.
-  (ii) `categoryOf($type, path)` (the `dimension → space|radius|font` disambiguation) is a **shared pure
-  function** imported by both the SD format and app validation — typed + unit-tested once, not buried in
-  the `.mjs`. _Note:_ runtime-parse stays the right call only if the token graph is ever frozen as a flat
-  literal list (no aliases) — not the expectation for a theming tool (ADR-0004).
-- **(b) Literal-resolution ownership. ✅ RESOLVED by corollary of (a)-subsume.** The catalog carries
-  `literal` per entry and owns `withOverrides`, so the Model **owns literal resolution**: `mjml.ts`'s
-  `makeLit` becomes `resolveLiteral(ref)` over the catalog and `editor/literals.ts` collapses in. MJML's
-  **flatten** (`renderCardSections`/`renderRowSection`) stays bespoke (ADR-0008) — the catalog hands MJML
-  per-leaf literals only, never tree shape.
-- **(c) dot↔kebab keying. ✅ RESOLVED (grilled 2026-06-20) — COLLAPSE TO DOT, atomically.** Make the IR
-  dot-path the ONE true ref; migrate `themeOverrides` / `SWATCHES` / `buildOverrideCss` / persistence to
-  dot **inside the D2 commit** (not staged). The bridge (`toKebab` / `fromKebab`) is **rejected**:
-  permanent dual keying, it leaks the boundary D2 exists to delete, and it doesn't even save the `onBrand`
-  fix (its `toKebab` must be SD-correct anyway). Risk today is **trivial** — only the `themeOverrides`
-  _keys_ are kebab; the design structure (every `StyleMap`) is already dot, and the only persisted state
-  is the dev's localStorage scratch + exported JSON. **Canonical ref mirrors `tokens.json` 1:1**, so the
-  `onBrand` ref is `color.onBrand` (catalog derives `--color-on-brand`); fix `mjml.ts:77`'s `color.on-brand`
-  cheat as part of the same change. "Single-keyed" means dot is the **identity**; kebab survives only as
-  the catalog's derived `cssVarName` field (SD-computed, camelCase-correct), so the `.replace(/\./g,'-')`
-  dies in all three files. See the three-leg regression gate below.
-- **(d) Scope awareness. ✅ RESOLVED (grilled 2026-06-20) — SCOPE-BLIND.** `resolveVar('space.md')` →
-  `'var(--space-md)'`, never a selector. This is **forced**, not a preference: a CSS `var()` _reference_
-  is scope-invariant (it resolves against wherever it's used); scope lives only in the _declaration
-  block's selector_, which `resolveVar` never emits. The selector is owned by the three places that emit
-  blocks — SD config (`theme.css @ :root`, `theme.scoped.css @ .ed-board-content`), `buildOverrideCss`,
-  and `FrameNode`'s class — **never the Model** (`.ed-board-content` is editor-chrome knowledge, not token
-  knowledge; putting it in the Model is the ADR-0007 smell the rejected frozen-index design committed).
-  Holds under per-Frame overrides / dark variants too (the editor's override-emitter picks the selector,
-  the Model still just resolves refs). _Adjacent (non-Model, optional) tidy:_ hoist the `.ed-board-content`
-  literal to one **editor** constant shared by `buildOverrideCss` + `FrameNode` — do it opportunistically
-  when (c)'s `buildOverrideCss` change touches that line.
-- **(e) `stylableKeys` granularity. ✅ RESOLVED (grilled 2026-06-20) — FLAT table.** A flat
-  `Record<styleKey, category>` (`background→color, padding→space, borderRadius→radius, gap→space`),
-  understood as the **container style keys** (consolidates `styleFromTokens` + `CONTAINER_STYLE_PROP`).
-  Leaf-exclusion (e.g. `gap` never offered on a `Text`) comes from the **Inspector's existing
-  container-gate**, not the table; the generators apply the table as a harmless filter (a leaf with
-  `borderRadius` is fine). The `key→category` mapping is **global truth** (`gap` is always `space`), so
-  only a per-node _set_ could ever vary → flat→per-node is a cheap local refactor, deferred until its real
-  trigger: **user-editable `Text` color/`fontSize`** via the IR (then add `stylableKeys(nodeType)`).
-  D2's token pickers are a **new** Inspector group (token-bound style), complementary to the existing
-  keyword Layout controls (Distribute/Justify/Align/Wrap are props, not tokens), in the same
-  container-gated panel.
+**(2) The editing smear (RP-1).** All **7 document-mutating actions** in `store.ts` repeat
+`structuredClone(frame.root)` → `nodeAt(root, path)` → splice/mutate →
+`doc.frames.map(f => f.id === id ? {...f, root} : f)`, with the tricky invariants (`moveNode`'s
+index-adjust, the `isPrefix` subtree guard, the root-delete guard, the Grid-`wrap` rule) inline in
+untested bodies — `moveNode` / `deleteNode` have **zero unit tests**. This smear is _type-agnostic_:
+it hangs off the _operation_, not the node type, which is exactly why it is a second module, not a
+face of the first.
 
-**Candidate interfaces (Design It Twice — digest, 2026-06-20).** Four designs were generated and judged;
-the run **agreed with every lean above** ((a) generated catalog · (b) own literal resolution · (c)
-collapse to dot · (d) scope-blind). The menu:
-
-| Design                       | Shape                                                                                                                    | Keying                   | Resolution seam                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------ | ---------------------------------------------------------------------- |
-| **Catalog (minimal)** ★      | one self-describing `Token` {ref, category, var, cssVarName, literal} + `get()`; `get()===undefined` **is** `isValidRef` | collapse to dot          | none — `resolveVar`/`resolveLiteral` are thin projections over `get()` |
-| Category-registry (flexible) | `byCategory` + pluggable `resolveFor(target)` / `registerTarget`                                                         | collapse to dot          | runtime plugin registry (unpaid-for surface; no 3rd target exists)     |
-| Frozen index (common-caller) | two hot calls (`resolveVar`=Map.get, `byCategory`=bucket) + public `toKebab`/`fromKebab`                                 | **bridge (keeps kebab)** | two baked fields; also puts `SCOPE_SELECTOR` inside the Model          |
-| Ports & adapters             | `resolve(ref, renderer)` + `webVar`/`emailLiteral` 1-line adapters                                                       | collapse to dot          | one real 2-adapter port, audited honestly                              |
-
-**Verdict (to grill): ship the minimal `Token` catalog interface**, and adopt the ports design's
-_explicit two-adapter audit_ as its written justification (source port collapsed = 1 adapter =
-indirection → plain `createCatalog(entries)`; resolution is the real 2-adapter seam, realized as two
-thin projections, **not** a `TokenRenderer` interface or a `registerTarget` plugin). **Reject** the
-frozen-index design's public `toKebab`/`fromKebab` and its in-Model `SCOPE_SELECTOR` (the latter names
-the chrome/canvas selectors _inside_ the token Model — an ADR-0007 smell). Flat `STYLE_KEYS` table
-(`background→color, padding/gap→space, borderRadius→radius`); `byCategory` powers ThemePanel swatches
-**and** the Inspector pickers; `literals.ts` collapses to a thin re-export.
-
-**Non-negotiable regression gate (LOCKED — atomic, all THREE in the D2 commit).** The grill found a third
-leg the first digest missed. The collapse to dot is safe _only if_ all of these land together:
-
-1. **`buildOverrideCss`** switches `--${key}` → `--${catalog.get(ref).cssVarName}` — else the live canvas
-   re-theme silently emits invalid `--color.brand:` and stops working (it's also a strict bug fix: the
-   var name now always comes from SD, never a hand-typed kebab key).
-2. **`literalsWithOverrides` / the MJML export path** stops doing `{ ...kebab baseLiterals, ...dot
-overrides }` (which would merge as _separate_ keys → `makeLit` finds the base, silently ignores the
-   live override) and routes through the catalog's dot-aware `withOverrides`.
-3. **`loadFromLocal` AND `loadDocument`** (the JSON-import path too) get the one-line `fromKebab` shim —
-   else saved kebab themes drop on load.
-
-Miss any one → a _silent_ break (dead canvas re-theme, stale MJML export, or lost themes).
-
-**Latent bug the catalog fixes (confirmed; canonical ref locked to `color.onBrand`).** `color.onBrand` → today's `.replace(/\./g,'-')`
-(in 3 files) → `--color-onBrand`, but Style Dictionary emits `--color-on-brand`. Hidden only because no
-`StyleMap` ref or swatch uses `onBrand` (mjml.ts hand-writes `color.on-brand`). The moment a user binds
-`background: color.onBrand` — which `byCategory('color')` will now offer — the naive `.replace` ships a
-broken `var()`. The catalog's SD-derived `cssVarName` closes it permanently: the decisive reason
-build-step source (crux a) beats runtime-parse.
-
-### D3 — The Frame lifecycle Module + the Board↔React-Flow seam
-
-> **✅ IMPLEMENTED (2026-06-20, ADR-0011).** `src/editor/frames.ts` (pure: `TARGET_PROFILES`,
-> `canInsertComponent`/`canInsertInTarget`/`insertHint`, `createFrame`/`deleteFrame`/`moveFrame`/
-> `nextSlot`, injected `MintId`) + `frames.test.ts` (11 tests, in `coverage.include`). Seam
-> `src/editor/useFrameNodes.ts` reconciles the React-Flow node list against the store off a cheap
-> `id:x:y` signature — add/remove/move/undo with **no remount** (live-verified: undo dropped a Frame
-> with a byte-identical viewport transform). Store gained `addFrame`/`removeFrame`/`renameFrame`/
-> `selectFrame` and routes `moveFrame` through the module; **`undo`/`redo` no longer bump `docKey`**
-> (load/reset still do → `fitView` on a fresh document only).
->
-> **Decisions locked.** (1) **Target FIXED at creation** — `setFrameTarget` + the header Web/Email
-> `SegmentedControl` are deleted; the medium is a read-only label that _drives the Palette_ (via the
-> selected Frame's target) but is never toggled, closing the web→email-with-Grid → broken-MJML hole
-> (ADR-0006). New Frames are minted via a Board `+ Web page` / `+ Email` panel. (2) **Module shape:**
-> the simpler pure functions returning `{frames, created}` / `{frames, removed}`, with the store doing
-> Selection reconciliation (chosen over a heavier `FrameMutation` object — `deleteFrame` has one
-> caller, so it doesn't concentrate). (3) **Frame chrome** (per user): thin 1px **dashed** body, title
-> label top-left = the React-Flow `dragHandle` **and** the select affordance, read-only medium label
-> top-right — no window titlebar. Frame-level Selection = `selectedFrameId` set + `selectedPath: null`
-> → a Frame Inspector panel (editable title via `renameFrame`, read-only medium, Delete frame). All
-> **four** email-rule sites (Palette tile `disabled`, Palette click guard, Palette locked note, Editor
-> drop guard) now route through `canInsertComponent`/`insertHint`. Green: typecheck · eslint · 54
-> vitest (98.7% stmt) · `generate` · build · live browser pass.
->
-> **Post-review (13 confirmed findings, all minor/nit) addressed.** Deleted dead `paletteFor`; unified
-> the Inspector node badge on `TARGET_PROFILES[].label`; corrected the `emailSafe` JSDoc; softened the
-> `nextSlot` comment; dropped the unused `data-target`; added the `moveFrame` unknown-id test. **Both
-> deferred follow-ups now done:** (a) an **import-time audit** — `frames.ts` `isEmailFrameClean` +
-> `EMAIL_UNSAFE_TYPES` (kept in sync with the Palette by a test), consulted in `isEditorFrame`, rejects
-> an email-unsafe node in an email Frame on load/import (verified: a Grid-in-email doc is rejected,
-> Grid-in-web accepted); (b) **pan-to-new-Frame** — `pendingFocusFrameId` + a `ViewportFocus` child
-> `setCenter`s on a newly-added Frame, zoom preserved (verified live). 60 tests green.
-
-- **Modules/files:** new `src/editor/frames.ts` + a `useFrameNodes` seam; today split across
-  `src/editor/store.ts` (`createInitialFrames` :98, `setFrameTarget` :232, `moveFrame` :248),
-  `src/editor/FrameNode.tsx` (the Web/Email `SegmentedControl` :34), `src/editor/Board.tsx` (React-Flow
-  node seeding :24, drag write-back :40), and **three** inline email-mode checks — `Editor.tsx:162`
-  (drop end), `Palette.tsx:102` (click insert), and `Palette.tsx:86` (the locked-tile `disabled` state).
-- **Problem (friction).** A **Frame**'s lifecycle has no owner. Creation lives in `createInitialFrames`;
-  the target medium is mutated by a DS `SegmentedControl` in `FrameNode` (`setFrameTarget`); the
-  **email-mode restriction** (ADR-0006) is re-implemented inline at three sites. Notably the reskin
-  changed the restriction from _hidden_ to _locked_: the Palette now keeps email-unsafe items visible but
-  disabled (`Palette.tsx:86` → DS `PaletteItem disabled`/`disabledNote`), so the same
-  `frame.target === 'email' && !item.emailSafe` predicate now also drives a user-facing affordance — a
-  drifting copy is now a **visible** bug, not just a silent one. Position is split between
-  `store.moveFrame` (`store.ts:248`) and Board's `onNodeDragStop` (`Board.tsx:40-42`). The
-  Board↔React-Flow sync is **one-directional and brittle**: Board seeds nodes once (`useMemo([])`,
-  `Board.tsx:24`) and only re-seeds by a full **remount** keyed on `docKey` (`<Board key={docKey}>`,
-  `Editor.tsx`). There is still no place to put "add a Frame" / "remove a Frame".
-- **Deletion test → CONCENTRATES.** The email-safe invariant is mandatory; delete the scattered checks and
-  three callers (drop, click, locked-tile) must re-implement it (drift + a now-_visible_ bug). Delete
-  Board's seed and nothing renders. Load-bearing rules with no home.
-- **Solution (the deep module + its seam).** A Frame lifecycle Module owning `createFrame(target)`,
-  `deleteFrame(id)` (also clearing Selection + the history coalesce key, and not stranding the Inspector
-  tab on a dead frame — `rightTab` reconciliation), `setTarget` (a thin move of the existing
-  `setFrameTarget`), `move`, and the single predicate `canInsertComponent(frame, item)` — consulted by
-  **all three** sites, including the Palette tile's `disabled` prop. The predicate reads `emailSafe` from
-  the enriched `PaletteItem` metadata (which now also carries `icon`/`group`), keeping the email rule
-  co-located with the palette catalog. Separately, a `useFrameNodes()` seam owns the
-  `EditorFrame[] → React-Flow node[]` mapping reactively (add/remove without a remount; position
-  write-back on drag), making the `docKey` remount an internal detail.
-- **Benefits.** _Locality:_ Frame rules co-locate; the email rule has one home that feeds both insert and
-  the locked affordance. _Leverage:_ add/remove Frames becomes a couple of lifecycle calls, not a
-  Board-remount choreography. _Tests:_ "cannot insert Grid into an email Frame", "createFrame yields a
-  unique id" — tested without React or React Flow.
-- **Unlocks:** **add-remove-frames**; Frame templates; strict validation on document load.
-- **Test it (Phase 0 is live — don't skip).** The Frame lifecycle is pure (no React/React-Flow): add
-  `src/editor/frames.test.ts` ("cannot insert Grid into an email Frame", "createFrame yields a unique
-  id", "target is fixed at creation", `canInsertComponent` truth table) **and** add `src/editor/frames.ts`
-  to `coverage.include` in `vitest.config.ts`. Keep `useFrameNodes` (the React-Flow seam) out of the unit
-  suite — it's verified live, like the canvas/editor render path.
-
-### D4 — The Editor history + persistence Module (hardening)
-
-> **✅ IMPLEMENTED (2026-06-20, ADR-0012).** Pure `src/editor/history.ts` (reducer over `DocumentBody`:
-> `record`/`undo`/`redo`, coalesce + redo-clear + 100 cap; `history.test.ts`, 10 tests). Store rewritten
-> around a single internal **`mutate(coalesceKey, edit)` funnel** (the one path for all 13 document
-> mutations; `edit` is a pure `(doc, state) => {body, ui?} | null`) + a **denormalised present**;
-> `commit()`/`Snapshot` deleted; `loadDocument`/`resetDocument`/`undo`/`redo` use the reducer directly.
-> `document.ts` gained `DocumentBody` (+ `EditorDocument extends` it, `toDocument(body)`) and one
-> `parseDocument()` pipeline (validate incl. ADR-0006 email audit, then D2 migrate) on both load paths;
-> version stays 1, persisted format unchanged. **`usePersistence()`** hook (mounted once in `Editor`) owns
-> the debounced save + transient `saveStatus`; Toolbar lost its autosave effect and just renders status.
-> Decisions locked & built: (a) `mutate` funnel + pure reducer, **denormalised** present (zero selector
-> ripple); (b) **hook** persistence (not store-subscribe/agnostic-module — keeps store + history.ts pure);
-> (c) `DocumentBody` unifies the shape; (d) one `parseDocument`, **keep v1**; (e) **keep** clearing
-> selection on undo. The 17-test regression net (written first) stayed green through the rewrite — proving
-> behaviour preservation. Green: typecheck · eslint (0 warn) · 87 vitest (99.2% stmt) · generate · build ·
-> live (Saving→Saved on edit, undo/redo, reload round-trips persistence, no console errors). _Deferred:_
-> restore-selection-on-undo; a `version` 1→2 migration when the saved shape actually breaks.
->
-> **Post-review (7 findings, all nit).** Addressed: documented `history.ts`'s by-reference snapshot
-> immutability contract; fixed the stale `commit()` comment in `frames.ts`; added a `renameFrame` no-op
-> guard (unknown id / unchanged title → no entry); added a history test for "same-key edit right after
-> undo starts a fresh step"; and made `usePersistence` **StrictMode-robust** (a last-seen-body compare
-> replaces the first-run flag that React StrictMode's dev double-invoke defeated, which had caused a
-> spurious save-on-load — pre-existing from the old Toolbar). Live-confirmed: fresh load no longer flashes
-> "Saving…", real edits still save. 88 tests green.
-
-> **Design cruxes — grilled & resolved (2026-06-20, post-D3).** _Refresh:_ the per-action `commit()` surface grew to
-> **thirteen** document mutations (D3 added `addFrame`/`removeFrame`/`renameFrame`); seven UI actions
-> (`selectNode`/`setRightTab`/`clearSelection`/`setDropTarget`/`selectFrame`/`clearPendingFocus`/`setExportTarget`)
-> correctly don't commit. A **regression net now exists** — `src/editor/store.test.ts` (17 characterization
-> tests) pins the coalescing keys, the `{frames, themeOverrides}` Snapshot, undo-clears-selection, the
-> redo-stack-clear, and the 100-entry cap — so D4's refactor can be proven behaviour-preserving.
-> `document.ts` also grew a **second** load transform (`isEmailFrameClean`, D3) beside `withMigratedOverrides`
-> (D2), so the load→validate→migrate pipeline is now D4's to unify.
->
-> - **(a) Dispatch shape** — how "undoable + persisted" becomes unforgettable: a `mutate(coalesceKey, transform)`
->   store helper over a pure `history.ts` module (actions compute only a pure `doc → doc` transform) vs a
->   zustand middleware vs a Redux-style reducer+command enum. Sub-crux: keep the present **denormalised**
->   (top-level `frames`/`themeOverrides`, no selector ripple) vs **derive** it from `history.present` (true
->   single-source, ripples to every `useEditor(s => s.frames)`). _Lean: `mutate()` + pure module, denormalised present._
-> - **(b) Persistence home** — lift the 400ms autosave out of `Toolbar`: a store-level subscribe+debounce
->   owning a `saveStatus` field (Toolbar just renders it) vs a dedicated `usePersistence` hook vs leave it.
->   _Lean: store-level; contestable because it puts a timer + localStorage in the store module._
-> - **(c) One document shape** — extract `DocumentBody = {frames, themeOverrides}`; `Snapshot` IS
->   `DocumentBody`, `EditorDocument = DocumentBody & {version}`. _Lean: yes (removes the hand-sync)._
-> - **(d) Load pipeline + versioning** — fold the two load transforms into one `load(raw) → {ok,doc}|{error}`;
->   bump `version` 1→2 (dot-keyed, explicit migrations) vs keep v1 + lenient normalisation. _Lean: keep v1._
-> - **(e) Selection on undo** — undo/redo currently CLEAR selection (it's out of Snapshot); keep vs restore
->   the selection at each history point. _Lean: keep clearing; "restore selection" is a later enhancement._
-> - **Scope** — D4 is hardening, not a feature unblock. _Lean: do (a)+(b)+(c); defer (d)'s versioning; (e) is one line._
-
-- **Modules/files:** `src/editor/store.ts` (`commit`/`undo`/`redo`), `src/editor/document.ts`, and the
-  debounced auto-save `useEffect` in `src/editor/Toolbar.tsx` (lines 28-41 — Toolbar now documents itself
-  as the persistence owner). _(There is no `DocumentPanel.tsx`; it never existed.)_
-- **Problem (friction).** The invariant _"every change is undoable **and** auto-persisted"_ is
-  **mixed-depth**: it works and reads cleanly, but it is enforced _per action_ — each mutating action in
-  `store.ts` must remember to call `commit(...)` (verified: all ten document mutations do; the UI actions
-  `selectNode`/`setRightTab`/`setExportTarget`/`setDropTarget` correctly do not). Add a new mutating action
-  and forget `commit()` → undo silently breaks, with nothing to catch it. Persistence is a free-floating
-  `useEffect` parked in `Toolbar` — load-bearing logic living in a presentation component. And the undoable
-  document shape exists twice: `Snapshot` `{frames, themeOverrides}` (`store.ts:24-27`) and `EditorDocument`
-  `{version, frames, themeOverrides}` (`document.ts:14-18`), kept in sync by hand.
-- **Deletion test → CONCENTRATES (mildly).** Remove `commit()` and history vanishes from every action;
-  remove the Toolbar effect and the persist need reappears at load. The invariant isn't negotiable.
-- **Solution.** A history-aware dispatch so document mutations are pure transforms over
-  `{frames, themeOverrides}` and one module records history + schedules persistence — making "undoable +
-  saved" structural rather than a per-action ritual, and lifting the save effect out of `Toolbar` (which
-  keeps only the 'saved'/'saving' presentation). **The reskin already proved the boundary this module must
-  encode:** `rightTab` is store state but is deliberately excluded from `Snapshot` (`store.ts:13`), i.e. UI
-  state must never enter history — and `selectNode`/inserts now thread `rightTab='inspector'` through the
-  same `set()` as the document mutation (`store.ts:136,151`), so a history-aware dispatch should cleanly
-  separate "document transform" from "UI side-effects". Make that an explicit rule, with the test
-  "switching the right-rail tab creates no undo step." Lower urgency than D1–D3 (it functions today); do it
-  once the action set grows.
-- **Benefits.** _Locality:_ coalescing, history limit, and debounce-save in one place — not split between
-  `store.ts` and a Toolbar effect. _Tests:_ coalescing, the document/UI split, and persistence timing
-  tested without zustand/React. _Leverage:_ named checkpoints and multi-field grouped undo become local
-  additions; a single `Snapshot`-as-`EditorDocument` shape removes the two-place drift.
-- **Unlocks:** robustness as the action set grows; future checkpoints.
-
-### Minor / deferred
-
-- **DropManager** (`computeTarget` in `Editor.tsx`): already concentrated (extracted during the reorder
-  work) — a single source of truth for before/after/inside. Leave as-is; revisit only if drop rules
-  multiply.
-- **`Row` `flex:1` wrapper**: folds into D1 (becomes the traversal's one `Row` case).
-- **DS ref-wrapper pattern (watch, low urgency).** DS function components don't forward `ref` under
-  React 19, so dnd-kit's `setNodeRef` sits on a native wrapper while listeners/attributes/onClick spread
-  onto the DS component — duplicated in `Palette.tsx:110-125` (PaletteTile) and `EditableNode.tsx:70-78`
-  (handle). Deletion test passes (the decision survives in the other site), so a tiny `useDsDraggable`
-  helper is worth a note; fold in when a **third** site appears.
-- **Explicitly considered and rejected (do not re-flag).** `editor.css` `--ed-*`→DS-token aliasing is a
-  single intentional bridge layer (one place, not duplication). The two `localStorage` keys
-  (`easydesign:document:v1` in `document.ts` vs `easydesign:theme` in `useDarkMode.ts`) are distinct
-  concerns — document persistence vs chrome dark-mode preference (chrome-only, ADR-0007). Both fail the
-  deletion test; leave them.
+**The typography sub-problem (Capability B).** A _variant → token binding_ is an identity fact too,
+but with an extra defect the other node-kind facts don't have: it is **not tokenized**. `h2`'s
+`lineHeight '1.25'` and `fontWeight '700' / '600' / '400'` are **raw literals the Theme can never
+reach**, triplicated across `leaf-style.ts`, `mjml.ts`, and the canvas component layer. **The disease
+is non-tokenization; triplication is only the cost-multiplier.** The fix (RP-3): grow `tokens.json`
+with the missing _primitive_ tokens (weight / line-height / letter-spacing — purely additive,
+decoupled from RP-2, do first), then author the closed **Heading set** as DTCG **composite `typography` tokens whose sub-values _alias_
+those primitives** (`heading.h2 = { fontSize:'{font.size.lg}', fontWeight:'{font.weight.bold}', … }`).
+Style Dictionary's `expand` fans each composite out to per-property values — web `var()` + email
+literals — and the `TextStyle` union is **codegen'd from the token graph** (the binding table is a
+_generated_ artifact, not hand-authored). This keeps DTCG / Figma / Tokens-Studio interop **and**
+compile-time safety. Acceptance test = the re-theme round-trip: editing one primitive re-themes `h2` in
+web preview **and** in MJML export. (Composite was briefly rejected on the theory SD only flattens it —
+but that flattening _is_ the intended `expand` seam; the alias-survives-`expand` web path is a 1-hr
+gating spike, see RP-3.) The split is **Heading styles** (a closed, themed, named
+set the user picks whole) vs **Free-form text** (the user picks size/weight **constrained to the type
+scale, never arbitrary px**). The chrome design-system's
+`Families → Weights → Scale → LineHeight → LetterSpacing → Semantic` _layering_ is the template, but
+its values are re-authored for the user Theme — chrome tokens never bleed in (ADR-0007).
 
 ---
 
-## How the requested features land on these seams
+## 2. Capability → Enabler map
 
-| Feature                                                        | Sits on                                                  | Work once the seam exists                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **add/remove Frames**                                          | **D3** (Frame lifecycle + `useFrameNodes`)               | `createFrame`/`deleteFrame` actions; a "+ Frame" control in the **Toolbar** (`src/editor/Toolbar.tsx`, which already owns the global-action row) or as a Board overlay — there is **no Document panel**. React-Flow reflects add/remove reactively (no remount). A Frame delete also clears Selection/history coalescing and reconciles `rightTab`. Per-Frame remove/target can also live in the Inspector tab.                                                                                                                                                                     |
-| **container style editing** (gap/padding Design-Token pickers) | **D2** (Design-Token Model) + the **existing Inspector** | The Inspector already exists (`src/editor/Inspector.tsx`, a DS `PanelSection`/`Input`/`Badge` tab; selection routes to it via `store.selectNode` → `rightTab='inspector'`, `store.ts:136`). The feature only adds a "Layout/Spacing" `PanelSection`: ask `stylableKeys(node.type)` → render a picker per key; spacing keys list `byCategory('space')`. The Design tab (`ThemePanel.tsx`, DS `Swatch` rows) is the precedent to copy. A new `setNodeStyle(frameId, path, key, ref)` store action (history-coalesced like text edits). No hardcoded token names, no new panel chrome. |
-| **canvas keyboard a11y**                                       | **D1** (Node Walk) + new `useCanvasA11y`                 | A `useCanvasA11y(frameId, path)` hook supplies roving `tabIndex`/`role`/`aria-label` and arrow-key tree navigation, Enter (edit), Delete (remove) — attached at the single traversal site D1 creates (the `EditableNode` wrapper, `EditableNode.tsx:60`). This finally lets the `src/editor/**` `jsx-a11y` relaxation — still present, exactly two rules (`click-events-have-key-events`, `no-static-element-interactions`, `eslint.config.mjs:142-148`) — be **removed** (it masks this gap, not a false positive).                                                                |
+Which candidates must land before each named feature, and why (with `file:line`).
+
+### Capability A — "Add more React Aria Components"
+
+Adding one leaf Component today touches **~15 sites; only 2 fail to compile if forgotten** (see
+Appendix A). The silent sites: `html.ts`, `react.ts`, `angular.ts` emitters; `mjml.ts:87` `renderLeaf`
+(throws at runtime, doesn't compile-fail); `leaf-style.ts:72-120` (`textDecls`/`buttonDecls`/`imageDecls`
+are standalone functions with **no switch, no exhaustiveness**); `canvas.tsx`; `EditableNode.tsx`;
+`palette.ts:23`; `Inspector.tsx:170`; `frames.ts:80` (`EMAIL_UNSAFE`); `paths.ts:6` (`CONTAINER_TYPES`);
+`useCanvasA11y.ts:20` (`describe()` falls into a generic `else`).
+
+A splits into **two halves that need different modules** (§1). The common case — a display-only
+Component (Divider, Spacer, Icon) — needs only the render/export half.
+
+**Render / export half — hard-required for any new Component:**
+
+| Enabler                                                                              | Why it's required                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RP-2 — Component Descriptor / Registry** _(primary unlock)_                        | The **identity** module: collapses the 8 silent per-type facts to one row; `palette.ts` / `isContainer` / `isNodeEmailSafe` / `describe()` become projections/lookups over `Record<Node['type'], Descriptor>`, so a missing row is a _compile_ error. 12-file change → 1 row + N renderers. |
+| **RP-9 — Typed per-target renderer exhaustiveness** _(§5.1 — promoted into the map)_ | `Record<LeafType, Renderer>` per Export Target, so a forgotten renderer is a _build_ error rather than `mjml.ts:99`'s runtime throw or a blank canvas. This is the actual **silent→caught** lever; it sits _underneath_ RP-2.                                                               |
+| **RP-8 — MJML walk-seam** _(low; only if email-safe rich)_                           | Once RP-9 supplies a leaf-renderer registry, MJML (`mjml.ts:87-101`) shares it so a forgotten email leaf compile-fails too. Low because email-unsafe rich widgets never reach it.                                                                                                           |
+
+**Editing half — required only when the new Component adds editable props beyond `content`** (a
+matched **write/read pair**; a display-only Component needs _neither_):
+
+| Enabler                                                    | Why it's required                                                                                                                                                                  |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RP-1 — Layout-tree editing module** _(write side)_       | The new prop-setter (set-variant, set-src…) routes through the 7-action mutation smear; extract it so the next setter is 3 lines, not a 12-line copy.                              |
+| **RP-6 — Inspector selection-editing model** _(read side)_ | `Inspector.tsx:170-180` hardcodes `editable = Text\|\|Button` inline; a Component with new props has nowhere to surface controls. Becomes table-driven, reading RP-2's `controls`. |
+
+Not required for A: RP-5 (drag-drop intent), RP-7 (persistence/reconciliation).
+
+### Capability B — "Real typography system"
+
+Today: `variant: 'h2' | 'body'` (`types.ts:43`) with the **same three literals hardcoded in three
+parallel places**: `leaf-style.ts:78,80` (`lineHeight '1.25'`, `fontWeight '700'`), `mjml.ts`
+(`line-height="1.25"`, `font-weight="700"/"400"`), and the canvas copy in `src/components`.
+`tokens.json:18-23` has **only 4 font tokens** (family, h2, body, line) — no weight, no letter-spacing,
+no composite. `ThemePanel.tsx` shows colors only; Text nodes never get a style section
+(`Inspector.tsx`, `styleKeys` is container-gated).
+
+B has **two halves** (the settled Heading-style vs Free-form-text split, §1) that unlock through
+**different** candidates, over one shared additive base — and, like A, each half has a render side and
+an editing side. **Scope:** the binding is **typography-only and Text-only**; everything else (Button's
+primary/secondary appearance) is _already_ token-based and out of scope. Button's lone typographic
+smear — `fontWeight '600'` — is killed by **direct primitive adoption** (`font.weight.semibold` ref in
+`buttonDecls`/`renderButton`/`Button.tsx`), **not** a binding row.
+
+| Slice                               | Enabler                       | Role                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Shared scaffolding** _(do first)_ | token growth (RP-3/RP-4 base) | add primitive `font.weight/scale/lineHeight/letterSpacing` tokens to `tokens.json` + `npm run tokens` — purely additive, decoupled from RP-2, lands first                                                                                                                                                                                    |
+| **Heading styles**                  | **RP-3** _(primary)_          | DTCG **composite `typography` tokens aliasing the primitives** (Figma/Tokens-Studio round-trippable); SD `expand` → per-property web `var()` + email literals that `leaf-style.textDecls` / `mjml.renderText` / canvas copy _interpret_. Adding `h1`/`caption` = one composite token; the `TextStyle` union is **codegen'd** from the graph. |
+| **Free-form text** _(read/model)_   | **RP-4** _(co-primary)_       | per-node-type style keys (Text → `fontSize`/`fontWeight`) — `STYLE_KEYS` (`design-tokens.ts:27`) is a flat _container_ map today — **plus** a finer token `Category` so a "pick weight" picker sources weights, not the whole intermixed `'font'` bucket. The `design-tokens.ts:24` comment predicts exactly this.                           |
+| **Free-form text** _(write)_        | **RP-1** _(conditional)_      | free-form editing must **set `fontSize`/`fontWeight` on a Text leaf**, which `setNodeStyle` refuses today (`store.ts:293` container-gate). Relaxing that gate is an editing-module op — routes through RP-1 if landed (same conditional role as A's editing half).                                                                           |
+| **Editing surface**                 | **RP-6**                      | `Inspector.tsx:41-49` builds options for _container_ keys only; renders the heading picker + free-form size/weight pickers, reading RP-2's control set. Extend "container-gated" → "per-node-type control set."                                                                                                                              |
+| **Identity**                        | **RP-2**                      | declares that the Text descriptor exposes a **typography control set** (read by RP-6). Owns the _control declaration_, not the variant→token mapping (that is RP-3).                                                                                                                                                                         |
+
+**A/B symmetry:** both capabilities decompose into a **render half** and an **editing half**, and the
+editing half is always the **RP-1 (write) + RP-6 (read)** pair. This is why §4 puts RP-1 first — it is
+on the critical path for _both_ capabilities' editing halves.
+
+Not required for B: RP-5 (drag-drop intent), RP-7 (persistence/reconciliation), RP-8 (MJML walk-seam).
 
 ---
 
-## Suggested sequence (dependency-ordered)
+## 3. The candidates
 
-**Phase 0 — Make it testable.** ✅ **Done.** `vitest` is configured (`vitest.config.ts`, `npm run test`)
-with a first suite against the D1 seam (`walkNode`/`shapeOf`), the β table (`leaf-style`), and golden
-snapshots of all four generators. Extend it as each further deepening lands — the deep modules are pure;
-the interface is the test surface.
+Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the implementation order
+— see §4 for sequencing. Priority: ★★★ keystone / ★★ high / ★ independent debt.
 
-**Phase 1 — Deepen the seams the features need.**
-
-1. **D1 Node Walk** — lowest risk, biggest duplication relief; keep MJML separate (+ ADR); no DS imports
-   in the substrate.
-2. **D2 Design-Token Model** — unblocks container editing; retires the most-scattered knowledge; owns the
-   user (`.ed-board-content`) token graph only.
-3. **D3 Frame lifecycle + `useFrameNodes`** — unblocks add/remove Frames; `canInsertComponent` becomes the
-   one home for the email rule (insert guards + the locked-tile affordance).
-
-**Phase 2 — Build the features on the new seams.** (The right-rail tabs scaffolding — `RightRail.tsx` +
-`rightTab` in `store.ts` — already ships, so the UI side of #5 is mostly token-picker rows in the existing
-Inspector, not new panel chrome.)
-
-4. ✅ **add/remove Frames** — done in D3 (Board `+ Web page`/`+ Email` panel; `addFrame`/`removeFrame`).
-5. ✅ **container style editing** — done (2026-06-20). `setNodeStyle(frameId, path, key, ref)` store action
-   through the D4 `mutate()` funnel (coalesced per `style:frame:path:key`, `''` clears); the Inspector's
-   container-gated **Style** `PanelSection` renders a DS `<Select>` per D2 `STYLE_KEYS` entry, options from
-   `catalog.byCategory` + a "Default" clear. Live canvas preview (via `components/tokens.ts`) + undo +
-   autosave. Tests in `store.test.ts`. No hardcoded token names, no new panel chrome.
-6. ✅ **canvas keyboard a11y** — done (2026-06-20). `src/editor/useCanvasA11y(frameId, path, node)` gives the
-   `EditableShell` wrapper `role="treeitem"`, a roving `tabIndex`, `aria-label`/`aria-selected`, and
-   `onKeyDown` (Enter/Space select · Delete/Backspace remove · Escape deselect · Arrow Up/Down walk the tree
-   in document order via the new pure `flattenPaths`). Props applied **explicitly** (jsx-a11y is static), the
-   click handler stays for the mouse, and the **two-rule `src/editor/**` `jsx-a11y` relaxation is deleted\*\* —
-   lint passes clean. Verified live (Enter/Arrow/Delete/Escape + ARIA).
-
-> **Post-review (both features, 14 findings — 2 major, rest minor/nit) addressed.** (1) **Style picker is
-> now target-aware** — an email Frame offers only the keys MJML honours (`background`/`padding`, root Stack
-> only), so a live-preview edit can't silently vanish on email export (ADR-0006); web keeps all four.
-> (2) **Valid ARIA tree** — each Frame body is `role="tree"`, nodes carry `aria-level` + `aria-expanded`
-> (containers) + `aria-selected` (selected only). Plus: `setNodeStyle` gained the container guard +
-> value-equality no-op (matches `setLayout`); keyboard Delete now lands focus on the parent and Backspace no
-> longer browser-navigates; Arrow ←/→ step parent/first-child; Image/empty `aria-label`s; options hoisted;
-> deeper `flattenPaths` tests. **Deferred (noted):** a `style` ref absent from the catalog (only via
-> hand-edited JSON) shows "Default" in the Select — the real fix is import-time style-ref validation
-> (a stale ref already throws in `resolveVar` on export), a separate hardening. 95 tests green.
-
-**Phase 3 — Hardening.**
-
-7. **D4** history+persistence module once the action set has grown — note its auto-save lives in
-   `Toolbar.tsx:28-41` (not a `DocumentPanel`), and `rightTab` must stay out of history.
-8. Tests at each new interface; the ADR for "MJML is intentionally not part of the Node Walk".
+| ID   | Title                                                                  | Priority | Unlocks                                | Origin                       |
+| ---- | ---------------------------------------------------------------------- | -------- | -------------------------------------- | ---------------------------- |
+| RP-1 | Frame layout-tree editing module                                       | ★★       | A + B (editing/write side), foundation | state review                 |
+| RP-2 | Component Descriptor / Registry (+ Node-kind facts)                    | ★★★      | A + B keystone                         | research synthesis (NEW)     |
+| RP-3 | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
+| RP-4 | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
+| RP-5 | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
+| RP-6 | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
+| RP-7 | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
+| RP-8 | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
+| RP-9 | Typed per-target renderer exhaustiveness (`Record<LeafType,Renderer>`) | ★★       | A (render-half safety)                 | completeness §5.1 (promoted) |
 
 ---
 
-## ADR follow-ups to consider
+### RP-1 — Frame layout-tree has no editing module; the edits live untested inside store actions
 
-- **MJML stays bespoke** — record that the Node Walk (D1) deliberately excludes the email Export Target
-  (literal resolution + tree flattening, ADR-0006), so future reviews don't re-suggest unifying it.
-- If D3's `canInsertComponent` becomes the _only_ enforcement point for the email-mode restriction, note
-  it against ADR-0006. The reskin gives this a UI consumer: the Component Palette now renders email-unsafe
-  items **locked** (`Palette.tsx:86`, the DS `PaletteItem disabled` predicate) rather than hidden, and that
-  disabled check plus the inline insert guards (`Palette.tsx:102`, `Editor.tsx:162`) should all derive from
-  the single `canInsertComponent` predicate so the rule has one home.
-- **Token scoping is structural, not a convention** — D2's model owns the user DTCG graph only; chrome
-  tokens (`:root` via `chrome.css`) are out of scope (golden rule, ADR-0007). Worth recording so a future
-  pass doesn't fold the two token worlds together.
+**Priority:** ★★ · **Sequence:** 1st · **Unlocks:** A (write side) + a tested mutation core for everything after.
 
-_Next step (per the skill): pick a candidate (D1–D4) to drop into a design/grilling conversation — we'd
-walk the interface options for the deep module (Design It Twice), what sits behind the seam, and which
-tests survive. D1 or D2 are the highest-leverage starting points._
+> ✅ **IMPLEMENTED 2026-06-22** — extracted to `src/editor/node-tree.ts` (5 pure ops); the 7 store
+> actions route through it via `applyTreeEdit`. See §4 step 2 for the full record.
+
+**Files / sites:** `src/editor/store.ts` (the 7 mutating actions: `insertChild`, `insertAt`,
+`moveNode`, `deleteNode`, `updateText`, `setLayout`, `setNodeStyle`), leaning on
+`src/editor/paths.ts` (`nodeAt`, `isPrefix`, `isContainer` — load-bearing, **untested**;
+`paths.test.ts` covers only `flattenPaths`). New module: e.g. `src/editor/node-tree.ts`.
+
+**Problem (deep/shallow):** Each action repeats the same shape —
+`structuredClone(frame.root)` → `nodeAt(root, path)` → splice/mutate →
+`doc.frames.map(f => f.id === id ? {...f, root} : f)` — interleaved with zustand `set`, history
+coalescing, and UI side-effects, so the tree edit is only reachable by driving the store and
+observing outcomes. The genuinely tricky invariants live _inline in untested bodies_:
+`moveNode`'s index adjustment (`if (fromParent === targetParent && fromIndex < i) i -= 1`), the
+`isPrefix` "can't move into your own subtree" guard, the root-deletion guard, and the Grid
+"delete `wrap`" rule. **`moveNode` and `deleteNode` have zero tests**; the others test only
+history-coalescing, not mutation correctness. This is the skill's canonical anti-pattern: pure
+functions (`frames.ts`, `paths.ts`) extracted for testability, while the bugs hide in the
+_composition_ that calls them.
+
+**Evidence:** `store.ts` 7 actions repeat the clone+nodeAt+splice+map boilerplate; `moveNode`
+index-adjust; `deleteNode` root guard; `setLayout` Grid-`wrap` special case. `paths.ts:8-32`
+(`nodeAt`/`isPrefix`/`isContainer`/`samePath`) used in 12+ call sites, none unit-tested.
+
+**Proposed direction:** Give a Frame's layout tree its own **editing module** (`src/editor/node-tree.ts`),
+**purely structural and type-agnostic** (resolved in grilling). **Five ops** serve the seven actions,
+each a pure `(root, …) → { root, path } | null` that never mutates its input (full `structuredClone` at
+entry):
+
+- `insert(root, parentPath, index, node)` — both `insertChild` (index = `children.length`) and `insertAt`.
+- `move(root, fromPath, parentPath, index)` — owns the index-adjust + `isPrefix` subtree guard.
+- `remove(root, path)` — the root-delete guard (`delete` is reserved).
+- `updateProps(root, path, patch)` — both `updateText` (`{content}`) and `setLayout` (a patch where
+  `undefined` deletes a key); a **blind** props merge.
+- `setStyle(root, path, key, ref|null)` — a blind style-map set/clear.
+
+`path` is the resolved **structural** location (insert/move target, delete's parent, or the unchanged
+path for in-place edits); `null` = a tree-level **no-op** (invalid path, root/subtree guard, no-change).
+Store actions shrink to: look up the frame, call the op, on `null` return `null`, else assemble the body
+and apply **UI policy** (map `path` → selection) through the existing `mutate()`. The store keeps
+_orchestration_ (frame lookup, body assembly, selection policy, history); the module owns _structural
+correctness_. **Node-type rules are NOT in the module** — the Grid-`delete-wrap` rule (`store.ts:278`)
+and the container-gate (`store.ts:293`) are _semantic_ facts that stay as thin store-action sanitization
+for now and **migrate to the descriptor in RP-2/RP-4** (RP-4 relaxes the gate so a Text leaf carries
+`fontSize`/`fontWeight`). The module's structural "can receive children" check is `'children' in node`
+(union-derived), not the hardcoded `isContainer` Set.
+
+**Benefits:** **Locality** — every _structural_ layout-tree invariant in one place, not re-derived per
+action and in `Editor.tsx`. **Leverage** — drag-drop (RP-5), keyboard a11y, and the store all edit
+through one seam. **Tests** — the interface _is_ the test surface: "move into own subtree rejected",
+"delete root is a no-op", "move index-adjust within the same parent", "insert into a leaf is a no-op"
+become pure unit tests with no zustand/history/React. (The "Grid drops `wrap`" test is **not** here — it
+is a node-type rule owned by RP-2.)
+
+**Tests that become possible:** direct unit tests for all 5 ops incl. the move index-adjust and subtree
+guard, the root guards, and "input root is never mutated" (purity); `paths.ts` primitives
+(`nodeAt`/`isPrefix`) get their own unit tests (backfilled by RP-1).
+
+**Dependencies:** none. Lowest-risk, do first.
+
+**ADR touchpoints:** likely an amendment to ADR-0012 (history reducer / `mutate()` funnel) noting the
+new tree-edit module sits _below_ the funnel. No reversal.
+
+**Open questions** — _all resolved in grilling:_ returns **`{ root, path } | null`** (`path` = structural
+location, store owns selection policy; `null` = tree-level no-op); module **owns the clone** (full
+`structuredClone`, pure, never mutates input); **tree-validity** no-ops live in the module, the
+**frame-lookup** no-op stays in the store; module is **structural/type-agnostic**; `updateText` +
+`setLayout` collapse into `updateProps`; structural-sharing optimization explicitly deferred. _Remaining
+for implementation:_ the exact `patch` typing for `updateProps`.
+
+---
+
+### RP-2 — Component Descriptor / Registry (the 12-file → 1-row unlock) ★★★
+
+**Priority:** ★★★ keystone · **Sequence:** 2nd · **Unlocks:** A (primary) + B (declares variants).
+**Grill together with the Node-kind-facts consolidation — they are the write-side and read-side of one
+module.**
+
+**Files / sites (consolidates):** `src/editor/palette.ts:23-93` (`PALETTE`),
+`src/editor/frames.ts:80` (`EMAIL_UNSAFE`), `src/editor/paths.ts:6-10`
+(`CONTAINER_TYPES`/`isContainer`), `src/editor/useCanvasA11y.ts:20-28` (`describe`),
+`src/editor/Inspector.tsx:170-174` (editable/container gates); _feeds_ `leaf-style.ts`, `mjml.ts:87`,
+`canvas.tsx`, `EditableNode.tsx` (emitter dispatch). New module: **`src/editor/descriptors.ts`** (it
+carries editor-runtime facts — `icon`, `controls` — so it _cannot_ live in the dependency-free `src/ir`,
+ADR-0008). RP-9's renderer registry is a **separate** library module (with the generators/components).
+
+**Problem (deep/shallow):** `walk.ts` is genuinely deep, but every _fact about a node type that isn't
+structural traversal_ leaks out of it into ~12 **shallow** sites that each re-encode the type list.
+**There is no module that owns "what is a Component."** Adding one means editing the union
+(`types.ts`) plus ~11 satellites, **8 of them silent** (no compile error). This is textbook
+information leakage: the same decision (kind, email-safety, label, icon, default props, editable
+controls, style keys) repeated at every call site. `frames.test.ts` exists _only_ to assert
+`PALETTE.emailSafe` and `EMAIL_UNSAFE` never drift — a test that **disappears** once the fact has one
+home.
+
+**Evidence (verified):** `types.ts:33-49` (7-branch union). `design-tokens.ts:24` comment predicts
+per-node-type evolution. `frames.ts` `EMAIL_UNSAFE = ['Grid']` separate from `palette.ts` per-item
+`emailSafe`. `paths.ts:8` hardcodes `isContainer` over a `Set`. `useCanvasA11y.describe()` unguarded
+`else`.
+
+**Proposed direction:** One **descriptor as a mapped type over the union** (resolved in grilling) —
+`type Descriptors = { [T in Node['type']]: Descriptor<T> }` — so a missing row is a _compile_ error and
+each row's `create: () => Extract<Node,{type:T}>` is per-type-checked (parity **by construction**, no
+test). `Descriptor<T>` = `{ label, icon, group, emailSafe, create, styleKeys, controls }` — **no `kind`**
+field (container-ness stays union-derived `'children' in node`). `PALETTE` becomes a _projection_;
+`isNodeEmailSafe` / `describe` become descriptor lookups; **`isContainer` stays union-derived** (not a
+descriptor lookup); the Grid-`wrap` rule and the container-gate come home as `controls` / `styleKeys`.
+`controls` is a **static data spec** (what a type can expose); **RP-6** renders it and owns the _dynamic_
+filtering (fill hides justify/wrap; email root → background/padding). The per-target renderers stay
+per-type-checked — but via **RP-9's renderer registry** (a separate library mapped type), not this
+descriptor and not only `walk.ts`.
+
+**Benefits:** **Locality** — adding a Component = a union branch (compile-forced everywhere via
+`walk.ts`) + one descriptor row + N target renderers; the 8 silent satellites collapse to one row.
+**Leverage** — descriptor-completeness is **compile-enforced** (mapped type), and one table-driven test
+(`email-unsafe ⊆ palette; every `create()` yields a valid per-type node`) replaces the `frames.test.ts`
+drift-guard and covers the satellites at once. ("Every leaf has a renderer in every target" is **RP-9's**
+coverage, its own mapped registry.) **Deletion test** — delete a row and the
+Component vanishes from palette, inspector, a11y, and the email rule simultaneously while a coverage
+test flags the orphaned renderer: that single-point-of-failure _is_ the depth.
+
+**Tests that become possible:** email-safety ⊆ palette invariant; `create()` yields a valid per-type
+node (mostly compile-enforced); descriptor-completeness is the _type system_ (mapped type), not a test.
+("Every leaf type appears in every emitter" coverage belongs to RP-9.)
+
+**Dependencies:** none hard, but best after RP-1 (so new Component prop-setters use the tested tree
+module). It is the **keystone** for RP-3 and RP-6, which read the descriptor.
+
+**ADR touchpoints:** **new ADR** — "Component Descriptor as the single source of node-type facts."
+Hard to reverse, surprising without context, a real trade-off (registry vs. exhaustive switches).
+Must reconcile with ADR-0008 (walk owns structural dispatch — descriptor owns _non-structural_ facts
+only) and ADR-0006 (email-safe rule moves _into_ the descriptor, `isEmailFrameClean` reads it). The ADR
+also records the **union-mapped-type** shape (parity by construction, no `kind` field), the
+**`src/editor/descriptors.ts`** home (editor-runtime `icon`/`controls`), and the **RP-9 split**
+(per-target renderers are a separate library mapped registry, not this descriptor).
+
+**Open questions** — _all resolved in grilling:_ **lives in `src/editor/descriptors.ts`** (carries
+editor-runtime `icon`/`controls`; the IR stays dependency-free per ADR-0008); **no IR/editor split** —
+the only library-side per-type concern is **RP-9's separate renderer registry**. `create`/`defaultProps`
+stay in sync **by construction** via the **union-mapped type** (`{ [T in Node['type']]: Descriptor<T> }`
+with `create: () => Extract<Node,{type:T}>`) — neither "derive union from descriptor" nor a parity test.
+The descriptor owns `controls` as a **static data spec**; **RP-6** renders it and owns the dynamic
+visibility (fill/email conditions). `kind` is _not_ a field — container-ness is union-derived.
+
+---
+
+### RP-3 — Typography token + Variant-binding seam (the type-scale unlock) ★★★
+
+**Priority:** ★★★ · **Sequence:** 3rd · **Unlocks:** B (primary).
+
+**Files / sites:** `src/theme/tokens.json:18-23` (add weight/line/composite tokens),
+`src/theme/design-tokens.ts:12,27` (`Category` / `STYLE_KEYS` — shared with RP-4),
+`src/generators/leaf-style.ts:72-93` (`textDecls`/`buttonDecls`),
+`src/generators/mjml.ts` (`renderText`/`renderButton`),
+`src/components/primitives.tsx` + `src/components/Button.tsx` (canvas copies),
+`src/ir/types.ts:43,46` (variant unions). New module: e.g. `src/theme/variant-bindings.ts`.
+
+**Problem:** The variant→token mapping is **triplicated** and **half-tokenized**.
+`leaf-style.ts:77-80` resolves `font.h2`/`font.body` through tokens but bakes
+`lineHeight '1.25'` and `fontWeight '700'` as **raw literals**; `mjml.ts` repeats the same literals
+for email; `src/components` repeats them again for the live canvas. `tokens.json` has **no** weight,
+line-height, letter-spacing, or composite typography tokens — so a designer editing weight in the
+**Design Palette** cannot re-theme typography (the value isn't a **Design Token**). This contradicts
+the dual-output spine (ADR-0004): the half-tokens never reach the Theme.
+
+**Evidence (verified):** `tokens.json:18-23` — `font` = `{ family, h2, body, line }` only.
+`leaf-style.ts:78` `lineHeight: h2 ? '1.25' : 'var(--font-line)'`; `:80` `fontWeight: '700'`; `:92`
+button `fontWeight: '600'`. `types.ts:43` `variant: 'h2' | 'body'`.
+
+**Proposed direction:** (1) Add the **discrete primitive** layer to `tokens.json` — `font.size.*`,
+`font.weight.*` (numeric `400`/`700`), `font.lineHeight.*` (unitless `number`), `font.letterSpacing.*` —
+all valid DTCG tokens; regenerate (`npm run tokens`). Button's lone `600` is a direct
+`font.weight.semibold` ref. (2) Author the closed **Heading set** as DTCG **composite `typography`
+tokens that _alias_ those primitives**
+(`heading.h2 = { fontSize:'{font.size.lg}', fontWeight:'{font.weight.bold}', lineHeight:'{font.lineHeight.tight}' }`)
+— standard DTCG, so Figma Variables / Tokens Studio can round-trip it. (3) Configure Style Dictionary
+with **four platforms** over the one graph: _interop_ (no `expand`, pass-through composite for
+round-trip), _web_ (`expand:{include:['typography']}` + `css/variables` + `outputReferences:true` →
+per-property `var()`), _email_ (`expand`, `outputReferences:false` → resolved literals; MJML sets
+`font-size`/`font-weight`/`line-height` as separate attributes — ADR-0004), _types_ (custom format → TS
+unions). `textDecls`/`renderText`/canvas all _interpret_ the per-property output — no branching, no raw
+literals. (4) **Compile-time safety via codegen:** a custom SD format reads the graph and emits
+`type HeadingStyle = …` (the `typography` group) + `FontSize`/`FontWeight` step unions; the IR's
+`variant` becomes `HeadingStyle`, free-form text picks `FontSize`/`FontWeight` (RP-4). The old
+hand-authored `VARIANT_BINDINGS` table is **replaced by this generated artifact** — add a heading = one
+composite token, types follow. **Gating spike (do FIRST, ~1 hr):** verify the alias survives `expand`
+so web still emits `var(--font-size-lg)`, not a resolved literal (SD doesn't guarantee it — a known
+flattening footgun). Email is unaffected (we _want_ literals). If it fails, web typography needs a
+custom format / composite-level refs.
+
+**Benefits:** **Locality** — adding `caption`/`h1`/`h3` = one composite token (+ primitive rows if new); zero
+generator edits (generators become _interpreters_ of the table). **Leverage** — the binding feeds the
+Inspector Typography picker (RP-6), the Design-Palette Type-Scale section, _and_ both export targets
+from one source; one round-trip test (`for each variant, web var ↔ email literal resolve to the same
+token`) covers all three. **Seam alignment** — kills the last raw literals in
+`leaf-style.ts`/`mjml.ts`/`src/components`, keeping β with one home per side (the `leaf-style` vs
+`src/components` split ADR-0008 mandates). **Deletion test** — delete a binding row → the variant
+disappears from palette/inspector and both exporters refuse it; a Theme override of
+`font.weight.heading` re-themes h2 across web preview _and_ email in one edit.
+
+**Tests that become possible:** variant↔token round-trip (web var name vs email literal parity); "no
+raw typographic literal remains in any generator" lint/test; Theme-override re-themes-h2 assertion.
+
+**Dependencies:** RP-2 (descriptor declares which variants a Component offers) + RP-4 (the Category /
+`STYLE_KEYS` growth to carry weight/line). Can begin token-graph work in parallel.
+
+**ADR touchpoints:** **new ADR** — "Typography authored as DTCG composite `typography` tokens aliasing
+a discrete primitive scale; Style Dictionary `expand` fans out to per-property web `var()` / email
+literals; the `TextStyle` union is codegen'd from the token graph." Extends ADR-0004 (dual output now
+covers composite typography). Trade-off resolved: composite-aliasing-primitives chosen over a bespoke
+TS binding table — it earns DTCG / Figma / Tokens-Studio interop while the codegen step preserves
+compile-safety. (The composite layer is the first thing to drop if token interop is ever deferred —
+then discrete primitives + codegen'd unions suffice.)
+
+**Open questions for grilling:** _Resolved:_ composite-vs-discrete → **both, layered**; `variant` →
+**codegen'd `HeadingStyle` enum**; `lineHeight` unitless `number`, `fontWeight` numeric, curly-brace
+`{dot.path}` refs; **naming** = `h1`/`h2`/`h3` heading roles (mapped to `<h1>/<h2>/<h3>` for a11y) +
+`body`/`caption`/`label`; **named body composites deferred** (free-form primitive binding covers it);
+**letter-spacing** token now, control later. _Remaining (verification/impl, not forks):_ the
+alias-survives-`expand` **gating spike**; when to migrate string `"24px"` → `{value,unit}` (forward, not
+a blocker); `font-family` stack quoting in MJML.
+
+---
+
+### RP-4 — Design-Token Model growth: per-node-type style keys
+
+**Priority:** ★★ · **Sequence:** co-primary with RP-3 · **Unlocks:** B (free-form-text half).
+
+**Files / sites:** `src/theme/design-tokens.ts:12` (`Category`), `:26-32` (`STYLE_KEYS` flat map),
+`src/theme/token-category.mjs` (`categoryOf`), `src/editor/Inspector.tsx:41-49` (`STYLE_LABEL` /
+`STYLE_OPTIONS`), `:72-73` (`stylableKeys` medium gate), `src/editor/ThemePanel.tsx` (hardcodes
+`byCategory('color')`).
+
+**Problem:** The Catalog itself is deep, but its _consumers_ hardcode category lists. `Category` is a
+4-value union; `STYLE_KEYS` is a flat _container_ map (4 keys, all node types see the same set);
+`STYLE_LABEL` duplicates the key list in the Inspector; `ThemePanel` shows only colors. Real
+typography needs Text to expose `fontSize`/`fontWeight`/`lineHeight` style keys — i.e. `STYLE_KEYS`
+must become **per-node-type** (or be owned by RP-2's descriptor). The code _predicts this exactly_:
+`design-tokens.ts:24` — _"Evolve to per-node-type only when a node needs different keys (e.g. Text →
+color/fontSize)."_
+
+**Evidence (verified):** `design-tokens.ts:12` `Category`; `:27-32` `STYLE_KEYS` flat;
+`:22-25` the prophetic comment. `tokens.json` four groups.
+
+**Proposed direction** (resolved in grilling): split the conflated `STYLE_KEYS` into **two facts, two
+homes** — (1) **`STYLE_KEY_CATEGORY: Record<StyleKey, Category>`** stays in `design-tokens.ts` (library,
+token-model fact); (2) the **per-type `styleKeys: StyleKey[]` list** moves onto **RP-2's descriptor**
+(node-type fact). The Inspector/RP-6 _composes_ them:
+`descriptor.styleKeys.map(k → byCategory(STYLE_KEY_CATEGORY[k]))`. **`Category` grows finer by
+path-derivation** — `categoryOf` (already path-aware) branches on `path[1]` within the `font` group →
+`fontFamily`/`fontSize`/`fontWeight`/`lineHeight`/`letterSpacing` (drop the coarse `font`; add a
+`fontWeight` `$type` arm). `byCategory('fontWeight')` then powers _both_ the free-form picker _and_
+RP-3's codegen'd `FontWeight` step union — **one mechanism** (why RP-3/RP-4 are one session). `ThemePanel`
+**auto-discovers the category set** but presents via a compile-forced
+`CATEGORY_META: Record<Category, { label, order }>` (no hardcoded `byCategory('color')`). The medium gate
+(web vs email) becomes **RP-6 filtering**, not inline JSX.
+
+**Benefits:** **Locality** — adding a token category or a per-type style key stops requiring parallel
+edits in `STYLE_KEYS`, `STYLE_LABEL`, `stylableKeys`, and `ThemePanel`. **Leverage** — Text gets a
+real style section; the Design Palette can grow a Type-Scale section by registration. **Tests** —
+category/style-key coverage becomes a table assertion.
+
+**Dependencies:** RP-2 (descriptor owns per-type `styleKeys`). RP-3 and RP-4 are the **two halves of
+Capability B** — RP-3 owns the Heading-style binding, RP-4 owns the Free-form-text model (per-node-type
+style keys + a finer `Category` so size/weight pickers are sourced). Grill them together as one
+"typography spine" session, over the shared additive token base (§2).
+
+**ADR touchpoints:** amendment to ADR-0004 (the Design-Token Model now supports per-node-type style
+keys and richer categories).
+
+**Open questions** — _all resolved in grilling:_ `STYLE_KEYS` **splits** — the key→category map stays in
+`design-tokens.ts` (library), the per-type list moves to the descriptor, the Inspector composes them.
+`ThemePanel` **auto-discovers the category set** + a compile-forced `CATEGORY_META` for label/order.
+**letter-spacing**: token + category land now (additive base), the editing control is deferred;
+**shadow**: a separate `effects` category, **deferred entirely** (not Capability B).
+
+---
+
+### RP-5 — Drag-drop intent resolution is complex domain logic trapped in a component
+
+**Priority:** ★ · **Sequence:** independent · **Unlocks:** editor correctness + drop feedback.
+
+**Files / sites:** `src/editor/Editor.tsx` (`computeTarget`, `resolveDrop`, `onDragEnd`).
+
+**Problem:** These pure-ish functions translate pointer geometry + dnd-kit event shapes into a tree
+operation — drop-mode thresholds (`<0.25` before / `>0.75` after / else inside), the "root forces
+inside" rule, insert-vs-move branching, and the email-safety guard applied _after_ the target is
+computed. Real, bug-prone logic, reachable only by mocking dnd-kit's `DragEndEvent`/`over`, so none of
+it is tested. The late email guard also means a blocked drop shows an indicator then silently drops.
+
+**Proposed direction:** Name the **drop-intent module**: `(geometry, draggedItem, hoveredNode) →
+resolved tree op | rejected`. `onDragEnd` shrinks to "resolve intent, dispatch to RP-1's tree module."
+Move the email rule _into_ resolution so the indicator can reflect rejection.
+
+**Benefits:** **Tests** — drop-mode maths + email restriction become pure unit tests. **Locality** —
+"where does this drop land" stops being split between a component closure and the store. **Leverage** —
+pairs with RP-1: intent resolution emits exactly the op the tree module consumes.
+
+**Dependencies:** best after RP-1 (consumes its op type) and RP-2 (email-safe from descriptor).
+
+**ADR touchpoints:** none expected.
+
+**Open questions for grilling:** Where does dnd-kit's event shape get adapted (a thin boundary
+function vs. inside the module)? Does "rejected" carry a reason for UI feedback?
+
+---
+
+### RP-6 — The Inspector decides "what can I edit about this selection" inline in JSX
+
+**Priority:** ★★ · **Sequence:** 4th (after RP-2/RP-3) · **Unlocks:** A + B (the editing half).
+
+**Files / sites:** `src/editor/Inspector.tsx` (`STYLE_OPTIONS`/`STYLE_LABEL` 41-49; `stylableKeys`
+72-73; `editable`/`container`/`isFillRow`/`styleKeys` 170-180), reaching `catalog.byCategory`.
+
+**Problem:** Given a Selection, the rules for _which_ controls appear — email Frames allow only
+`background`/`padding` at root, Row-in-`fill` hides justify/wrap, which Design Token categories fill
+each style field, **and (post-RP-3) which typography controls a Text node gets** — are computed inline
+and interleaved with JSX, untested, and container-gated so leaves never get a style section. The
+medium-gating (a domain rule tied to Frame target) is buried in a component.
+
+**Proposed direction** (resolved in grilling): one **pure resolver**
+`resolveEditModel(medium, node, path, descriptors, catalog) → EditModel` — a **structured, typed** model
+(`{ content?, layout?: {distribute?,justify?,align?,wrap?}, typography?: {heading?,size?,weight?},
+style?: StyleField[] }`) where each _present_ field carries its resolved options + current value; absence
+= "not editable for this selection." The deep part — **medium** filtering (email root → only
+`background`/`padding`), **state** filtering (Row-`fill` → drop justify/wrap), and **category→options**
+resolution — lives entirely in the resolver. The Inspector becomes a **thin presenter** rendering each
+present field with its **typed** component (no inline conditionals, no generic switch — honoring the
+depth guard: don't over-genericize controls into shallow data). **Four layers:** RP-2 descriptor =
+static per-type availability (`controls`/`styleKeys`); RP-4/library = `STYLE_KEY_CATEGORY` + `byCategory`
+
+- RP-3's codegen'd unions = option _source_; the RP-6 resolver = dynamic medium/state filtering +
+  option/value resolution; the presenter = `EditModel → typed components`. `Inspector.tsx`'s
+  `editable`/`container`/`isFillRow`/`stylableKeys`/`STYLE_OPTIONS` all collapse into the resolver. Option
+  lists split three ways: **invariant enums** (justify/align/wrap/distribute) = shared presenter constants;
+  **per-type** (variant/heading) = descriptor; **dynamic token options** = resolver via `byCategory`.
+
+**Benefits:** **Tests** — "email root exposes only background/padding", "Row-fill hides justify",
+"Text exposes the type-scale picker" become pure assertions. **Locality** — medium-aware editing
+rules sit beside the email-insert rule in domain code, not in JSX.
+
+**Dependencies:** RP-2 (control/style-key source) + RP-3 (typography controls to render) + RP-4
+(per-type style keys). Grill **after** them so it consumes finished tables.
+
+**ADR touchpoints:** none expected (it consumes RP-2/RP-3 ADRs).
+
+**Open questions** — _resolved in grilling:_ a **pure function** returning a **structured typed
+`EditModel`** (not scattered predicates, not a fully-generic form spec); the typed `SegmentedControl`/
+`Select`/`Input` JSX **stays** but is driven by the model's present fields (no inline conditionals).
+Invariant enum options stay as presenter constants; the resolver owns medium/state filtering + dynamic
+token-option resolution.
+
+---
+
+### RP-7 — Persistence + React-Flow reconciliation hide clever, untested decisions in hooks
+
+**Priority:** ★ · **Sequence:** independent · **Unlocks:** test coverage.
+
+**Files / sites:** `src/editor/usePersistence.ts`, `src/editor/useFrameNodes.ts`,
+`src/editor/document.ts` (only `parseDocument` is tested).
+
+**Problem:** Both hooks contain subtle logic reachable only through React: `usePersistence`'s
+reference-identity trick to skip StrictMode's double-invoke + the initial-load re-save, the debounce,
+and the `saveStatus` transitions; `useFrameNodes`'s reconcile that adopts the store position _only
+when it changed_ so it never fights an in-flight drag. `saveToLocal`/`loadFromLocal`/`toDocument` and
+the reconcile decision are untested.
+
+**Proposed direction:** Push the _decisions_ (should-save? adopt-store-position-or-keep-node?) into
+pure functions the hooks call; leave the hooks as thin effect wrappers.
+
+**Benefits:** **Tests** — "don't fight the drag" and "don't re-save what we just loaded" become unit
+tests. Lower payoff than RP-1…RP-4; independent, schedule when convenient.
+
+**Dependencies:** none.
+
+**ADR touchpoints:** none (ADR-0012 already covers persistence shape).
+
+**Open questions for grilling:** Is the reconcile decision a pure `(prevNodes, frames) → nodes` fn
+worth its own test, or is it too thin to extract?
+
+---
+
+### RP-8 — MJML re-implements the structure traversal the Node Walk owns (contradicts ADR-0008)
+
+**Priority:** ★ (optional) · **Sequence:** last · **Unlocks:** A (only when an email-safe rich
+Component is added).
+
+**Files / sites:** `src/generators/mjml.ts` (`renderLeaf` 87-101, `renderCardSections`,
+`renderRowSection`) vs. `src/ir/walk.ts`.
+
+**Problem:** The three web targets share the Node Walk; MJML hand-rolls its own child loops + type
+dispatch — a **second source of truth** for document-order traversal. Adding a container/leaf type
+means updating both the walk and MJML's bespoke dispatch in sync; `renderLeaf` throws at runtime
+(doesn't compile-fail) when a leaf is forgotten.
+
+**Why flagged despite the ADR:** ADR-0008 _deliberately_ keeps MJML bespoke because email's
+section/column flattening is genuinely different from flex/grid — that rationale is sound. **Do not
+act on this unless container/leaf types start churning.** Surfaced so the duplication reads as a known
+decision, not an oversight. (The keyword→CSS duplication between `leaf-style.ts` and
+`components/Layout.tsx` is likewise deliberate per ADR-0008 — leave it.)
+
+**Proposed direction (if taken up):** Let MJML at least share the _leaf dispatch_ (the descriptor's
+renderer registry from RP-2) so a forgotten leaf is a compile error, while keeping its bespoke
+section/column structure. Revisit only on demand.
+
+**Dependencies:** RP-2 (renderer registry).
+
+**ADR touchpoints:** amendment to ADR-0008 _only if_ acted on.
+
+**Open questions for grilling:** Can leaf rendering be registry-driven without dragging MJML's
+section model into the walk? Is the cost worth it before email-safe rich Components exist?
+
+---
+
+## 4. Recommended sequencing (one candidate — or one tightly-coupled pair — per grilling session)
+
+Ordered **safety harness → foundations → features**, respecting **prerequisite-before-dependent**. The
+harness comes first because RP-2/RP-3 rewrite the four code generators, and golden snapshots are the
+only output-level guard against an emitter regression (§5.3).
+
+1. **RP-11 — Golden-output regression net** ✅ **IMPLEMENTED** (2026-06-22). Pure additive: a committed
+   snapshot per Export Target (`IR → {html, react, angular, mjml}`) over a **fixture corpus** that
+   isolates one feature each across the full IR vocabulary. Zero production change, zero risk, and the
+   **only** output-level guard for the emitter-touching refactors below — every later step reviews its
+   snapshot diff instead of hoping. (§5.3.)
+   - **Where:** `src/generators/golden.test.ts` + committed `__snapshots__/golden.test.ts.snap`
+     (39 goldens). The canonical rich `sampleCard` keeps its own golden block in `generators.test.ts`.
+   - **Corpus (11 fixtures):** covers every container (Stack/Row/Column/Grid), `distribute` fit+fill,
+     every `Justify`/`Align`/`Wrap` value (`justify-matrix` / `align-wrap-matrix`), every leaf variant
+     (Text h2/body, Button primary/secondary, Image width/no-width), the container style keys
+     (background/padding/borderRadius/gap), and a `nested-deep` recursion fixture. Table-driven
+     `GoldenFixture { name, frame, emailSafe }`.
+   - **Target split:** **email-safe** fixtures (Stack root, leaf / Row-of-leaf children) run all four
+     targets; **web-only** fixtures (Grid/Column/nesting) run the three web targets — MJML deliberately
+     rejects those shapes (ADR-0006/0008), so feeding them to `emitMJML` would throw, not regress.
+   - **Verified:** all 146 tests pass, `typecheck`/`lint`/`format:check` clean, change set is two new
+     files only.
+   - **⚠ Known gap for RP-3:** the vitest net covers the **four string generators only**. RP-3 also
+     edits the **React-Aria canvas copies** (`src/components/primitives.tsx`, `Button.tsx`) — the
+     typography literals `1.25`/`700`/`600`. Those are excluded from vitest by deliberate policy
+     (React UI is E2E-verified, `vitest.config.ts`), so an RP-3 canvas-copy regression would **not**
+     trip this net. RP-3 must either visually verify the canvas via `npm run generate` or add an SSR
+     canvas snapshot (needs a `.test.tsx` + jsdom — out of RP-11's additive scope).
+2. **RP-1 — Layout-tree editing module.** ✅ **IMPLEMENTED** (2026-06-22). Lowest-risk refactor,
+   highest immediate coverage: the 7 mutations had _no unit test surface_. Wrote the
+   `moveNode`/`deleteNode` characterization tests **first** (green against the unmodified store),
+   then extracted. Gives a tested mutation library _before_ the Component-specific ops (set-prop,
+   set-variant) that A and B need. Depended on nothing.
+   - **Where:** new `src/editor/node-tree.ts` — **5 pure, type-agnostic ops** (`insert`/`move`/
+     `remove`/`updateProps`/`setStyle`), each `(root, …) → { root, path } | null`, owning the full
+     `structuredClone` (never mutates input; `insert` clones the inserted node too). `move` owns the
+     index-adjust + `isPrefix` subtree guard + root guard; container check is union-derived
+     (`'children' in node`), never a `kind`/`isContainer` list.
+   - **Store:** a small `applyTreeEdit(doc, frameId, op)` helper collapses the 7 actions to ~4–6
+     lines each — the store keeps frame-lookup, Selection/history policy, and the **node-type
+     sanitization** (Text/Button gate, container gate, Grid-`wrap` drop) as thin reads → these move
+     onto the descriptor in RP-2/RP-4. `insertChild`+`insertAt` collapse into `insert`;
+     `updateText`+`setLayout` into `updateProps`.
+   - **Tests:** `node-tree.test.ts` (the 5 ops incl. purity / index-adjust / both subtree guards /
+     root guards) + backfilled `paths.test.ts` (`nodeAt`/`isPrefix`/`samePath`/`isContainer`).
+     **204 tests pass**, node-tree.ts + paths.ts at **100%** lines, typecheck/lint/format clean,
+     golden net unchanged (zero emitter touch). Added both modules to the vitest coverage include.
+   - **ADR:** ADR-0012 gets a one-line amendment (the tree-edit module sits _below_ the `mutate()`
+     funnel) — no reversal; written when convenient.
+3. **RP-2 — Component Descriptor / Registry (+ Node-kind facts).** The **keystone**: largest
+   extensibility unlock (12-file → 1-row), every Reader's PRIMARY, prerequisite for RP-3/RP-4/RP-6;
+   now guarded by RP-11's snapshots. Bring the `frames.test.ts` drift-guard and the
+   `paths.ts`/`useCanvasA11y.ts` predicates as deletion-test evidence. **RP-9** (typed per-target
+   renderer registry, §5.1) lands with or just after RP-2 as the render-half safety net — it is what
+   makes a forgotten renderer a _build_ error.
+4. **RP-3 + RP-4 — the typography spine** (DTCG composite Heading styles + Free-form-text primitive
+   binding, the two co-primary halves of Capability B). Tightly scoped, highly visible (kill the
+   triplicated `'1.25'`/`'700'`). **First move is the ~1 hr alias-survives-`expand` spike** before any
+   token restructure. Depends on RP-2 + the shared additive primitive base.
+5. **RP-6 — Inspector selection-editing model.** Consumes RP-2's `controls`/`styleKeys`, RP-3's
+   Heading bindings, and RP-4's free-form style keys; unlocks the _editing_ half of both A and B. Do
+   after so it reads finished tables.
+6. **RP-7 — Persistence/reconciliation pure decisions.** Independent; good test ROI; no blocker.
+7. **RP-5 — Drag-drop intent resolution.** Independent; valuable but touches neither named feature.
+   Do when the drop logic next needs to change.
+8. **RP-8 — MJML walk-seam alignment.** Last/optional; ADR-0008 cleanup; only bites when an
+   _email-safe_ rich Component is added.
+
+**One-liner:** RP-11 lays the golden safety net; RP-1 gives a tested mutation core with no deps; RP-2
+is the keystone everything hangs off; RP-3/RP-4/RP-6 are the two named features riding the keystone;
+RP-5/RP-7/RP-8 are independent debt with no feature gate.
+
+---
+
+## 5. Completeness check — dimensions NOT yet covered by any candidate
+
+The candidates cover node-type facts, props modeling, the token graph, typography, and the untested
+orchestration. Of the dimensions first flagged here, **RP-9** (typed renderer exhaustiveness) and
+**RP-11** (golden-output net) are now **promoted** into §3/§4. **Two genuine gaps remain (RP-10, RP-12)**,
+plus a secondary import-audit confirmation:
+
+1. **Typed per-target renderer exhaustiveness (the silent-emitter gap itself).** RP-2's descriptor
+   fixes the _facts_, but nobody has examined making the **`Emitter<T,C>` adapters compile-exhaustive**
+   — e.g. a `Record<LeafType, Renderer>` registry per target so a missing leaf renderer is a
+   _compile_ error in every Export Target, not a runtime throw (`mjml.ts:99`) or a blank canvas. This
+   is the deepest fix for Capability A's silent-failure problem and sits _underneath_ RP-2. **Now a
+   named candidate (RP-9)** — promoted into §2's Capability-A map and the §3 candidate table as the
+   render-half safety lever.
+2. **`allowed-children` / structural validity (RP-10) — deferred until the first _compound_ Component,
+   mandatory then.** The IR has **no constraint layer** — any node nests in any container. Simple
+   leaves (Divider/Spacer/Badge) don't care; but the first _compound_ RAC Component (`Tabs` must contain
+   `Tab`s; `RadioGroup → Radio`; `Select → Item`) makes this a **correctness requirement** — without it
+   the user drops a `Radio` into a `Grid`, exports, and gets a broken/invalid tree. **Not a standalone
+   module:** it's an `allowedChildren`/`slots` **field on RP-2's descriptor**, read by two consumers —
+   **RP-5** (drag-intent rejects an invalid drop, carrying a reason for the indicator) and a
+   **generalized import audit** (`isEmailFrameClean` → `isFrameValid(descriptor, root)`, one path that
+   then rejects email-unsafe _and_ structurally-invalid trees). **Hybrid compile/runtime** — the one
+   place pure build-time safety isn't reachable: narrowing the children union
+   (`{ type:'RadioGroup'; children: RadioNode[] }`) compile-checks hand-authored IR + the generators,
+   but the editor builds trees at runtime (`insertChild` takes a generic `Node`), so the drag-insert
+   path needs the descriptor's **runtime** validator.
+3. **Export round-trip / golden-output regression net — the most important gap.** ✅ **CLOSED by
+   RP-11** (2026-06-22, `src/generators/golden.test.ts` — see §4 step 1). The committed per-target
+   snapshot corpus over the full IR vocabulary now catches any emitter regression as a reviewable
+   diff. **Residual:** the net covers the four _string_ generators; the React-Aria canvas copies
+   (`src/components`) remain E2E-only by deliberate policy — RP-3 must visually verify them (see the
+   RP-11 ⚠ note in §4).
+   _Original gap (kept for context):_ the plan optimizes _unit_ testability of extracted modules, but
+   the stated goal is a codebase you can _safely extend_; `npm run generate` self-checks samples but is
+   a build step, not a regression net, so the RP-2/RP-3 refactors would otherwise change emitter
+   behaviour with no output-level guard.
+4. **IR schema versioning + migration (RP-12) — deferred, by decision.** RP-3 restructures the Text
+   node (`variant:'h2'|'body'` → a discriminated union) — a **breaking IR change**. `document.ts` has a
+   `version: 1` guard but only _additive_ migrations (`withMigratedOverrides`/`withFrameDefaults`) and
+   **no node-shape rewrite**; `isEditorFrame:34-50` never validates `props`, so a legacy Text node would
+   pass validation then mis-render under the new renderers (silent corruption). **Decision (no real
+   users yet — free to wipe):** do **not** build migration machinery now (the schema is still moving in
+   RP-3/RP-4). Adopt the cheap discipline instead — **every breaking IR change bumps `version`; the
+   loader resets stale documents** (an explicit wipe, which `isEditorDocument`'s `=== version` check
+   already performs, not silent corruption). So RP-3 just bumps to `version: 2` and stale localStorage
+   reseeds — no migration code. **Node-shape deep-validation folds into RP-2** (descriptor-driven).
+   **Revisit** the full `v1 → vN` migrate path at the first real users / schema-freeze.
+
+_(The former "secondary" import-audit note is folded into RP-10 above: `isFrameValid(descriptor, root)`
+is the single descriptor-driven audit that rejects both an imported email-unsafe Component (ADR-0006)
+and a structurally-invalid tree before either reaches an Export Target.)_
+
+---
+
+## Appendix A — The extensibility tax today (adding one leaf Component)
+
+Ordered edit sites; **C** = compiler-enforced (forgetting = build error), **S** = silent (forgetting =
+runtime gap / blank render, no error).
+
+| #   | File                           | Edit                                                          | Guard                                         |
+| --- | ------------------------------ | ------------------------------------------------------------- | --------------------------------------------- |
+| 1   | `src/ir/types.ts`              | add `Node` union branch                                       | C (drives the rest)                           |
+| 2   | `src/ir/walk.ts`               | `Emitter` method + `walkNode` case (+ `shapeOf` if container) | **C**                                         |
+| 3   | `src/generators/leaf-style.ts` | `xxxDecls` function (or `structuralDecls` case)               | partial — `structuralDecls` C, leaf fns **S** |
+| 4   | `src/generators/html.ts`       | emitter method                                                | S                                             |
+| 5   | `src/generators/react.ts`      | emitter method                                                | S                                             |
+| 6   | `src/generators/angular.ts`    | emitter method                                                | S                                             |
+| 7   | `src/generators/mjml.ts`       | `renderXxx` + `renderLeaf` case                               | S (throws at runtime)                         |
+| 8   | `src/components/<Comp>.tsx`    | React-Aria component                                          | —                                             |
+| 9   | `src/components/canvas.tsx`    | emitter method                                                | S                                             |
+| 10  | `src/editor/EditableNode.tsx`  | emitter method                                                | S                                             |
+| 11  | `src/editor/palette.ts`        | `PALETTE` entry                                               | S                                             |
+| 12  | `src/editor/frames.ts`         | `EMAIL_UNSAFE` (if unsafe)                                    | S                                             |
+| 13  | `src/editor/Inspector.tsx`     | editable/container guard + controls                           | S                                             |
+| 14  | `src/editor/useCanvasA11y.ts`  | `describe()` case                                             | S                                             |
+
+**~14 sites, ~10 silent.** RP-2 collapses 9-14 to one descriptor row; RP-9 (completeness §5.1) would
+make 4-7, 9-10 compile-exhaustive.
+
+## Appendix B — Typography hardcoding inventory (verified `file:line`)
+
+| Location                        | Hardcoded literal                                     | Should be                                                |
+| ------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
+| `tokens.json:18-23`             | `font` = `{family, h2, body, line}` only              | + weight, line-height, letter-spacing / composite tokens |
+| `leaf-style.ts:78`              | `lineHeight: h2 ? '1.25' : var(--font-line)`          | token ref (`font.line.heading`)                          |
+| `leaf-style.ts:80`              | `fontWeight: '700'` (h2)                              | token ref (`font.weight.heading`)                        |
+| `leaf-style.ts:92`              | `fontWeight: '600'` (button base)                     | token ref (`font.weight.button`)                         |
+| `mjml.ts` `renderText`          | `line-height="1.25"`, `font-weight="700"/"400"`       | resolved literals from binding                           |
+| `mjml.ts` `renderButton`        | `font-weight="600"`                                   | resolved literal from binding                            |
+| `src/components/primitives.tsx` | `lineHeight: 1.25`, `fontWeight: 700` (canvas copy)   | token-driven via component layer                         |
+| `src/components/Button.tsx`     | `fontWeight: 600` (canvas copy)                       | token-driven                                             |
+| `types.ts:43,46`                | `variant: 'h2' \| 'body'`, `'primary' \| 'secondary'` | type-scale enum sourced from bindings                    |
+| `Inspector.tsx`                 | Text nodes get no style section (container-gated)     | per-node-type Typography controls (RP-6)                 |
+
+The same three literals (`1.25`, `700`, `600`) appear in **three** per-target copies — the exact
+duplication RP-3's binding table removes.
+
+## Appendix C — The Design-Token system map (for RP-3 / RP-4 grilling)
+
+- **Source:** `src/theme/tokens.json` (hand-authored DTCG) → Style Dictionary
+  (`style-dictionary.config.mjs`, `token-category.mjs`) → **two outputs**: `theme.css` /
+  `theme.scoped.css` (CSS vars, web + live canvas) and `tokens.catalog.json` (resolved literals,
+  email). Run via `npm run tokens`.
+- **Model:** `src/theme/design-tokens.ts` — the `Catalog` (`get`/`byCategory`/`resolveVar`/
+  `resolveLiteral`/`withOverrides`/`fromKebab`); `Category = color|space|radius|font`;
+  `STYLE_KEYS` (flat container map). Dot-ref is the canonical id; kebab `cssVarName` is SD-derived.
+- **Consumers:** `leaf-style.ts` `containerDecls` (string targets, `resolveVar`); `src/components/tokens.ts`
+  (React side, parallel home per ADR-0008); `mjml.ts` (`withOverrides` → literals); `Inspector.tsx` /
+  `ThemePanel.tsx` (`byCategory` pickers/swatches); `Editor.tsx` `buildOverrideCss` (live theming
+  scoped to `.ed-board-content`, ADR-0007 golden rule).
+- **Growth path (RP-3/RP-4):** add weight/line/composite font tokens; make `STYLE_KEYS`
+  per-node-type (or descriptor-owned); auto-discover categories in UI. The dual-output + override
+  machinery already supports arbitrary refs — composite **typography** tokens (aliasing primitives)
+  unpack via Style Dictionary's `expand` into per-property web/email output, not in the Catalog.

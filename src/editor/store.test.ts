@@ -177,6 +177,102 @@ describe('history is bounded', () => {
   });
 });
 
+// ── RP-1 characterization: moveNode / deleteNode ─────────────────────────────
+// These two mutating actions had ZERO unit coverage. Pin their observable behaviour
+// (tree outcome, resolved Selection, history) BEFORE RP-1 extracts the tree edits
+// into src/editor/node-tree.ts — the byte-equality discipline that lets the extract
+// prove it changed nothing. web-1 seed: Stack[ Text"Web screen", Grid[ Text"Cell A", Text"Cell B" ] ].
+const childrenOf = (node: Node | undefined): Node[] =>
+  node && 'children' in node ? node.children : [];
+const rootOf = (id: string): Node | undefined => s().frames.find((f) => f.id === id)?.root;
+const at = (id: string, path: NodePath): Node | undefined => {
+  const root = rootOf(id);
+  return root ? nodeAt(root, path) : undefined;
+};
+
+describe('moveNode — reorder within a container (the index-adjust)', () => {
+  it('moving a child forward past a later sibling lands it after that sibling', () => {
+    // Grid children [Cell A, Cell B]; move [1,0] (A) toward index 2 → [Cell B, Cell A].
+    s().moveNode('web-1', [1, 0], [1], 2);
+    expect(content('web-1', [1, 0])).toBe('Cell B');
+    expect(content('web-1', [1, 1])).toBe('Cell A');
+    expect(s().selectedPath).toEqual([1, 1]); // resolved resting place after the index-adjust
+    expect(s().history.past).toHaveLength(1);
+  });
+  it('moving a child backward to the front needs no index-adjust', () => {
+    s().moveNode('web-1', [1, 1], [1], 0); // move B to the front → [Cell B, Cell A]
+    expect(content('web-1', [1, 0])).toBe('Cell B');
+    expect(content('web-1', [1, 1])).toBe('Cell A');
+    expect(s().selectedPath).toEqual([1, 0]);
+  });
+});
+
+describe('moveNode — across containers', () => {
+  it('lifts a grid cell up into the root Stack at the chosen index', () => {
+    s().moveNode('web-1', [1, 1], [], 1); // Cell B → Stack index 1
+    expect(childrenOf(rootOf('web-1'))).toHaveLength(3);
+    expect(content('web-1', [1])).toBe('Cell B'); // moved node now sits at [1]
+    expect(s().selectedPath).toEqual([1]);
+    expect(childrenOf(at('web-1', [2]))).toHaveLength(1); // the Grid (now [2]) lost a child
+    expect(s().history.past).toHaveLength(1);
+  });
+});
+
+describe('moveNode — guards (no-op, no history)', () => {
+  it('refuses to move the root', () => {
+    s().moveNode('web-1', [], [1], 0);
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('refuses to move a node into its own subtree', () => {
+    s().moveNode('web-1', [1], [1, 0], 0); // the Grid into one of its own cells
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('refuses an unknown frame', () => {
+    s().moveNode('nope', [0], [1], 0);
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('refuses a non-container target parent', () => {
+    s().moveNode('web-1', [0], [1, 0], 0); // target parent [1,0] is a Text leaf
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+});
+
+describe('deleteNode', () => {
+  it('removes a top-level child and clears the Selection', () => {
+    s().selectNode('web-1', [0]);
+    s().deleteNode('web-1', [0]);
+    expect(childrenOf(rootOf('web-1'))).toHaveLength(1);
+    expect(childrenOf(rootOf('web-1'))[0]?.type).toBe('Grid');
+    expect(s().selectedFrameId).toBeNull();
+    expect(s().selectedPath).toBeNull();
+    expect(s().history.past).toHaveLength(1);
+  });
+  it('removes a deeply nested node', () => {
+    s().deleteNode('web-1', [1, 1]); // delete Cell B
+    expect(content('web-1', [1, 0])).toBe('Cell A');
+    expect(at('web-1', [1, 1])).toBeUndefined();
+  });
+  it('refuses to delete the root (no-op, no history)', () => {
+    s().deleteNode('web-1', []);
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('refuses an unknown frame', () => {
+    s().deleteNode('nope', [0]);
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('undo restores a deleted subtree', () => {
+    s().deleteNode('web-1', [1]); // delete the whole Grid
+    s().undo();
+    expect(s().frames).toEqual(SEED);
+  });
+});
+
 describe('setNodeStyle — token-bound container style', () => {
   const styleOf = (id: string) => s().frames.find((f) => f.id === id)?.root.style;
   it('binds a Design Token to a style key and is undoable', () => {

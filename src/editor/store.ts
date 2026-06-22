@@ -1,14 +1,7 @@
 import { create } from 'zustand';
 
 import { sampleCard } from '../ir/sample';
-import {
-  type Align,
-  type Distribute,
-  type Justify,
-  type Node,
-  type StyleMap,
-  type Wrap,
-} from '../ir/types';
+import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
 import { type StyleKey } from '../theme/design-tokens';
 
 import {
@@ -25,7 +18,8 @@ import {
   undo as historyUndo,
   type History,
 } from './history';
-import { isPrefix, nodeAt, type NodePath } from './paths';
+import * as NodeTree from './node-tree';
+import { nodeAt, type NodePath } from './paths';
 
 export type { EditorFrame };
 
@@ -97,6 +91,27 @@ const bodyOf = (s: Pick<EditorState, 'frames' | 'themeOverrides'>): DocumentBody
 // A document mutation returns the next body plus any UI side-effects (selection, rightTab, pan focus);
 // null means "no-op" (invalid target, or a same-position move) → no history entry, no state change.
 type DocEdit = { body: DocumentBody; ui?: Partial<EditorState> } | null;
+
+// Apply a structural tree op (RP-1, node-tree.ts) to one Frame's root: look up the Frame, run the
+// op (which clones + edits the tree), and reassemble the body. Returns the next body + the op's
+// resolved path (the store maps it to Selection), or null if the Frame is missing or the op no-ops.
+function applyTreeEdit(
+  doc: DocumentBody,
+  frameId: string,
+  op: (root: Node) => NodeTree.TreeEdit | null,
+): { body: DocumentBody; path: NodePath } | null {
+  const frame = doc.frames.find((f) => f.id === frameId);
+  if (!frame) return null;
+  const result = op(frame.root);
+  if (!result) return null;
+  return {
+    body: {
+      ...doc,
+      frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root: result.root } : f)),
+    },
+    path: result.path,
+  };
+}
 
 const webRoot: Node = {
   type: 'Stack',
@@ -187,136 +202,88 @@ export const useEditor = create<EditorState>()((set) => {
     setExportTarget: (target) => set({ exportTarget: target }),
     setSaveStatus: (status) => set({ saveStatus: status }),
 
-    // ── Document mutations (through the mutate funnel → always undoable + persisted) ──
+    // ── Document mutations (structural edits via node-tree.ts → through the mutate funnel,
+    //    so every one is undoable + persisted; the ops own clone + correctness, the store owns
+    //    the Frame lookup, node-type gates, Selection, and history). ──
     insertChild: (frameId, parentPath, node) =>
       mutate(null, (doc) => {
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const parent = nodeAt(root, parentPath);
-        if (!parent || !('children' in parent)) return null;
-        parent.children.push(node);
+        const r = applyTreeEdit(doc, frameId, (root) => NodeTree.insert(root, parentPath, node));
+        if (!r) return null;
         return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-          ui: {
-            selectedFrameId: frameId,
-            rightTab: 'inspector',
-            selectedPath: [...parentPath, parent.children.length - 1],
-          },
+          body: r.body,
+          ui: { selectedFrameId: frameId, rightTab: 'inspector', selectedPath: r.path },
         };
       }),
 
     insertAt: (frameId, parentPath, index, node) =>
       mutate(null, (doc) => {
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const parent = nodeAt(root, parentPath);
-        if (!parent || !('children' in parent)) return null;
-        const i = Math.max(0, Math.min(index, parent.children.length));
-        parent.children.splice(i, 0, node);
+        const r = applyTreeEdit(doc, frameId, (root) =>
+          NodeTree.insert(root, parentPath, node, index),
+        );
+        if (!r) return null;
         return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-          ui: { selectedFrameId: frameId, rightTab: 'inspector', selectedPath: [...parentPath, i] },
+          body: r.body,
+          ui: { selectedFrameId: frameId, rightTab: 'inspector', selectedPath: r.path },
         };
       }),
 
     moveNode: (frameId, fromPath, parentPath, index) =>
       mutate(null, (doc) => {
-        const fromIndex = fromPath.at(-1);
-        if (fromIndex === undefined) return null; // can't move the root
-        if (isPrefix(fromPath, parentPath)) return null; // can't move a node into its own subtree
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const fromParent = nodeAt(root, fromPath.slice(0, -1));
-        const targetParent = nodeAt(root, parentPath);
-        if (!fromParent || !('children' in fromParent)) return null;
-        if (!targetParent || !('children' in targetParent)) return null;
-        const moved = fromParent.children[fromIndex];
-        if (!moved) return null;
-        fromParent.children.splice(fromIndex, 1);
-        let i = index;
-        if (fromParent === targetParent && fromIndex < i) i -= 1;
-        i = Math.max(0, Math.min(i, targetParent.children.length));
-        targetParent.children.splice(i, 0, moved);
+        const r = applyTreeEdit(doc, frameId, (root) =>
+          NodeTree.move(root, fromPath, parentPath, index),
+        );
+        if (!r) return null;
         return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-          ui: { selectedFrameId: frameId, rightTab: 'inspector', selectedPath: [...parentPath, i] },
+          body: r.body,
+          ui: { selectedFrameId: frameId, rightTab: 'inspector', selectedPath: r.path },
         };
       }),
 
+    // The node-TYPE gate (Text/Button only) stays here as store sanitization (→ descriptor in RP-2);
+    // node-tree's updateProps does the blind props merge + clone.
     updateText: (frameId, path, content) =>
       mutate(`text:${frameId}:${path.join('.')}`, (doc) => {
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const target = nodeAt(root, path);
-        if (!target || (target.type !== 'Text' && target.type !== 'Button')) return null;
-        target.props.content = content;
-        return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-        };
+        const r = applyTreeEdit(doc, frameId, (root) => {
+          const target = nodeAt(root, path);
+          if (!target || (target.type !== 'Text' && target.type !== 'Button')) return null;
+          return NodeTree.updateProps(root, path, { content });
+        });
+        return r ? { body: r.body } : null;
       }),
 
-    // Set a container's layout properties (justify/align/wrap). Coalesced per node so a flurry of
-    // changes is one undo step; persisted like every document mutation.
+    // Set a container's layout properties (justify/align/wrap/distribute). The container gate and the
+    // Grid-has-no-wrap rule are node-type sanitization (stay here → descriptor in RP-2/RP-4); the
+    // blind merge is node-tree's. Coalesced per node so a flurry of changes is one undo step.
     setLayout: (frameId, path, patch) =>
       mutate(`layout:${frameId}:${path.join('.')}`, (doc) => {
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const target = nodeAt(root, path);
-        if (!target || !('children' in target)) return null; // only containers carry layout props
-        const next: Record<string, unknown> = {
-          ...(target.props as Record<string, unknown> | undefined),
-        };
-        for (const [k, v] of Object.entries(patch)) {
-          if (v === undefined) delete next[k];
-          else next[k] = v;
-        }
-        if (target.type === 'Grid') delete next.wrap; // Grid has no flex-wrap
-        (target as { props?: unknown }).props = next;
-        return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-        };
+        const r = applyTreeEdit(doc, frameId, (root) => {
+          const target = nodeAt(root, path);
+          if (!target || !('children' in target)) return null; // only containers carry layout props
+          // Grid has no flex-wrap: drop it from the patch (undefined deletes the key in updateProps).
+          const effective = target.type === 'Grid' ? { ...patch, wrap: undefined } : patch;
+          return NodeTree.updateProps(root, path, effective);
+        });
+        return r ? { body: r.body } : null;
       }),
 
     // Bind/clear a container's token-bound style key (background/padding/borderRadius/gap → a Design
-    // Token ref, or '' to clear). Coalesced per node + key.
+    // Token ref, or '' to clear). The container gate stays here (→ RP-4 relaxes it for Text leaves);
+    // node-tree's setStyle owns the set/clear + the no-change no-op. Coalesced per node + key.
     setNodeStyle: (frameId, path, key, ref) =>
       mutate(`style:${frameId}:${path.join('.')}:${key}`, (doc) => {
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const target = nodeAt(root, path);
-        if (!target || !('children' in target)) return null; // only containers honour style keys
-        const current = target.style?.[key];
-        const nextRef = ref || undefined;
-        if (current === nextRef) return null; // no change → no history entry
-        const style: StyleMap = { ...target.style };
-        if (nextRef) style[key] = nextRef;
-        else delete style[key];
-        target.style = style;
-        return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-        };
+        const r = applyTreeEdit(doc, frameId, (root) => {
+          const target = nodeAt(root, path);
+          if (!target || !('children' in target)) return null; // only containers honour style keys
+          return NodeTree.setStyle(root, path, key, ref);
+        });
+        return r ? { body: r.body } : null;
       }),
 
     deleteNode: (frameId, path) =>
       mutate(null, (doc) => {
-        const last = path.at(-1);
-        if (last === undefined) return null; // can't delete the root
-        const frame = doc.frames.find((f) => f.id === frameId);
-        if (!frame) return null;
-        const root = structuredClone(frame.root);
-        const parent = nodeAt(root, path.slice(0, -1));
-        if (!parent || !('children' in parent)) return null;
-        parent.children.splice(last, 1);
-        return {
-          body: { ...doc, frames: doc.frames.map((f) => (f.id === frameId ? { ...f, root } : f)) },
-          ui: { selectedFrameId: null, selectedPath: null },
-        };
+        const r = applyTreeEdit(doc, frameId, (root) => NodeTree.remove(root, path));
+        if (!r) return null;
+        return { body: r.body, ui: { selectedFrameId: null, selectedPath: null } };
       }),
 
     // Add a Frame (medium FIXED at creation, ADR-0006) and select it so the Palette reflects its medium.
