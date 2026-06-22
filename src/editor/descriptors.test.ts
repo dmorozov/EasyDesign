@@ -46,7 +46,7 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
     expect(DESCRIPTORS.Stack.controls).not.toContain('distribute');
     expect(DESCRIPTORS.Stack.controls).toContain('wrap');
     expect(DESCRIPTORS.Grid.controls).not.toContain('wrap');
-    expect(DESCRIPTORS.Text.controls).toEqual(['content']);
+    expect(DESCRIPTORS.Text.controls).toEqual(['content', 'heading']); // RP-6: + named-style picker
     expect(DESCRIPTORS.Button.controls).toEqual(['content']);
   });
 });

@@ -23,8 +23,9 @@ type NodeType = Node['type'];
 type NodeOf<T extends NodeType> = Extract<Node, { type: T }>;
 
 /** The Inspector control kinds a type *can* expose — a static spec. RP-6 renders these and owns the
- *  *dynamic* visibility (a Row in `fill` hides justify/wrap; an email root limits style keys). */
-export type ControlKind = 'content' | 'distribute' | 'justify' | 'align' | 'wrap';
+ *  *dynamic* visibility (a Row in `fill` hides justify/wrap; an email root limits style keys).
+ *  `heading` = the named Text-style (variant) picker — declared here, resolved by RP-6's edit-model. */
+export type ControlKind = 'content' | 'heading' | 'distribute' | 'justify' | 'align' | 'wrap';
 
 /** Per-node-type facts. `T` ties `create` to the exact node variant so the row can't drift from the union. */
 export interface Descriptor<T extends NodeType> {
@@ -104,7 +105,7 @@ export const DESCRIPTORS: Descriptors = {
     emailSafe: true,
     create: () => ({ type: 'Text', props: { content: 'Body text', variant: 'body' } }),
     styleKeys: ['fontSize', 'fontWeight'], // RP-4: free-form text picks size/weight from the Type scale
-    controls: ['content'],
+    controls: ['content', 'heading'], // RP-6: Text edits its content + its named style (variant)
   },
   Button: {
     label: 'Button',

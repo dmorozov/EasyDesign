@@ -194,7 +194,7 @@ Stable IDs (`RP-n`) are referenceable across sessions. The number is **not** the
 | RP-3 ✅ | Typography token + Variant-binding seam (Text styles)                  | ★★★      | B (heading half)                       | research synthesis (NEW)     |
 | RP-4 ✅ | Design-Token Model growth (per-node-type style keys)                   | ★★       | B (free-form half)                     | research                     |
 | RP-5    | Drag-drop intent resolution module                                     | ★        | editor correctness                     | state + UI review            |
-| RP-6    | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
+| RP-6 ✅ | Inspector selection-editing model                                      | ★★       | A + B (editing side)                   | UI review                    |
 | RP-7    | Persistence + reconciliation pure decisions                            | ★        | test coverage                          | state review                 |
 | RP-8    | MJML walk-seam alignment (ADR-0008)                                    | ★        | A (email widgets)                      | export review                |
 | RP-9 ✅ | Typed per-target renderer exhaustiveness (`Record<LeafType,Renderer>`) | ★★       | A (render-half safety)                 | completeness §5.1 (promoted) |
@@ -528,6 +528,11 @@ function vs. inside the module)? Does "rejected" carry a reason for UI feedback?
 
 **Priority:** ★★ · **Sequence:** 4th (after RP-2/RP-3) · **Unlocks:** A + B (the editing half).
 
+> ✅ **IMPLEMENTED 2026-06-22** — new `src/editor/edit-model.ts` (`resolveEditModel(medium, node, path)
+→ EditModel`, pure + typed); the Inspector is now a thin presenter. The heading-style picker
+> (`setVariant`) and the deferred RP-3/RP-4 `CATEGORY_META` + ThemePanel Type-scale section landed too.
+> No new ADR (consumes RP-2/RP-3/RP-4). See §4 step 5 for the full record.
+
 **Files / sites:** `src/editor/Inspector.tsx` (`STYLE_OPTIONS`/`STYLE_LABEL` 41-49; `stylableKeys`
 72-73; `editable`/`container`/`isFillRow`/`styleKeys` 170-180), reaching `catalog.byCategory`.
 
@@ -719,11 +724,39 @@ styleKeys, controls`. **No `kind`** — container-ness stays union-derived (`'ch
    - **Verified:** 211 tests, 100% lines / typecheck / lint / format; golden net updated (reviewed
      typography diffs); `npm run generate` SSR self-check green (canvas copies). **No RP-12 bump** —
      `variant` widened (h2/body still valid) + additive style keys ⇒ saved docs load unchanged.
-   - **Deferred to RP-6:** the heading-style picker (switch `variant`), `CATEGORY_META` + ThemePanel
-     Type-scale section, the full `resolveEditModel`. Free-form size/weight pickers DID land (RP-4 model).
-5. **RP-6 — Inspector selection-editing model.** Consumes RP-2's `controls`/`styleKeys`, RP-3's
-   Heading bindings, and RP-4's free-form style keys; unlocks the _editing_ half of both A and B. Do
-   after so it reads finished tables.
+   - **Deferred to RP-6 — ✅ all landed there 2026-06-22:** the heading-style picker (`setVariant`),
+     `CATEGORY_META` + the ThemePanel Type-scale section, and the full `resolveEditModel`. Free-form
+     size/weight pickers had already landed in the RP-4 model.
+5. **RP-6 — Inspector selection-editing model.** ✅ **IMPLEMENTED 2026-06-22.** Consumed RP-2's
+   `controls`/`styleKeys`, RP-3's Heading bindings, and RP-4's free-form style keys; unlocks the
+   _editing_ half of both A and B. The whole "what can I edit about this Selection" decision — the
+   inline `editable`/`container`/`isFillRow`/`stylableKeys`/`STYLE_OPTIONS` smear that was interleaved
+   with Inspector JSX and untested — is now a pure function.
+   - **Where:** new `src/editor/edit-model.ts` — `resolveEditModel(medium, node, path) → EditModel`, a
+     **structured, typed** model (`{ type, content?, layout?{distribute,justify,align,wrap},
+typography?{heading,size,weight}, style?: TokenField[] }`) where a _present_ field = an editable
+     section. The resolver owns the **dynamic** rules: medium narrowing (email container → root
+     `background`/`padding` only, none deeper), state filtering (Row-`fill` drops justify+wrap),
+     container-vs-leaf gating, the **typographic-vs-container styleKey split** (font-ish categories →
+     the Typography section, the rest → Style), and token-option resolution via `byCategory`.
+   - **Presenter:** `Inspector.tsx` is now thin — present model fields render their typed control
+     (`Input`/`Select`/`SegmentedControl`), no inline domain logic. **Invariant** enum option lists
+     (justify/align/wrap/distribute) + the `TextStyle` label set stay as presenter constants; only the
+     **dynamic** token options live in the model (the §RP-6 three-way split, honoured exactly).
+   - **Heading-style picker (the deferred RP-3 item):** new store action `setVariant(frameId, path,
+variant: TextStyle)` — Text-gated, routes through RP-1's `NodeTree.updateProps` via
+     `applyTreeEdit` (the "next prop-setter is ~6 lines" payoff). The descriptor gained a `heading`
+     `ControlKind` so the picker is descriptor-declared.
+   - **CATEGORY_META + ThemePanel Type-scale section (the deferred RP-4 item):** compile-forced
+     `CATEGORY_META: Record<Category, {label, order}>` in `design-tokens.ts`; `ThemePanel` now
+     **auto-discovers** the category set from the Catalog (no hard-coded `byCategory('color')`),
+     rendering colors as Swatches and the Type-scale primitives as literal Inputs — editing either
+     re-themes the board live (the generic `buildOverrideCss`/`withOverrides` path already carried it).
+   - **Tests:** new `edit-model.test.ts` (13 pure assertions — email-root narrowing, Row-`fill` hiding,
+     Grid no-wrap, per-type controls, default resolution, option sourcing) + 3 `setVariant`
+     characterization tests. **229 tests pass**, typecheck (mapped-type completeness on `CATEGORY_META`
+     - `ControlKind`) / lint / format clean, **golden net byte-identical** (zero emitter touch), and
+       `npm run generate`'s SSR self-check green. **No new ADR** — RP-6 consumes the RP-2/RP-3/RP-4 ADRs.
 6. **RP-7 — Persistence/reconciliation pure decisions.** Independent; good test ROI; no blocker.
 7. **RP-5 — Drag-drop intent resolution.** Independent; valuable but touches neither named feature.
    Do when the drop logic next needs to change.

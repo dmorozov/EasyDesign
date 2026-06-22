@@ -273,6 +273,32 @@ describe('deleteNode', () => {
   });
 });
 
+describe('setVariant — the heading-style picker (RP-6)', () => {
+  const variantOf = (id: string, path: NodePath): string | undefined => {
+    const node = at(id, path);
+    return node?.type === 'Text' ? node.props.variant : undefined;
+  };
+  it('changes a Text node’s named style and is undoable', () => {
+    expect(variantOf('web-1', [0])).toBe('h2'); // seed heading
+    s().setVariant('web-1', [0], 'h1');
+    expect(variantOf('web-1', [0])).toBe('h1');
+    expect(s().history.past).toHaveLength(1);
+    s().undo();
+    expect(s().frames).toEqual(SEED);
+  });
+  it('refuses a non-Text node (no-op, no history)', () => {
+    s().setVariant('web-1', [1], 'h1'); // [1] is the Grid
+    expect(s().frames).toEqual(SEED);
+    expect(s().history.past).toHaveLength(0);
+  });
+  it('coalesces repeated picks on the same node into one undo step', () => {
+    s().setVariant('web-1', [0], 'h1');
+    s().setVariant('web-1', [0], 'h3');
+    expect(s().history.past).toHaveLength(1);
+    expect(variantOf('web-1', [0])).toBe('h3');
+  });
+});
+
 describe('setNodeStyle — token-bound container style', () => {
   const styleOf = (id: string) => s().frames.find((f) => f.id === id)?.root.style;
   it('binds a Design Token to a style key and is undoable', () => {

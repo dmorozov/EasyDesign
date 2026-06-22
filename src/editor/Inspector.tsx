@@ -9,14 +9,17 @@ import {
   SegmentedControl,
   Select,
 } from '../design-system';
-import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
-import { catalog, STYLE_KEY_CATEGORY, type StyleKey } from '../theme/design-tokens';
+import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
+import { type StyleKey } from '../theme/design-tokens';
+import { TEXT_STYLE_BINDING, type TextStyle } from '../theme/generated/typography';
 
-import { DESCRIPTORS } from './descriptors';
+import { resolveEditModel, type TokenField } from './edit-model';
 import { TARGET_PROFILES } from './frames';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
 
+// ── Presenter constants — the INVARIANT option lists (not selection-dependent), kept out of the
+//    resolver per RP-6 (the resolver owns only the dynamic medium/state filtering + token options). ──
 const DISTRIBUTE_OPTS = [
   { value: 'fit', label: 'Fit' },
   { value: 'fill', label: 'Fill' },
@@ -39,8 +42,22 @@ const WRAP_OPTS = [
   { value: 'wrap', label: 'Wrap' },
 ];
 
-// Token-bound container style keys (D2 STYLE_KEYS) → a Select per key; options are the Design Tokens
-// of the key's category. Leaf nodes don't honour these keys, so the Style section is container-gated.
+// The named Text styles (RP-3). A compile-forced label per `TextStyle` (a new style won't slip through
+// unlabelled); the option order follows the binding's declaration order (h1→label).
+const HEADING_LABEL: Record<TextStyle, string> = {
+  h1: 'Heading 1',
+  h2: 'Heading 2',
+  h3: 'Heading 3',
+  body: 'Body',
+  caption: 'Caption',
+  label: 'Label',
+};
+const HEADING_OPTS = (Object.keys(TEXT_STYLE_BINDING) as TextStyle[]).map((v) => ({
+  value: v,
+  label: HEADING_LABEL[v],
+}));
+
+// Friendly label per token-bound style key (presentation; the keys themselves come from the model).
 const STYLE_LABEL: Record<StyleKey, string> = {
   background: 'Background',
   padding: 'Padding',
@@ -49,50 +66,43 @@ const STYLE_LABEL: Record<StyleKey, string> = {
   fontSize: 'Font size',
   fontWeight: 'Font weight',
 };
-const STYLE_KEY_LIST = Object.keys(STYLE_KEY_CATEGORY) as StyleKey[];
-const leaf = (ref: string): string => ref.split('.').pop() ?? ref;
 
-// Built once (the catalog is static): a Select option list per style key, sourced from the key's
-// Category (RP-4 — fontSize → the Type scale, not the whole font bucket). "Default" (value '') clears.
-interface Opt {
-  value: string;
-  label: string;
+/** One token-bound Select (a container style key or a free-form Text size/weight) — value + options are
+ *  resolved by the edit-model; binding/clearing routes through `setNodeStyle` (RP-1/RP-4 gate). */
+function TokenSelect({
+  frameId,
+  path,
+  field,
+}: {
+  frameId: string;
+  path: NodePath;
+  field: TokenField;
+}): ReactElement {
+  const setNodeStyle = useEditor((s) => s.setNodeStyle);
+  return (
+    <Select
+      label={STYLE_LABEL[field.key]}
+      value={field.value}
+      options={[...field.options]}
+      onChange={(e) => {
+        setNodeStyle(frameId, path, field.key, e.target.value);
+      }}
+    />
+  );
 }
-const STYLE_OPTIONS: Record<StyleKey, Opt[]> = Object.fromEntries(
-  STYLE_KEY_LIST.map((key) => [
-    key,
-    [
-      { value: '', label: 'Default' },
-      ...catalog
-        .byCategory(STYLE_KEY_CATEGORY[key])
-        .map((t) => ({ value: t.ref, label: `${leaf(t.ref)} · ${t.literal}` })),
-    ],
-  ]),
-) as Record<StyleKey, Opt[]>;
 
-// Which style keys a selected node exposes (RP-4): descriptor-driven (a container gets bg/padding/
-// radius/gap, a Text leaf gets fontSize/fontWeight). One medium rule remains: MJML only honours
-// background/padding, and only on the root Stack (mjml.ts renderCardSections), so an email *container*
-// is narrowed to what export keeps — typography keys are honoured everywhere and stay. (RP-6 folds
-// this into resolveEditModel.)
-const stylableKeys = (node: Node, target: 'web' | 'email', path: NodePath): StyleKey[] => {
-  const keys = DESCRIPTORS[node.type].styleKeys;
-  if (target === 'email' && 'children' in node) {
-    return path.length === 0 ? keys.filter((k) => k === 'background' || k === 'padding') : [];
-  }
-  return [...keys];
-};
-
-/** Edits the selected node: text content, container layout (distribute/justify/align/wrap), token-bound
- *  container style (background/padding/border-radius/gap), and delete — or the Frame panel (rename /
- *  read-only medium / delete) for a Frame-level Selection. Rendered as the Inspector tab body. */
+/** Edits the selected node, driven entirely by `resolveEditModel` (RP-6): a present model field is a
+ *  rendered section — Content, Typography (named style + free-form size/weight), Layout, and the
+ *  token-bound Style keys — plus delete. A Frame-level Selection shows the Frame panel (rename /
+ *  read-only medium / Preview width / delete). All the "what can I edit" logic lives in the resolver;
+ *  this is a thin presenter. Rendered as the Inspector tab body. */
 export function Inspector(): ReactElement {
   const selectedFrameId = useEditor((s) => s.selectedFrameId);
   const selectedPath = useEditor((s) => s.selectedPath);
   const frames = useEditor((s) => s.frames);
   const updateText = useEditor((s) => s.updateText);
+  const setVariant = useEditor((s) => s.setVariant);
   const setLayout = useEditor((s) => s.setLayout);
-  const setNodeStyle = useEditor((s) => s.setNodeStyle);
   const deleteNode = useEditor((s) => s.deleteNode);
   const renameFrame = useEditor((s) => s.renameFrame);
   const removeFrame = useEditor((s) => s.removeFrame);
@@ -178,30 +188,20 @@ export function Inspector(): ReactElement {
     );
   }
 
-  const editable = node.type === 'Text' || node.type === 'Button';
-  const container =
-    node.type === 'Stack' || node.type === 'Row' || node.type === 'Column' || node.type === 'Grid'
-      ? node
-      : null;
-
-  // A Row in 'fill' mode gives every child flex:1 (equal columns), so justify and
-  // wrap have no free space to act on — hide them to avoid a control that does nothing.
-  const rowDistribute = container?.type === 'Row' ? (container.props?.distribute ?? 'fit') : null;
-  const isFillRow = rowDistribute === 'fill';
-  const styleKeys = stylableKeys(node, frame.target, selectedPath);
+  const model = resolveEditModel(frame.target, node, selectedPath);
 
   return (
     <div className="ed-inspector">
       <div className="ed-inspector-head">
-        <span className="ed-inspector-type">{node.type}</span>
+        <span className="ed-inspector-type">{model.type}</span>
         <Badge tone="accent">{TARGET_PROFILES[frame.target].label}</Badge>
       </div>
 
-      {editable && (
+      {model.content !== undefined && (
         <PanelSection title="Content">
           <Input
             label="Text"
-            value={node.props.content}
+            value={model.content}
             onChange={(e) => {
               updateText(selectedFrameId, selectedPath, e.target.value);
             }}
@@ -209,48 +209,79 @@ export function Inspector(): ReactElement {
         </PanelSection>
       )}
 
-      {container && (
+      {model.typography && (
+        <PanelSection title="Typography">
+          {model.typography.heading !== undefined && (
+            <Select
+              label="Style"
+              value={model.typography.heading}
+              options={HEADING_OPTS}
+              onChange={(e) => {
+                setVariant(selectedFrameId, selectedPath, e.target.value as TextStyle);
+              }}
+            />
+          )}
+          {model.typography.size && (
+            <TokenSelect
+              frameId={selectedFrameId}
+              path={selectedPath}
+              field={model.typography.size}
+            />
+          )}
+          {model.typography.weight && (
+            <TokenSelect
+              frameId={selectedFrameId}
+              path={selectedPath}
+              field={model.typography.weight}
+            />
+          )}
+        </PanelSection>
+      )}
+
+      {model.layout && (
         <PanelSection title="Layout">
-          {container.type === 'Row' && (
+          {model.layout.distribute !== undefined && (
             <div className="ed-field">
               <span className="eds-label">Distribute</span>
               <SegmentedControl
                 options={DISTRIBUTE_OPTS}
-                value={rowDistribute ?? 'fit'}
+                value={model.layout.distribute}
                 onChange={(v) => {
                   setLayout(selectedFrameId, selectedPath, { distribute: v as Distribute });
                 }}
               />
             </div>
           )}
-          {!isFillRow && (
+          {model.layout.justify !== undefined && (
             <div className="ed-field">
               <span className="eds-label">Justify</span>
               <SegmentedControl
                 options={JUSTIFY_OPTS}
-                value={container.props?.justify ?? 'start'}
+                value={model.layout.justify}
                 onChange={(v) => {
                   setLayout(selectedFrameId, selectedPath, { justify: v as Justify });
                 }}
               />
             </div>
           )}
-          <div className="ed-field">
-            <span className="eds-label">Align</span>
-            <SegmentedControl
-              options={ALIGN_OPTS}
-              value={container.props?.align ?? 'stretch'}
-              onChange={(v) => {
-                setLayout(selectedFrameId, selectedPath, { align: v as Align });
-              }}
-            />
-          </div>
-          {container.type !== 'Grid' && !isFillRow && (
+          {model.layout.align !== undefined && (
+            <div className="ed-field">
+              <span className="eds-label">Align</span>
+              <SegmentedControl
+                options={ALIGN_OPTS}
+                value={model.layout.align}
+                onChange={(v) => {
+                  setLayout(selectedFrameId, selectedPath, { align: v as Align });
+                }}
+              />
+            </div>
+          )}
+          {model.layout.wrap !== undefined && (
             <div className="ed-field">
               <span className="eds-label">Wrap</span>
               <SegmentedControl
                 options={WRAP_OPTS}
-                value={container.props?.wrap ?? 'nowrap'}
+                value={model.layout.wrap}
                 onChange={(v) => {
                   setLayout(selectedFrameId, selectedPath, { wrap: v as Wrap });
                 }}
@@ -260,17 +291,14 @@ export function Inspector(): ReactElement {
         </PanelSection>
       )}
 
-      {styleKeys.length > 0 && (
+      {model.style && (
         <PanelSection title="Style">
-          {styleKeys.map((key) => (
-            <Select
-              key={key}
-              label={STYLE_LABEL[key]}
-              value={node.style?.[key] ?? ''}
-              options={STYLE_OPTIONS[key]}
-              onChange={(e) => {
-                setNodeStyle(selectedFrameId, selectedPath, key, e.target.value);
-              }}
+          {model.style.map((field) => (
+            <TokenSelect
+              key={field.key}
+              frameId={selectedFrameId}
+              path={selectedPath}
+              field={field}
             />
           ))}
         </PanelSection>

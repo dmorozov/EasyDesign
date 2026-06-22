@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { sampleCard } from '../ir/sample';
 import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
 import { type StyleKey } from '../theme/design-tokens';
+import { type TextStyle } from '../theme/generated/typography';
 
 import { DESCRIPTORS } from './descriptors';
 import {
@@ -61,6 +62,7 @@ interface EditorState {
   moveNode: (frameId: string, fromPath: NodePath, parentPath: NodePath, index: number) => void;
   setDropTarget: (target: DropTarget | null) => void;
   updateText: (frameId: string, path: NodePath, content: string) => void;
+  setVariant: (frameId: string, path: NodePath, variant: TextStyle) => void;
   setLayout: (
     frameId: string,
     path: NodePath,
@@ -248,6 +250,19 @@ export const useEditor = create<EditorState>()((set) => {
           const target = nodeAt(root, path);
           if (!target || (target.type !== 'Text' && target.type !== 'Button')) return null;
           return NodeTree.updateProps(root, path, { content });
+        });
+        return r ? { body: r.body } : null;
+      }),
+
+    // Set a Text node's named style (its `variant` — the heading-style picker, RP-6). The Text gate is
+    // node-type sanitization (stays here → descriptor); node-tree's updateProps does the blind merge.
+    // Coalesced per node so a flurry of picks is one undo step.
+    setVariant: (frameId, path, variant) =>
+      mutate(`variant:${frameId}:${path.join('.')}`, (doc) => {
+        const r = applyTreeEdit(doc, frameId, (root) => {
+          const target = nodeAt(root, path);
+          if (target?.type !== 'Text') return null;
+          return NodeTree.updateProps(root, path, { variant });
         });
         return r ? { body: r.body } : null;
       }),

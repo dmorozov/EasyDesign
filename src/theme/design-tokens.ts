@@ -49,6 +49,21 @@ export const STYLE_KEY_CATEGORY: Record<StyleKey, Category> = {
   fontWeight: 'fontWeight',
 };
 
+/** Presentation metadata per category, for the Design Palette (RP-4, landed with RP-6). A `Record` over
+ *  the `Category` union → a new category is a COMPILE error here, so ThemePanel can auto-discover the
+ *  category set from the Catalog yet present it in a deliberate order with a friendly label (no
+ *  hard-coded `byCategory('color')`). `order` sorts the sections; lower is higher in the rail. */
+export const CATEGORY_META: Record<Category, { label: string; order: number }> = {
+  color: { label: 'Brand colors', order: 0 },
+  fontSize: { label: 'Type scale', order: 1 },
+  fontWeight: { label: 'Font weights', order: 2 },
+  lineHeight: { label: 'Line heights', order: 3 },
+  letterSpacing: { label: 'Letter spacing', order: 4 },
+  fontFamily: { label: 'Font family', order: 5 },
+  space: { label: 'Spacing', order: 6 },
+  radius: { label: 'Corner radius', order: 7 },
+};
+
 export interface Catalog {
   /** Resolve a ref to its full entry, or undefined for an unknown/misspelled ref — this IS isValidRef. */
   get(ref: string): Token | undefined;
