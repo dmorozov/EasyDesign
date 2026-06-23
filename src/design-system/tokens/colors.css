@@ -93,6 +93,7 @@
 
   --focus-ring:       var(--indigo-400);
   --selection:        var(--indigo-500);
+  --hover-outline:    color-mix(in srgb, var(--accent) 45%, transparent);  /* node hover affordance */
   --drop-indicator:   var(--indigo-500);
   --drop-inside:      var(--indigo-50);
   --dot-color:        var(--slate-300);   /* dot-grid canvas dots */

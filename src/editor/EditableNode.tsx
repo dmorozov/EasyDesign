@@ -21,7 +21,7 @@ import { useCanvasA11y } from './useCanvasA11y';
 
 // Selection + drop indicators use CHROME tokens (NOT the user's --color-brand), so they stay
 // visible and on-brand for the editor regardless of what the user themes their design to.
-const selectedOutline: CSSProperties = { outline: '2px solid var(--selection)', outlineOffset: 1 };
+const selectedOutline: CSSProperties = { outline: '1px dashed var(--selection)', outlineOffset: 1 };
 const insideOutline: CSSProperties = { outline: '2px dashed var(--accent)', outlineOffset: 1 };
 // A drop the email rule forbids (RP-5): the same placement, shown disallowed (danger, not accent).
 const blockedOutline: CSSProperties = { outline: '2px dashed var(--danger)', outlineOffset: 1 };

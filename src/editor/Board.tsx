@@ -65,6 +65,10 @@ export function Board(): ReactElement {
       onPaneClick={clearSelection}
       minZoom={0.2}
       fitView
+      // Cap the initial fit so a single small Frame doesn't fill the viewport (default maxZoom 2 felt
+      // way too zoomed-in on load); 0.6 gives a comfortable zoomed-out overview. With many/spread Frames
+      // fitView already computes a lower zoom, so the cap only bites the few-Frames case.
+      fitViewOptions={{ maxZoom: 0.6 }}
     >
       <ViewportFocus />
       <Panel position="top-left" className="ed-add-frame">

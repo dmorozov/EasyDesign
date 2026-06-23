@@ -477,6 +477,23 @@ body {
 .ed-node {
   min-height: 6px;
 }
+/* The board is a non-interactive DESIGN preview: a click SELECTS the node under the pointer, it never
+   operates the rendered control. Disable pointer interaction on the preview controls (buttons / inputs /
+   the radio + legend labels) so the EditableShell's selection click wins — this is what makes an
+   individual Radio (and a Button) selectable. The node's own chrome (the drag handle) is excluded, and
+   nested child nodes are plain divs that keep their pointer-events, so they stay selectable too. */
+.ed-board-content button:not(.ed-node-handle),
+.ed-board-content input,
+.ed-board-content label {
+  pointer-events: none;
+}
+/* Hover affordance: outline the innermost hovered node only — the :has() guard drops ancestors of the
+   hovered node so just the leaf-most box lights up. A selected / drop-target node keeps its own outline
+   (those are inline styles, which win over this rule). */
+.ed-node:hover:not(:has(.ed-node:hover)) {
+  outline: 1px dashed var(--hover-outline);
+  outline-offset: 1px;
+}
 .ed-node-handle {
   position: absolute;
   top: -9px;
