@@ -4,9 +4,10 @@ import {
   Panel,
   ReactFlow,
   useReactFlow,
+  useStore,
   type NodeTypes,
 } from '@xyflow/react';
-import { useEffect, type ReactElement } from 'react';
+import { useEffect, useRef, type ReactElement } from 'react';
 
 import { Button, Icon } from '../design-system';
 
@@ -44,6 +45,36 @@ function ViewportFocus(): null {
   return null;
 }
 
+/** Initial board view: instead of a fit-all overview, frame the FIRST Frame at roughly its native
+ *  width (its Preview width + a side margin) and point the viewport at its top — a "start designing
+ *  here" view. The zoom is width-driven (so a desktop Frame fills the board width with margin), capped
+ *  so a small Frame can't balloon on a very wide board. Runs ONCE, after the pane has been measured
+ *  (store `width` flips from 0); later resizes/pans are left untouched. The Controls "Fit View" button
+ *  still frames every Frame. Must live INSIDE <ReactFlow> to read the instance + pane dimensions. */
+function InitialView(): null {
+  const { setViewport } = useReactFlow();
+  const paneWidth = useStore((s) => s.width);
+  const done = useRef(false);
+
+  useEffect(() => {
+    if (done.current || paneWidth === 0) return;
+    const frame = useEditor.getState().frames[0];
+    if (!frame) return;
+    done.current = true;
+
+    const MARGIN_X = 32; // px of breathing room on each side of the Frame
+    const TOP = 64; // px gap above the Frame (so the view starts at its top, not its middle)
+    const zoom = Math.min(1.5, Math.max(0.2, (paneWidth - 2 * MARGIN_X) / frame.width));
+    void setViewport({
+      zoom,
+      x: (paneWidth - frame.width * zoom) / 2 - frame.x * zoom, // centre the Frame horizontally
+      y: TOP - frame.y * zoom, // anchor the Frame's top near the viewport top
+    });
+  }, [paneWidth, setViewport]);
+
+  return null;
+}
+
 /** The infinite workspace (ADR-0001): pan/zoom over Frames as React Flow nodes. The node list is kept
  *  reconciled with the store by `useFrameNodes` (add/remove/move/undo, no remount); a drag writes the
  *  committed position back via `moveFrame`. A top-left Panel mints new Frames (medium fixed at creation,
@@ -64,13 +95,9 @@ export function Board(): ReactElement {
       nodeTypes={nodeTypes}
       onPaneClick={clearSelection}
       minZoom={0.2}
-      fitView
-      // Cap the initial fit so a single small Frame doesn't fill the viewport (default maxZoom 2 felt
-      // way too zoomed-in on load); 0.6 gives a comfortable zoomed-out overview. With many/spread Frames
-      // fitView already computes a lower zoom, so the cap only bites the few-Frames case.
-      fitViewOptions={{ maxZoom: 0.6 }}
     >
       <ViewportFocus />
+      <InitialView />
       <Panel position="top-left" className="ed-add-frame">
         <span className="eds-label">New frame</span>
         <Button
@@ -95,7 +122,9 @@ export function Board(): ReactElement {
         </Button>
       </Panel>
       <Background color="var(--dot-color)" bgColor="var(--canvas-bg)" gap={22} />
-      <Controls />
+      {/* The manual "Fit View" frames EVERY Frame (its own options, independent of the initial view) —
+          capped at native size so a lone Frame doesn't over-zoom. */}
+      <Controls fitViewOptions={{ maxZoom: 1, padding: 0.1 }} />
     </ReactFlow>
   );
 }
