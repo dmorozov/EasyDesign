@@ -295,17 +295,23 @@ export function Inspector(): ReactElement {
       )}
 
       <div className="ed-rail-actions">
-        <Button
-          variant="danger"
-          size="sm"
-          block
-          icon={<Icon.trash />}
-          onClick={() => {
-            deleteNode(selectedFrameId, selectedPath);
-          }}
-        >
-          Delete element
-        </Button>
+        {selectedPath.length === 0 ? (
+          // The Frame's root container is structural — a Frame always has one — so it can't be deleted
+          // (the canvas Delete key already ignores the root). Show why, instead of a button that no-ops.
+          <p className="ed-inspector-note">The frame’s root container can’t be deleted.</p>
+        ) : (
+          <Button
+            variant="danger"
+            size="sm"
+            block
+            icon={<Icon.trash />}
+            onClick={() => {
+              deleteNode(selectedFrameId, selectedPath);
+            }}
+          >
+            Delete element
+          </Button>
+        )}
       </div>
     </div>
   );

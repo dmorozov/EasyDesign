@@ -1,4 +1,5 @@
 import {
+  closestCenter,
   DndContext,
   DragOverlay,
   PointerSensor,
@@ -64,10 +65,20 @@ function collisionDepth(collision: Collision): number {
   return Array.isArray(path) ? path.length : 0;
 }
 
-const deepestPointerWithin: CollisionDetection = (args) => {
-  const hits = pointerWithin(args);
-  if (hits.length <= 1) return hits;
-  return [...hits].sort((a, b) => collisionDepth(b) - collisionDepth(a));
+// Collision detection. `pointerWithin` is precise but returns NOTHING in the blank areas around a
+// Frame's content — below the last child, in a Frame's padding-less gaps, or just off the content on
+// release — so `over` goes null, no indicator shows, and a drop dispatches nothing. That is the "it
+// doesn't show I can drop / works but only after several tries" bug. So: when the pointer is genuinely
+// within nodes, keep those hits and prefer the DEEPEST (longest path); otherwise fall back to the single
+// CLOSEST droppable, so a drag anywhere over the board always resolves to a target.
+const deepestCollision: CollisionDetection = (args) => {
+  const within = pointerWithin(args);
+  if (within.length > 1) {
+    return [...within].sort((a, b) => collisionDepth(b) - collisionDepth(a));
+  }
+  if (within.length === 1) return within;
+  const [closest] = closestCenter(args);
+  return closest ? [closest] : [];
 };
 
 type ResolveOver = { rect: { top: number; height: number }; data: { current?: unknown } } | null;
@@ -203,7 +214,7 @@ export function Editor(): ReactElement {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={deepestPointerWithin}
+      collisionDetection={deepestCollision}
       onDragStart={onDragStart}
       onDragMove={onDragMove}
       onDragEnd={onDragEnd}
