@@ -63,7 +63,7 @@ function InitialView(): null {
     done.current = true;
 
     const MARGIN_X = 32; // px of breathing room on each side of the Frame
-    const TOP = 64; // px gap above the Frame (so the view starts at its top, not its middle)
+    const TOP = 120; // px gap above the Frame (so the view starts at its top, not its middle)
     const zoom = Math.min(1.5, Math.max(0.2, (paneWidth - 2 * MARGIN_X) / frame.width));
     void setViewport({
       zoom,
