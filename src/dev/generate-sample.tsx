@@ -1,6 +1,6 @@
 // Dev runner (not part of the library bundle): proves the promoted generators
-// still work AND that the React Aria component layer renders. Run: `npm run generate`
-// (after `npm run tokens`). Writes inspectable output to generated-samples/.
+// still work AND that the React Aria component layer renders. Run: `pnpm generate`
+// (after `pnpm tokens`). Writes inspectable output to generated-samples/.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

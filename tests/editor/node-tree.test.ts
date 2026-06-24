@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
-
-import { insert, move, remove, setStyle, updateProps } from './node-tree';
-import { nodeAt, type NodePath } from './paths';
+import { insert, move, remove, setStyle, updateProps } from '../../src/editor/node-tree';
+import { nodeAt, type NodePath } from '../../src/editor/paths';
+import { type Node } from '../../src/ir/types';
 
 // The 5 pure ops ARE the test surface (RP-1): the tricky invariants — move's index-adjust, the
 // subtree guard, the root guards — become direct assertions with no zustand / history / React.

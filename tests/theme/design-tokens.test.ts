@@ -7,7 +7,7 @@ import {
   paletteCategories,
   STYLE_KEY_CATEGORY,
   type Token,
-} from './design-tokens';
+} from '../../src/theme/design-tokens';
 
 describe('catalog — query + validation', () => {
   it('get returns the entry for a valid ref, undefined for a typo (= isValidRef)', () => {

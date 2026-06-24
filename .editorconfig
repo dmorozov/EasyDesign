@@ -18,6 +18,6 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 
 # Lockfiles / minified / generated: don't impose width or indent.
-[{package-lock.json,*.min.*}]
+[{pnpm-lock.yaml,*.min.*}]
 indent_size = unset
 max_line_length = unset

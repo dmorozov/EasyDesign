@@ -1,23 +1,10 @@
 TODO:
 
-Let's do a new refactoring targeting ability to define real web page layout with header, and navigation components.
-We have already implemented AppShell that is probably biggest part. What we are missing is the following:
-
-- allow Zero padding / Gap in the Inspector panel This is especially important for layout components.
-  I.e. the top application bar usually takes the whole width and there are no spaced between left side navigation panel (if any) and body.
-  It is usually visually separated by background panel color. Note: having spaces are still useful, there are design options that are requiring that.
-- We need to be able to design top AppBar (branding logo, logout url, etc)
-- top horizontal (menu like) navigation - option one
-- left panel navigation - option two
-- breadcrumb component
-
-- how to implement the top bar component, like in Stich design
+- Please move all tests in the separate tests folder (preserve the folders). It is bloating the production source code
+- Migrate to pnpm package manager, upgrade Vite to the latest version. Check if we can upgrade Typescript to the latest version.
 - add a display-only Component (Divider/Spacer) to exercise Capability A end-to-end
 - Select Frame when click grep in title, not just a title
 - RP-12 (IR migration, bump-and-reset)
-
-- Please move all tests in the separate tests folder (preserve the folders). It is bloating the production source code
-- Migrate to pnpm package manager, upgrade Vite to the latest version. Check if we can upgrade Typescript to the latest version.
 
 Layout components
 

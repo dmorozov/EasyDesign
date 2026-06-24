@@ -14,7 +14,7 @@ gated on clean output to all four targets.
 The architecture is settled (foundational ADRs 0001–0007, extended by implementation ADRs 0008–0019)
 and the package lives at the repo root: the IR, the four
 export generators, a React-Aria component layer, and a **working editor MVP** (`src/editor/`, run
-`npm run dev`) — React Flow workspace of Frames rendering live IR, a dnd-kit Component Palette
+`pnpm dev`) — React Flow workspace of Frames rendering live IR, a dnd-kit Component Palette
 (drag or click to insert), per-node drag handles to **reorder/move** with **before/after/inside drop
 indicators** and **insertion-point (gap) drop targets** (ADR-0018), selection + inspector + a Frame
 **Structure** tree, an `AppShell` application layout (ADR-0017) hosting **application chrome** — AppBar,
@@ -85,24 +85,37 @@ Source layout (`src/`): `ir/` (types + sample), `theme/` (DTCG tokens + Style Di
 palette, panels), `dev/` (the demo runner). `editor/`, `main.tsx`, and `dev/` are excluded from the
 library build (`tsconfig.build.json`); the lib entry is `src/index.ts`.
 
+Tests live **outside** `src/`, in `tests/` mirroring the source folders (e.g. `tests/ir/walk.test.ts`,
+`tests/generators/__snapshots__/`), so the production source tree stays free of test bloat. Each test
+reaches into `../../src/…`. Vitest discovers them via `include: ['tests/**/*.test.ts']`; `tsconfig.app.json`
+includes both `src` and `tests` (so typecheck + type-aware lint cover tests), while `tsconfig.build.json`
+includes only `src` (tests never reach `dist`).
+
 Commands (from the repo root):
 
-- `npm run dev` — **the editor** at <http://localhost:5173> (Vite dev server). Run `npm run tokens` first.
-- `npm run tokens` — compile DTCG tokens → `src/theme/generated/{theme.css, tokens.literals.json}`
+- `pnpm dev` — **the editor** at <http://localhost:5173> (Vite dev server). Run `pnpm tokens` first.
+- `pnpm tokens` — compile DTCG tokens → `src/theme/generated/{theme.css, tokens.literals.json}`
   (the editor and the MJML generator import the generated literals, so this must run before dev/build)
-- `npm run generate` — run all four generators on the sample **and** SSR-render the React Aria canvas
+- `pnpm generate` — run all four generators on the sample **and** SSR-render the React Aria canvas
   → `generated-samples/` (each step self-checks)
-- `npm run typecheck` — `tsc -b --noEmit` (project refs: `tsconfig.app.json` + `tsconfig.node.json`)
-- `npm run lint` / `lint:fix` — ESLint 9 flat config (`eslint.config.mjs`)
-- `npm run format` / `format:check` — Prettier (the only formatter)
-- `npm run build` — `tsc -b && vite build` (library mode, Rolldown)
+- `pnpm typecheck` — `tsc -b --noEmit` (project refs: `tsconfig.app.json` + `tsconfig.node.json`)
+- `pnpm lint` / `lint:fix` — ESLint 9 flat config (`eslint.config.mjs`)
+- `pnpm format` / `format:check` — Prettier (the only formatter)
+- `pnpm build` — `tsc -b && vite build` (library mode, Rolldown)
 
 Editor invariants: frame positions live in React Flow (export ignores them); IR lives in the zustand
-store keyed by frame id. `jsx-a11y` interaction rules are relaxed for `src/editor/**` only (the
-recursive node-selection chrome); product components in `src/components/**` stay strictly checked.
+store keyed by frame id. `jsx-a11y` is enforced everywhere (no per-directory relaxation): the recursive
+node-selection chrome satisfies it via `useCanvasA11y` (each canvas node is a keyboard-navigable
+`treeitem` — roving tabindex, Enter/Space/Delete/Escape/arrows), with the mouse click handler kept
+alongside; product components in `src/components/**` are likewise strictly checked.
 
 Tooling invariants (deliberate — don't "fix" them):
 
+- **The package manager is pnpm** (`packageManager` field pins the version; `pnpm-lock.yaml` is the
+  lockfile — there is no `package-lock.json`). pnpm 10 blocks dependency build scripts by default, so
+  `package.json` has `pnpm.onlyBuiltDependencies: ["esbuild", "unrs-resolver"]` to allow the two native
+  packages (esbuild's transform binary; the Rust resolver behind `eslint-import-resolver-typescript`).
+  After a fresh `pnpm install`, those two run their postinstall; don't drop them or builds/lint break.
 - **ESLint is pinned to 9.x**, not 10 — `eslint-plugin-react` crashes on ESLint 10 and `jsx-a11y`
   peer-caps at `^9`. The flat config is `.mjs` (not `.ts`) to avoid the untyped-plugin type-check
   cascade and the `jiti` dependency.

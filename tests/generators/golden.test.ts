@@ -16,13 +16,12 @@
 // this corpus isolates one feature per fixture for legible diffs.
 import { describe, expect, it } from 'vitest';
 
-import { type Frame } from '../ir/types';
-import { catalog } from '../theme/design-tokens';
-
-import { emitAngularSource } from './angular';
-import { emitHTML } from './html';
-import { emitMJML } from './mjml';
-import { emitReactSource } from './react';
+import { emitAngularSource } from '../../src/generators/angular';
+import { emitHTML } from '../../src/generators/html';
+import { emitMJML } from '../../src/generators/mjml';
+import { emitReactSource } from '../../src/generators/react';
+import { type Frame } from '../../src/ir/types';
+import { catalog } from '../../src/theme/design-tokens';
 
 // Short, stable image source — we snapshot generator SOURCE, not delivered email,
 // so a plain URL keeps the goldens readable (vs. the sample's inline data URI).

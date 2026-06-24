@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
-
-import { makeAppShell } from './descriptors';
-import { emptyHistory } from './history';
-import { nodeAt, type NodePath } from './paths';
-import { useEditor } from './store';
+import { makeAppShell } from '../../src/editor/descriptors';
+import { emptyHistory } from '../../src/editor/history';
+import { nodeAt, type NodePath } from '../../src/editor/paths';
+import { useEditor } from '../../src/editor/store';
+import { type Node } from '../../src/ir/types';
 
 // ── D4 regression net ───────────────────────────────────────────────────────
 // CHARACTERIZATION tests of the editor history + persistence contract as it stands TODAY (post-D3).

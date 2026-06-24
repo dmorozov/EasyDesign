@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
-
-import { resolveEditModel } from './edit-model';
+import { resolveEditModel } from '../../src/editor/edit-model';
+import { type Node } from '../../src/ir/types';
 
 // resolveEditModel is the RP-6 testability win: "what can I edit about this Selection" is now a pure
 // function, so the rules that used to be inline in Inspector JSX — the email-root style narrowing, the

@@ -54,7 +54,7 @@ leaf accepts them where the old blanket container-gate refused.
 - **Guarded by RP-11.** The golden net caught every emitter change as a reviewed diff — web now emits
   `var(--font-line-height-tight)` / `var(--font-weight-bold)` where raw literals used to be; MJML keeps
   the same font-size/weight literals with px line-heights. The canvas copies (`primitives.tsx`,
-  `Button.tsx`) — outside the vitest net — were verified via `npm run generate`'s SSR self-check.
+  `Button.tsx`) — outside the vitest net — were verified via `pnpm generate`'s SSR self-check.
 - **Deferred to RP-6** (the Inspector editing surface): the **heading-style picker** (switching a Text's
   `variant`) and the full `resolveEditModel` refactor. RP-3/RP-4 ship the model + render + the free-form
   size/weight pickers; `CATEGORY_META` + the ThemePanel Type-scale section ride with RP-6's UI pass.

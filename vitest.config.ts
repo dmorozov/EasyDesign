@@ -7,7 +7,9 @@ export default defineConfig({
   test: {
     globals: false,
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // Tests live in tests/ (mirroring src/) to keep the production source tree clean;
+    // each test reaches into ../../src/… and its snapshots sit alongside it.
+    include: ['tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
@@ -31,7 +33,7 @@ export default defineConfig({
         'src/editor/inspector-options.ts',
         'src/editor/palette.ts',
       ],
-      exclude: ['src/**/*.test.ts', 'src/**/*.d.ts', 'src/generators/index.ts'],
+      exclude: ['tests/**', 'src/**/*.d.ts', 'src/generators/index.ts'],
       // Headroom below the current run (98.9 / 90.9 / 100 / 100) so the gate catches
       // real regressions without snapping on a single defensive/unreachable branch.
       thresholds: {

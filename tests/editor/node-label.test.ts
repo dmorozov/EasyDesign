@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { nodeLabel } from './node-label';
+import { nodeLabel } from '../../src/editor/node-label';
 
 // The one home for Frame-tree node labels (shared by the canvas a11y tree + the Structure panel).
 describe('nodeLabel — Frame-tree node labels', () => {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { sampleCard } from '../ir/sample';
+import { emitAngularSource } from '../../src/generators/angular';
+import { emitHTML } from '../../src/generators/html';
+import { classifyCardChild, emitMJML } from '../../src/generators/mjml';
+import { emitReactSource } from '../../src/generators/react';
+import { sampleCard } from '../../src/ir/sample';
 import {
   type Distribute,
   type Frame,
@@ -8,13 +12,8 @@ import {
   type Node,
   type RegionNode,
   type RowProps,
-} from '../ir/types';
-import { catalog } from '../theme/design-tokens';
-
-import { emitAngularSource } from './angular';
-import { emitHTML } from './html';
-import { classifyCardChild, emitMJML } from './mjml';
-import { emitReactSource } from './react';
+} from '../../src/ir/types';
+import { catalog } from '../../src/theme/design-tokens';
 
 // A minimal two-button Row, for exercising the distribute / justify behaviour.
 function rowFrame(distribute?: Distribute, justify?: Justify): Frame {

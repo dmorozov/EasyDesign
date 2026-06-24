@@ -16,7 +16,8 @@ four hand-written generators), all on a strict, mutually-aligned TypeScript tool
 ## Requirements
 
 - **Node.js ≥ 20.19** (or **≥ 22.12**) — required by Vite 8 / `@vitejs/plugin-react` 6.
-- **npm** (the repo uses npm; a `package-lock.json` is the source of truth).
+- **pnpm** (the repo uses pnpm; `pnpm-lock.yaml` is the source of truth, pinned via the
+  `packageManager` field in `package.json`). If you don't have it: `corepack enable` or `npm i -g pnpm`.
 
 Check your version:
 
@@ -29,21 +30,21 @@ node -v   # should be 20.19+ or 22.12+
 ## Quick start
 
 ```bash
-npm install          # install dependencies
-npm run tokens       # compile design tokens (REQUIRED before dev/build — see note)
-npm run dev          # start the editor at http://localhost:5173
+pnpm install   # install dependencies
+pnpm tokens    # compile design tokens (REQUIRED before dev/build — see note)
+pnpm dev       # start the editor at http://localhost:5173
 ```
 
 Open <http://localhost:5173> and you'll see the editor: a top toolbar (undo/redo, save status,
 export/import/reset), a Component Palette (left), the Board with two Frames (center), and
 Inspector/Theme/Export panels (right).
 
-> **Why `npm run tokens` first?** The theme is authored once as W3C **DTCG** tokens and compiled by
+> **Why `pnpm tokens` first?** The theme is authored once as W3C **DTCG** tokens and compiled by
 > Style Dictionary into `src/theme/generated/{theme.css, tokens.literals.json}`. Those generated
 > files are imported by the editor and the email generator, and are **not** committed — so you must
-> run `npm run tokens` after a fresh install and whenever you edit `src/theme/tokens.json`.
-> (Tip: you can wire this automatically by adding `"predev": "npm run tokens"` and
-> `"prebuild": "npm run tokens"` to `package.json` scripts.)
+> run `pnpm tokens` after a fresh install and whenever you edit `src/theme/tokens.json`.
+> (Tip: you can wire this automatically by adding `"predev": "pnpm tokens"` and
+> `"prebuild": "pnpm tokens"` to `package.json` scripts.)
 
 ---
 
@@ -51,18 +52,18 @@ Inspector/Theme/Export panels (right).
 
 Run from the repo root.
 
-| Script                 | What it does                                                                                                                                                                    |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`          | Editor dev server (Vite) at <http://localhost:5173>. Run `npm run tokens` first.                                                                                                |
-| `npm run tokens`       | Compile DTCG tokens → `src/theme/generated/{theme.css, tokens.literals.json}`.                                                                                                  |
-| `npm run generate`     | Run all four generators on the sample design **and** server-render the React-Aria canvas → `generated-samples/`. Each step self-checks (see [Testing](#testing--verification)). |
-| `npm run typecheck`    | `tsc -b --noEmit` across the project references (`tsconfig.app.json` + `tsconfig.node.json`).                                                                                   |
-| `npm run lint`         | ESLint 9 flat config (`eslint.config.mjs`).                                                                                                                                     |
-| `npm run lint:fix`     | ESLint with autofix (import ordering, etc.).                                                                                                                                    |
-| `npm run format`       | Prettier — write. Prettier is the **only** formatter.                                                                                                                           |
-| `npm run format:check` | Prettier — check (used in CI/verification).                                                                                                                                     |
-| `npm run build`        | Library build: `tsc -b && vite build` (Vite library mode, Rolldown).                                                                                                            |
-| `npm run preview`      | Preview a production build (`vite preview`).                                                                                                                                    |
+| Script              | What it does                                                                                                                                                                    |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`          | Editor dev server (Vite) at <http://localhost:5173>. Run `pnpm tokens` first.                                                                                                   |
+| `pnpm tokens`       | Compile DTCG tokens → `src/theme/generated/{theme.css, tokens.literals.json}`.                                                                                                  |
+| `pnpm generate`     | Run all four generators on the sample design **and** server-render the React-Aria canvas → `generated-samples/`. Each step self-checks (see [Testing](#testing--verification)). |
+| `pnpm typecheck`    | `tsc -b --noEmit` across the project references (`tsconfig.app.json` + `tsconfig.node.json`).                                                                                   |
+| `pnpm lint`         | ESLint 9 flat config (`eslint.config.mjs`).                                                                                                                                     |
+| `pnpm lint:fix`     | ESLint with autofix (import ordering, etc.).                                                                                                                                    |
+| `pnpm format`       | Prettier — write. Prettier is the **only** formatter.                                                                                                                           |
+| `pnpm format:check` | Prettier — check (used in CI/verification).                                                                                                                                     |
+| `pnpm build`        | Library build: `tsc -b && vite build` (Vite library mode, Rolldown).                                                                                                            |
+| `pnpm preview`      | Preview a production build (`vite preview`).                                                                                                                                    |
 
 ---
 
@@ -70,38 +71,40 @@ Run from the repo root.
 
 There are two build outputs, by design:
 
-- **The editor app** is served in development by `npm run dev` (entry: `index.html` → `src/main.tsx`).
-- **The package** is built by `npm run build` — Vite **library mode** with entry `src/index.ts`,
+- **The editor app** is served in development by `pnpm dev` (entry: `index.html` → `src/main.tsx`).
+- **The package** is built by `pnpm build` — Vite **library mode** with entry `src/index.ts`,
   emitting the IR, the four generators, and the React-Aria component layer (with `.d.ts` types via
   `vite-plugin-dts`). The editor app and the dev tooling are excluded from the library bundle.
 
 ```bash
-npm run tokens && npm run build   # -> dist/
+pnpm tokens && pnpm build   # -> dist/
 ```
 
 ---
 
 ## Testing & verification
 
-**Unit tests run on `vitest`** — `npm run test` (with `test:watch` and `test:coverage`). The deep
+**Unit tests run on `vitest`** — `pnpm test` (with `test:watch` and `test:coverage`). The deep
 modules (the Node Walk, the Design-Token Model, the Frame lifecycle) are pure and unit-tested at
 their interfaces.
 
 Alongside the unit tests, the **quality-gate suite** plus a **self-checking generate** step:
 
 ```bash
-npm run test           # vitest unit tests
-npm run tokens         # prerequisite for generate
-npm run generate       # runs the 4 generators + SSR-renders the React-Aria canvas;
+pnpm test           # vitest unit tests
+pnpm tokens         # prerequisite for generate
+pnpm generate       # runs the 4 generators + SSR-renders the React-Aria canvas;
                        # asserts: MJML compiles cleanly, HTML has the expected elements,
                        # the canvas renders a real <button>, etc. Exits non-zero on failure.
-npm run typecheck      # strict TypeScript (tsc -b)
-npm run lint           # ESLint 9
-npm run format:check   # Prettier
+pnpm typecheck      # strict TypeScript (tsc -b)
+pnpm lint           # ESLint 9
+pnpm format:check   # Prettier
 ```
 
-All should pass. Visual outputs land in `generated-samples/` — open
-`generated-samples/{html.html,react/…,email.html,canvas.html}` in a browser to eyeball the exports.
+All should pass. Visual outputs land in `generated-samples/` — open them in a browser to eyeball the
+exports: `html.html` (static HTML), `Card.tsx` / `card.component.ts` (React / Angular source),
+`email.html` (compiled MJML), `canvas.html` (React-Aria render), and `app-layout.html` /
+`app-layout-canvas.html` (the ADR-0019 application-chrome page).
 
 ---
 
@@ -119,6 +122,9 @@ All should pass. Visual outputs land in `generated-samples/` — open
 │   ├── editor/                # the editor app (store, React Flow board, palette, panels)
 │   ├── dev/                   # generate-sample runner (not in the library build)
 │   └── main.tsx               # editor bootstrap
+├── tests/                     # vitest suites, mirroring src/ (kept out of the production source tree)
+│   ├── ir/  generators/  editor/  theme/
+│   └── generators/__snapshots__/   # golden snapshots, alongside their tests
 ├── docs/
 │   ├── adr/                   # architecture decision records (0001–0019)
 │   └── design-system/         # the EasyDesign design system (chrome kit + SKILL.md)

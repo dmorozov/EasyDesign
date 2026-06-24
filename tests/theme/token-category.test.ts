@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { categoryOf } from './token-category.mjs';
+import { categoryOf } from '../../src/theme/token-category.mjs';
 
 describe('categoryOf — DTCG $type + path -> Design-Token category', () => {
   it('color -> color', () => {

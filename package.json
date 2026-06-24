@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.33.2",
   "description": "Visual UI design tool — IR + multi-target generators (React/Angular/HTML/MJML) + React Aria component layer",
   "scripts": {
     "dev": "vite",
@@ -33,7 +34,7 @@
     "@types/node": "26.0.0",
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
+    "@vitejs/plugin-react": "6.0.3",
     "@vitest/coverage-v8": "4.1.9",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
@@ -51,8 +52,14 @@
     "tsx": "^4.22.4",
     "typescript": "6.0.3",
     "typescript-eslint": "8.61.1",
-    "vite": "8.0.16",
-    "vite-plugin-dts": "5.0.2",
+    "vite": "8.1.0",
+    "vite-plugin-dts": "5.0.3",
     "vitest": "4.1.9"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { decideSave, parseDocument } from './document';
+import { decideSave, parseDocument } from '../../src/editor/document';
 
 // A minimal valid raw document holding one Frame; `over` patches/omits fields (e.g. drop `width`).
 function rawDoc(over: Record<string, unknown> = {}): unknown {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from './types';
-import { type Emitter, shapeOf, walkNode } from './walk';
+import { type Node } from '../../src/ir/types';
+import { type Emitter, shapeOf, walkNode } from '../../src/ir/walk';
 
 describe('shapeOf — the one place the structural (α) decisions live', () => {
   it('Stack is vertical flow that does not wrap its children', () => {

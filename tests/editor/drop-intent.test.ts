@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node, type RadioNode } from '../ir/types';
-
 import {
   computeMode,
   placeAt,
@@ -9,8 +7,9 @@ import {
   type DragSource,
   type DropGeometry,
   type DropZone,
-} from './drop-intent';
-import { type PaletteItem } from './palette';
+} from '../../src/editor/drop-intent';
+import { type PaletteItem } from '../../src/editor/palette';
+import { type Node, type RadioNode } from '../../src/ir/types';
 
 // RP-5: drag-drop intent is now a pure function, so the drop-mode maths, the root/empty rules, the
 // insert-vs-move branching, and the email guard are plain assertions — no dnd-kit, no React.

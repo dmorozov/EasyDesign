@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { buttonDecls, containerDecls, imageDecls, structuralDecls, textDecls } from './leaf-style';
+import {
+  buttonDecls,
+  containerDecls,
+  imageDecls,
+  structuralDecls,
+  textDecls,
+} from '../../src/generators/leaf-style';
 
 describe('structuralDecls — α/layout -> CSS, shared by the string targets', () => {
   it('a flow row is display:flex + flex-direction:row', () => {

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { APPSHELL_MIN_HEIGHT, appShellTemplate, CANONICAL_AREAS, OPTIONAL_AREAS } from './appshell';
+import {
+  APPSHELL_MIN_HEIGHT,
+  appShellTemplate,
+  CANONICAL_AREAS,
+  OPTIONAL_AREAS,
+} from '../../src/ir/appshell';
 
 // ADR-0017 — the app-shell grid template is COMPUTED from the present regions. These pin the CSS so all
 // five renderers (which share this helper) stay in lock-step, and so absent rows/cols collapse cleanly.

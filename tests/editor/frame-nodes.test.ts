@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { type EditorFrame } from './document';
-import { framesSignature, reconcileNodes, toRFNode } from './frame-nodes';
+import { type EditorFrame } from '../../src/editor/document';
+import { framesSignature, reconcileNodes, toRFNode } from '../../src/editor/frame-nodes';
 
 // RP-7: the Board↔React-Flow reconcile decision is now a pure function, so the load-bearing
 // "adopt the store position only when it changed, else keep the node so we never fight a live drag"

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { type DocumentBody } from './document';
-import { emptyHistory, record, redo, undo, type History } from './history';
+import { type DocumentBody } from '../../src/editor/document';
+import { emptyHistory, record, redo, undo, type History } from '../../src/editor/history';
 
 // Bodies are identified by a marker frame title so assertions read clearly; only identity/shape matters.
 const body = (tag: string): DocumentBody => ({

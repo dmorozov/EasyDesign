@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
-import { isLayoutContainer } from '../ir/walk';
-
-import { canContain, DESCRIPTORS, makeAppShell, RESTRICTED_CHILD_TYPES } from './descriptors';
-import { PALETTE } from './palette';
+import {
+  canContain,
+  DESCRIPTORS,
+  makeAppShell,
+  RESTRICTED_CHILD_TYPES,
+} from '../../src/editor/descriptors';
+import { PALETTE } from '../../src/editor/palette';
+import { type Node } from '../../src/ir/types';
+import { isLayoutContainer } from '../../src/ir/walk';
 
 // Mapped-type completeness (a row per node type) is enforced by the COMPILER, not here. These cover the
 // runtime facts the type system can't: create()/type parity, the email rule, and the control/style sets.

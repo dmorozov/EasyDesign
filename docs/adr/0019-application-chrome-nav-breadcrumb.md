@@ -74,7 +74,7 @@ with `aria-current`). An Inspector toggle to flip it (a new boolean control kind
 
 - A real page is now buildable: `AppShell` (header/left/main/footer) hosting an `AppBar`, `SideNav`, and
   `Breadcrumb` — see `sampleAppLayout` (`src/ir/sample.ts`), exported to HTML + the live canvas by
-  `npm run generate` (`app-layout.html`, `app-layout-canvas.html`) with semantic-landmark self-checks.
+  `pnpm generate` (`app-layout.html`, `app-layout-canvas.html`) with semantic-landmark self-checks.
 - Eight Components now ride the ADR-0016 seam: RadioGroup, AppShell, AppBar, TopNav, SideNav, and
   Breadcrumb, plus the Radio/Region/NavLink slot leaves. Each addition is still "one descriptor row and
   the adapters the compiler demands", the cost ADR-0016 priced in.

@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
-import { type StyleKey } from '../theme/design-tokens';
-import { type TextStyle } from '../theme/generated/typography';
-
 import {
   ALIGN_OPTS,
   DISTRIBUTE_OPTS,
@@ -12,7 +8,10 @@ import {
   type Opt,
   STYLE_LABEL,
   WRAP_OPTS,
-} from './inspector-options';
+} from '../../src/editor/inspector-options';
+import { type Align, type Distribute, type Justify, type Wrap } from '../../src/ir/types';
+import { type StyleKey } from '../../src/theme/design-tokens';
+import { type TextStyle } from '../../src/theme/generated/typography';
 
 // The presenter's invariant option lists are compile-forced off the IR/token unions (a missing member
 // is a build error in the label maps). These pure tests pin that contract at RUNTIME too: each list

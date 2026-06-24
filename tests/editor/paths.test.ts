@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
-
-import { flattenPaths, isContainer, isPrefix, nodeAt, samePath } from './paths';
+import { flattenPaths, isContainer, isPrefix, nodeAt, samePath } from '../../src/editor/paths';
+import { type Node } from '../../src/ir/types';
 
 // Shared fixture: Stack[ Text"a", Row[ Button"b" ] ]. Paths: [] [0] [1] [1,0].
 const tree: Node = {

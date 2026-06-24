@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type Node } from '../ir/types';
-
-import { type EditorFrame } from './document';
+import { type EditorFrame } from '../../src/editor/document';
 import {
   canInsertComponent,
   canInsertInTarget,
@@ -15,8 +13,9 @@ import {
   resizeFrame,
   TARGET_PROFILES,
   type FrameTarget,
-} from './frames';
-import { type PaletteItem } from './palette';
+} from '../../src/editor/frames';
+import { type PaletteItem } from '../../src/editor/palette';
+import { type Node } from '../../src/ir/types';
 
 const item = (emailSafe: boolean): PaletteItem => ({
   id: 'x',
