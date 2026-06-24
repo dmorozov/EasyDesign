@@ -375,7 +375,7 @@ body {
    frame's own background so it occludes the dashes behind it; the row itself is click-through. */
 .ed-frame-labels {
   position: absolute;
-  top: 0;
+  top: -16px;
   left: var(--space-6);
   right: var(--space-6);
   transform: translateY(-50%);
@@ -399,14 +399,6 @@ body {
   max-width: 72%;
   padding: 0 var(--space-2);
   pointer-events: auto;
-
-  background: linear-gradient(
-    to bottom,
-    transparent calc(50% - 1px),
-    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% - 1px),
-    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% + 1px),
-    transparent calc(50% + 1px)
-  );
 }
 /* Grip — the React Flow drag handle (board move). */
 .ed-frame-grip {
@@ -442,9 +434,9 @@ body {
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text-muted);
-  font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
+  color: var(--text-faint);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-regular);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -470,14 +462,6 @@ body {
   text-transform: uppercase;
   white-space: nowrap;
   pointer-events: auto;
-
-  background: linear-gradient(
-    to bottom,
-    transparent calc(50% - 1px),
-    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% - 1px),
-    color-mix(in srgb, var(--surface) 85%, transparent) calc(50% + 1px),
-    transparent calc(50% + 1px)
-  );
 }
 .ed-frame[data-selected] .ed-frame-type {
   color: var(--accent);
