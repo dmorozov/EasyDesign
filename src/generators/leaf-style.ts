@@ -5,6 +5,7 @@
 // for "Button primary = brand bg" and for the structural-/layout-property -> CSS map,
 // instead of three. The React targets (canvas / EditableNode) do NOT import this;
 // they delegate β to src/components (ADR-0005), so β has one home per side, not three.
+import { APPSHELL_MIN_HEIGHT, appShellTemplate, type RegionArea } from '../ir/appshell';
 import { type Align, type Justify, type StyleMap } from '../ir/types';
 import { type ButtonNode, type ContainerShape, type ImageNode, type TextNode } from '../ir/walk';
 import { catalog, STYLE_KEY_CATEGORY } from '../theme/design-tokens';
@@ -57,6 +58,28 @@ export function structuralDecls(shape: ContainerShape): Decl[] {
       return out;
     }
   }
+}
+
+/**
+ * AppShell β (ADR-0017): the CSS-grid container decls for an application shell, with the
+ * `grid-template-*` computed from its present regions (the ONE template home is ir/appshell.ts).
+ * Shared by the three string targets; the React canvas/editor keep their copy in components/AppShell.
+ */
+export function appShellDecls(areas: readonly RegionArea[], style: StyleMap | undefined): Decl[] {
+  const t = appShellTemplate(areas);
+  return [
+    { prop: 'display', value: 'grid' },
+    { prop: 'gridTemplateColumns', value: t.columns },
+    { prop: 'gridTemplateRows', value: t.rows },
+    { prop: 'gridTemplateAreas', value: t.areas },
+    { prop: 'minHeight', value: APPSHELL_MIN_HEIGHT },
+    ...containerDecls(style),
+  ];
+}
+
+/** Places one Region child into its named grid area (the AppShell renderer wraps each child in this). */
+export function gridAreaDecl(area: RegionArea): Decl {
+  return { prop: 'gridArea', value: area };
 }
 
 /** Token-bound container decls: the bound style keys (STYLE_KEYS) resolved by the Design-Token Model

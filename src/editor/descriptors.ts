@@ -16,23 +16,27 @@
 // This module lives in src/editor (not the dependency-free src/ir) because it carries editor-runtime
 // chrome facts — `icon` and `controls` (ADR-0008).
 import { type IconName } from '../design-system';
-import { type Node } from '../ir/types';
+import { CANONICAL_AREAS, type RegionArea } from '../ir/appshell';
+import { type Node, type RegionNode } from '../ir/types';
 import { type StyleKey } from '../theme/design-tokens';
 
 type NodeType = Node['type'];
 type NodeOf<T extends NodeType> = Extract<Node, { type: T }>;
+/** The editable prop keys of a node type — `never` for a type with no `props` (e.g. AppShell), so such
+ *  a type simply can't declare `textFields`. */
+type PropKeys<T extends NodeType> = NodeOf<T> extends { props: infer P } ? keyof P & string : never;
 
 /** The Inspector control kinds a type *can* expose — a static spec. RP-6 renders these and owns the
  *  *dynamic* visibility (a Row in `fill` hides justify/wrap; an email root limits style keys).
  *  `heading` = the named Text-style (variant) picker. Free-text props are declared separately, as
  *  `textFields` (so the editable prop *keys* stay type-checked against the node), not as a control. */
-export type ControlKind = 'heading' | 'distribute' | 'justify' | 'align' | 'wrap';
+export type ControlKind = 'heading' | 'distribute' | 'justify' | 'align' | 'wrap' | 'regions';
 
 /** A free-text prop the Inspector edits as a labelled text input. `key` is type-checked to be a real
  *  prop of *this* node type (so Radio can only expose `value`/`label`, Text only `content`, …); the
  *  Inspector renders each in order and writes back via the generic `setTextProp` store action. */
 export interface TextFieldSpec<T extends NodeType> {
-  readonly key: keyof NodeOf<T>['props'] & string;
+  readonly key: PropKeys<T>;
   readonly label: string;
 }
 
@@ -71,6 +75,29 @@ const imagePlaceholder =
 
 // The token-bound style keys every container exposes (web superset; RP-6 filters per medium/state).
 const CONTAINER_STYLE_KEYS: readonly StyleKey[] = ['background', 'padding', 'borderRadius', 'gap'];
+
+// A Region box — a surface card the user fills. Per-area sizing is baked into the AppShell grid
+// (ir/appshell.ts), so a Region only carries its `area` + content styling. Exported so the store's
+// `toggleRegion` mints a panel with the same default styling as the presets.
+export function makeRegion(area: RegionArea): RegionNode {
+  return {
+    type: 'Region',
+    props: { area },
+    style: { background: 'color.surface', padding: 'space.md', gap: 'space.md' },
+    children: [],
+  };
+}
+
+/** Build an AppShell with one Region per area, in canonical visual order (header, left, main, right,
+ *  footer). `main` is always present. Used by the descriptor `create()` AND the palette presets — so a
+ *  preset is just a different area set (ADR-0017). */
+export function makeAppShell(areas: readonly RegionArea[]): NodeOf<'AppShell'> {
+  const present = new Set<RegionArea>([...areas, 'main']); // main is required
+  return {
+    type: 'AppShell',
+    children: CANONICAL_AREAS.filter((a) => present.has(a)).map(makeRegion),
+  };
+}
 
 export const DESCRIPTORS: Descriptors = {
   Stack: {
@@ -178,6 +205,30 @@ export const DESCRIPTORS: Descriptors = {
       { key: 'label', label: 'Label' },
       { key: 'value', label: 'Value' },
     ],
+  },
+  // ADR-0017 — the application-shell layout. AppShell is a COMPOUND layout Component (a CSS-grid box
+  // whose template is computed from its Region children) constrained to Region children; Region is its
+  // slot. Both are web-only (a grid app shell can't flatten to MJML, ADR-0006/0017). A fresh AppShell
+  // mints header + main + footer; the `regions` control toggles the side panels, and the palette ships
+  // preset area-sets. Region is NOT a free palette item — it exists only inside an AppShell.
+  AppShell: {
+    label: 'App layout',
+    icon: 'layout',
+    group: 'layout',
+    emailSafe: false,
+    create: () => makeAppShell(['header', 'main', 'footer']),
+    styleKeys: ['background', 'padding', 'gap'],
+    controls: ['regions'],
+    allowedChildren: ['Region'],
+  },
+  Region: {
+    label: 'Region',
+    icon: 'stack',
+    group: 'layout',
+    emailSafe: false,
+    create: () => makeRegion('main'),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: ['justify', 'align'],
   },
 };
 

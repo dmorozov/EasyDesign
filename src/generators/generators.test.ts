@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { sampleCard } from '../ir/sample';
-import { type Distribute, type Frame, type Justify, type RowProps } from '../ir/types';
+import {
+  type Distribute,
+  type Frame,
+  type Justify,
+  type Node,
+  type RegionNode,
+  type RowProps,
+} from '../ir/types';
 import { catalog } from '../theme/design-tokens';
 
 import { emitAngularSource } from './angular';
@@ -124,6 +131,11 @@ describe('MJML guardrails (ADR-0006/0008)', () => {
       type: 'Grid',
     });
     expect(classifyCardChild({ type: 'Stack', children: [] }).role).toBe('unsupported');
+    // ADR-0017: the web-only app-shell nodes also classify unsupported (kept exhaustive by the compiler).
+    expect(classifyCardChild({ type: 'AppShell', children: [] }).role).toBe('unsupported');
+    expect(classifyCardChild({ type: 'Region', props: { area: 'main' }, children: [] }).role).toBe(
+      'unsupported',
+    );
   });
 
   it('a malformed type-scale override never ships line-height="NaNpx" (RP-6 guard)', () => {
@@ -136,5 +148,58 @@ describe('MJML guardrails (ADR-0006/0008)', () => {
     const out = emitMJML(frame, catalog.withOverrides({ 'font.size.2xl': 'abc' }));
     expect(out).not.toContain('NaN');
     expect(out).toContain('line-height="1.25"'); // the binding's base ratio, not NaNpx
+  });
+});
+
+// ADR-0017 — the app-shell layout: a CSS-grid box whose template is computed from its Region children,
+// each placed into its named grid area. Web-only; this asserts the computed grid + placement per target.
+describe('AppShell (ADR-0017) — computed grid-areas on every web target', () => {
+  const region = (area: 'header' | 'main' | 'footer', label: string): RegionNode => ({
+    type: 'Region',
+    props: { area },
+    children: [{ type: 'Text', props: { content: label, variant: 'body' } }],
+  });
+  const shell: Node = {
+    type: 'AppShell',
+    children: [region('header', 'H'), region('main', 'M'), region('footer', 'F')],
+  };
+  const appShellFrame: Frame = { target: 'web', root: shell };
+
+  const WEB = [
+    {
+      name: 'html',
+      emit: emitHTML,
+      grid: 'display:grid',
+      areas: "grid-template-areas:'header' 'main' 'footer'",
+      cell: 'grid-area:header',
+    },
+    {
+      name: 'react',
+      emit: emitReactSource,
+      grid: "display: 'grid'",
+      areas: `gridTemplateAreas: "'header' 'main' 'footer'"`,
+      cell: "gridArea: 'header'",
+    },
+    {
+      name: 'angular',
+      emit: emitAngularSource,
+      grid: 'display:grid',
+      areas: "grid-template-areas:'header' 'main' 'footer'",
+      cell: 'grid-area:header',
+    },
+  ] as const;
+
+  for (const { name, emit, grid, areas, cell } of WEB) {
+    it(`${name}: emits a CSS grid with the computed template-areas and places each region`, () => {
+      const out = emit(appShellFrame);
+      expect(out).toContain(grid);
+      expect(out).toContain(areas);
+      expect(out).toContain(cell);
+    });
+  }
+
+  it('an AppShell nested in an email Frame is rejected with a clear message (web-only, ADR-0017)', () => {
+    const email: Frame = { target: 'email', root: { type: 'Stack', children: [shell] } };
+    expect(() => emitMJML(email, catalog.withOverrides({}))).toThrow(/AppShell/);
   });
 });

@@ -39,19 +39,23 @@ export type ContainerNode = Extract<Node, { children: readonly Node[] }>;
 export type ContainerType = ContainerNode['type'];
 
 /**
- * COMPONENT containers (RP-10 / ADR-0016): containers that render as a specific Component — a RAC
- * RadioGroup, not a layout box — so they bypass `shapeOf`/`container()` and dispatch through
- * `emit.component`, exactly parallel to how leaves dispatch through `emit.leaf`. The rest are LAYOUT
- * containers (Stack/Row/Column/Grid), which share the one shape-driven `container()` renderer.
+ * COMPONENT containers (RP-10 / ADR-0016, ADR-0017): containers that render bespoke — a RAC RadioGroup,
+ * or an AppShell's computed CSS grid — rather than via a shared layout *shape*, so they bypass
+ * `shapeOf`/`container()` and dispatch through `emit.component`, exactly parallel to how leaves dispatch
+ * through `emit.leaf`. The rest are LAYOUT containers (Stack/Row/Column/Grid/Region), which share the
+ * one shape-driven `container()` renderer.
  */
-export type ComponentContainerType = 'RadioGroup';
+export type ComponentContainerType = 'RadioGroup' | 'AppShell';
 export type ComponentContainerNode = Extract<Node, { type: ComponentContainerType }>;
 export type LayoutContainerNode = Exclude<ContainerNode, ComponentContainerNode>;
 export type LayoutContainerType = LayoutContainerNode['type'];
 
 /** Which container types are component-containers — a Record (not a Set) so adding one is a compile
  *  error here AND at every walk adapter's `component` record (the §1 "locality ≠ safety" lever). */
-export const COMPONENT_CONTAINERS: Record<ComponentContainerType, true> = { RadioGroup: true };
+export const COMPONENT_CONTAINERS: Record<ComponentContainerType, true> = {
+  RadioGroup: true,
+  AppShell: true,
+};
 
 /** A container that renders via a layout shape (Stack/Row/Column/Grid), not as a Component. A real type
  *  guard so consumers that read layout props (e.g. the Inspector model) narrow without a cast, and stay
@@ -141,6 +145,16 @@ export function shapeOf(node: LayoutContainerNode): ContainerShape {
         justify: node.props.justify ?? null,
         align: node.props.align ?? null,
       };
+    case 'Region':
+      // A Region is a flow column (like Stack); its grid placement is applied by its AppShell parent.
+      return {
+        kind: 'flow',
+        axis: 'column',
+        wrapChildren: false,
+        justify: node.props.justify ?? null,
+        align: node.props.align ?? null,
+        wrap: node.props.wrap ?? null,
+      };
   }
 }
 
@@ -151,7 +165,13 @@ export function walkNode<T, C>(node: Node, ctx: C, emit: Emitter<T, C>): T {
     // Component container (RadioGroup) → its own renderer; layout container → the shared shape renderer.
     // The casts bridge TS's correlated-union gap (the `in` check narrows the value, not the type).
     if (node.type in COMPONENT_CONTAINERS) {
-      const render = emit.component[node.type as ComponentContainerType];
+      // The cast collapses the per-key renderer union to one signature: `node` and the looked-up
+      // renderer are both narrowed to the same component container, but TS can't prove they align.
+      const render = emit.component[node.type as ComponentContainerType] as (
+        n: ComponentContainerNode,
+        children: T[],
+        ctx: C,
+      ) => T;
       return render(node as ComponentContainerNode, children, ctx);
     }
     const layout = node as LayoutContainerNode;

@@ -186,6 +186,21 @@ describe('isFrameValid — the import audit: email-safety (ADR-0006) + allowed-c
       isFrameValid('web', { type: 'RadioGroup', props: { label: 'x' }, children: [text] }),
     ).toBe(false);
   });
+  it('the app-shell slot rule: a Region is valid only inside an AppShell (ADR-0017)', () => {
+    const region: Node = { type: 'Region', props: { area: 'main' }, children: [] };
+    expect(isFrameValid('web', { type: 'AppShell', children: [region] })).toBe(true);
+    expect(isFrameValid('web', { type: 'AppShell', children: [text] })).toBe(false); // non-Region child
+    expect(isFrameValid('web', { type: 'Stack', children: [region] })).toBe(false); // Region escaped
+  });
+  it('locks AppShell out of an email Frame (web-only, ADR-0017)', () => {
+    const region: Node = { type: 'Region', props: { area: 'main' }, children: [] };
+    expect(
+      isFrameValid('email', {
+        type: 'Stack',
+        children: [{ type: 'AppShell', children: [region] }],
+      }),
+    ).toBe(false);
+  });
   it('is defensive over malformed/partial imported IR (never throws; unknown types permissive)', () => {
     expect(isFrameValid('email', null)).toBe(true);
     expect(isFrameValid('email', { children: 'nope' })).toBe(true);

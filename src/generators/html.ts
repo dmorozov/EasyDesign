@@ -6,9 +6,11 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  appShellDecls,
   buttonDecls,
   containerDecls,
   type Decl,
+  gridAreaDecl,
   imageDecls,
   legendDecls,
   radioDecls,
@@ -51,6 +53,19 @@ const htmlEmitter: Emitter<string, void> = {
     RadioGroup(node, children) {
       const legend = `<legend style="${inlineStyle(legendDecls())}">${escapeText(node.props.label)}</legend>`;
       return `<fieldset style="${inlineStyle(radioGroupDecls(node.style))}">${legend}${children.join('')}</fieldset>`;
+    },
+    // AppShell → a CSS-grid <div> whose template is computed from its regions; each Region child is
+    // placed by wrapping it in a `grid-area` cell div (ADR-0017).
+    AppShell(node, children) {
+      const areas = node.children.map((c) => c.props.area);
+      const decls = appShellDecls(areas, node.style);
+      const cells = children
+        .map(
+          (rendered, i) =>
+            `<div style="${inlineStyle([gridAreaDecl(areas[i] ?? 'main')])}">${rendered}</div>`,
+        )
+        .join('');
+      return `<div style="${inlineStyle(decls)}">${cells}</div>`;
     },
   },
   leaf: {

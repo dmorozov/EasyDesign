@@ -5,6 +5,10 @@
 
 import { type TextStyle } from '../theme/generated/typography';
 
+import { type RegionArea } from './appshell';
+
+export type { RegionArea };
+
 export type TokenRef = string; // dot path into the token graph, e.g. "space.md"
 export type StyleMap = Record<string, TokenRef>;
 
@@ -41,6 +45,17 @@ export interface RadioNode {
   style?: StyleMap;
 }
 
+/** A panel inside an AppShell (ADR-0017). Renders like a Stack (flow column) but also NAMES the grid
+ *  `area` it occupies; its only valid parent is AppShell (the descriptor's `allowedChildren` at
+ *  runtime + `AppShell.children: RegionNode[]` at compile time). Created only by AppShell — never a
+ *  free palette item. `main` is required; the rest are optional. */
+export interface RegionNode {
+  type: 'Region';
+  props: { area: RegionArea; justify?: Justify; align?: Align; wrap?: Wrap };
+  style?: StyleMap;
+  children: Node[];
+}
+
 export type Node =
   | { type: 'Stack'; props?: FlowProps; style?: StyleMap; children: Node[] }
   | { type: 'Row'; props?: RowProps; style?: StyleMap; children: Node[] }
@@ -57,6 +72,12 @@ export type Node =
   // non-Radio here); the editor's runtime drop validator (canContain) is the other half. ADR-0016.
   | { type: 'RadioGroup'; props: { label: string }; style?: StyleMap; children: RadioNode[] }
   | RadioNode
+  // AppShell (ADR-0017) is a COMPOUND layout Component: a CSS-grid application shell whose grid template
+  // is COMPUTED from its present Region children (appShellTemplate). It renders as a computed grid box,
+  // not a layout *shape*, so — like RadioGroup — it dispatches via `emit.component`, not `shapeOf`.
+  // Web-only (emailSafe:false). Children CONSTRAINED to Region (compile + runtime halves, as above).
+  | { type: 'AppShell'; style?: StyleMap; children: RegionNode[] }
+  | RegionNode
   | { type: 'Text'; props: { content: string; variant: TextStyle }; style?: StyleMap }
   | {
       type: 'Button';

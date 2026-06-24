@@ -3,12 +3,14 @@ import { type ReactElement } from 'react';
 import {
   Badge,
   Button,
+  Checkbox,
   Icon,
   Input,
   PanelSection,
   SegmentedControl,
   Select,
 } from '../design-system';
+import { type RegionArea } from '../ir/appshell';
 import { type Align, type Distribute, type Justify, type Wrap } from '../ir/types';
 import { type TextStyle } from '../theme/generated/typography';
 
@@ -24,6 +26,15 @@ import {
 } from './inspector-options';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
+
+/** Human labels for the AppShell region toggles (ADR-0017). */
+const REGION_LABEL: Record<RegionArea, string> = {
+  header: 'Header',
+  left: 'Left sidebar',
+  main: 'Main',
+  right: 'Right sidebar',
+  footer: 'Footer',
+};
 
 /** One token-bound Select (a container style key or a free-form Text size/weight) — value + options are
  *  resolved by the edit-model; binding/clearing routes through `setNodeStyle` (RP-1/RP-4 gate). */
@@ -61,6 +72,7 @@ export function Inspector(): ReactElement {
   const setTextProp = useEditor((s) => s.setTextProp);
   const setVariant = useEditor((s) => s.setVariant);
   const setLayout = useEditor((s) => s.setLayout);
+  const toggleRegion = useEditor((s) => s.toggleRegion);
   const deleteNode = useEditor((s) => s.deleteNode);
   const renameFrame = useEditor((s) => s.renameFrame);
   const removeFrame = useEditor((s) => s.removeFrame);
@@ -147,6 +159,7 @@ export function Inspector(): ReactElement {
   }
 
   const model = resolveEditModel(frame.target, node, selectedPath);
+  const regions = model.regions; // captured so the closures below narrow it past the && guard
 
   return (
     <div className="ed-inspector">
@@ -154,6 +167,22 @@ export function Inspector(): ReactElement {
         <span className="ed-inspector-type">{model.type}</span>
         <Badge tone="accent">{TARGET_PROFILES[frame.target].label}</Badge>
       </div>
+
+      {regions && (
+        <PanelSection title="Panels">
+          {regions.optional.map((area) => (
+            <Checkbox
+              key={area}
+              label={REGION_LABEL[area]}
+              checked={regions.present.includes(area)}
+              onChange={() => {
+                toggleRegion(selectedFrameId, selectedPath, area);
+              }}
+            />
+          ))}
+          <Checkbox label={`${REGION_LABEL.main} · always on`} checked disabled />
+        </PanelSection>
+      )}
 
       {model.text && (
         <PanelSection title="Content">

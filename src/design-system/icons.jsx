@@ -53,6 +53,7 @@ const Icon = {
   moon:     (p) => <Svg {...p}><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z"/></Svg>,
   chevronLeft:  (p) => <Svg {...p}><path d="m15 6-6 6 6 6"/></Svg>,
   chevronRight: (p) => <Svg {...p}><path d="m9 6 6 6-6 6"/></Svg>,
+  layout:   (p) => <Svg {...p}><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></Svg>,
 };
 
 export { Icon, Svg };

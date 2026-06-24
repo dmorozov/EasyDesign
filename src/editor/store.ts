@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 
+import { CANONICAL_AREAS, type RegionArea } from '../ir/appshell';
 import { sampleCard } from '../ir/sample';
 import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
 import { type StyleKey } from '../theme/design-tokens';
 import { type TextStyle } from '../theme/generated/typography';
 
-import { DESCRIPTORS } from './descriptors';
+import { DESCRIPTORS, makeRegion } from './descriptors';
 import {
   loadFromLocal,
   type DocumentBody,
@@ -65,6 +66,7 @@ interface EditorState {
     patch: { justify?: Justify; align?: Align; wrap?: Wrap; distribute?: Distribute },
   ) => void;
   setNodeStyle: (frameId: string, path: NodePath, key: StyleKey, ref: string) => void;
+  toggleRegion: (frameId: string, path: NodePath, area: RegionArea) => void;
   deleteNode: (frameId: string, path: NodePath) => void;
   addFrame: (target: Frames.FrameTarget) => void;
   removeFrame: (frameId: string) => void;
@@ -308,6 +310,24 @@ export const useEditor = create<EditorState>()((set) => {
           return NodeTree.setStyle(root, path, key, ref);
         });
         return r ? { body: r.body } : null;
+      }),
+
+    // Toggle an AppShell side panel (ADR-0017): remove the Region with this area if present, else insert
+    // a fresh one at its canonical position (header→left→main→right→footer). `main` is never toggled (the
+    // Inspector locks it). Selection stays on the AppShell; undoable + persisted like any structural edit.
+    toggleRegion: (frameId, path, area) =>
+      mutate(null, (doc) => {
+        const r = applyTreeEdit(doc, frameId, (root) => {
+          const target = nodeAt(root, path);
+          if (target?.type !== 'AppShell' || area === 'main') return null;
+          const idx = target.children.findIndex((c) => c.props.area === area);
+          if (idx >= 0) return NodeTree.remove(root, [...path, idx]);
+          const rank = (a: RegionArea): number => CANONICAL_AREAS.indexOf(a);
+          const at = target.children.filter((c) => rank(c.props.area) < rank(area)).length;
+          return NodeTree.insert(root, path, makeRegion(area), at);
+        });
+        if (!r) return null;
+        return { body: r.body, ui: { selectedFrameId: frameId, selectedPath: path } };
       }),
 
     deleteNode: (frameId, path) =>

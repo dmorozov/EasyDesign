@@ -141,6 +141,10 @@ export function classifyCardChild(node: Node): CardChild {
     case 'Column':
     case 'Grid':
     case 'RadioGroup':
+    case 'AppShell':
+    case 'Region':
+      // Stack/Column/Grid don't flatten; Grid/RadioGroup/AppShell/Region are web-only (emailSafe:false),
+      // so a valid email tree never reaches them — the arms keep the switch compile-exhaustive (ADR-0017).
       return { role: 'unsupported', type: node.type };
     default:
       // Exhaustiveness: `node` is `never` here. A new container type makes it non-never → a compile

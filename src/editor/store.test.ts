@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { type Node } from '../ir/types';
 
+import { makeAppShell } from './descriptors';
 import { emptyHistory } from './history';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
@@ -348,5 +349,45 @@ describe('setNodeStyle — token-bound container style', () => {
     expect(s().history.past).toHaveLength(1); // same node+key → one undo step
     s().setNodeStyle('web-1', [], 'padding', 'space.md');
     expect(s().history.past).toHaveLength(2); // different key → a new step
+  });
+});
+
+// ADR-0017 — the AppShell region toggles, the flexible half of the app-shell feature.
+describe('toggleRegion — AppShell side panels (ADR-0017)', () => {
+  const webRoot = (): Node => {
+    const f = s().frames.find((fr) => fr.id === 'web-1');
+    if (!f) throw new Error('web-1 missing');
+    return f.root;
+  };
+  function shellAreas(path: NodePath): string[] {
+    const node = nodeAt(webRoot(), path);
+    return node?.type === 'AppShell' ? node.children.map((c) => c.props.area) : [];
+  }
+  function seedAppShell(): NodePath {
+    s().insertChild('web-1', [], makeAppShell(['header', 'main', 'footer']));
+    const r = webRoot();
+    return 'children' in r ? [r.children.length - 1] : [];
+  }
+
+  it('adds an absent panel at its canonical position', () => {
+    const path = seedAppShell();
+    s().toggleRegion('web-1', path, 'left');
+    expect(shellAreas(path)).toEqual(['header', 'left', 'main', 'footer']);
+    s().toggleRegion('web-1', path, 'right');
+    expect(shellAreas(path)).toEqual(['header', 'left', 'main', 'right', 'footer']);
+  });
+  it('removes a present panel, and is undoable', () => {
+    const path = seedAppShell();
+    s().toggleRegion('web-1', path, 'header');
+    expect(shellAreas(path)).toEqual(['main', 'footer']);
+    s().undo();
+    expect(shellAreas(path)).toEqual(['header', 'main', 'footer']);
+  });
+  it('never toggles main (the required region) — a no-op with no history entry', () => {
+    const path = seedAppShell();
+    const before = s().history.past.length;
+    s().toggleRegion('web-1', path, 'main');
+    expect(shellAreas(path)).toEqual(['header', 'main', 'footer']);
+    expect(s().history.past).toHaveLength(before);
   });
 });

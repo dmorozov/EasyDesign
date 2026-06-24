@@ -16,7 +16,7 @@ export type IconName =
   | 'folder' | 'puzzle' | 'copy' | 'download' | 'upload' | 'plus' | 'trash' | 'check'
   | 'hand' | 'cursor' | 'zoomIn' | 'zoomOut' | 'fit' | 'play' | 'web' | 'mail'
   | 'alignL' | 'alignC' | 'alignR' | 'alignJ' | 'dots' | 'grip' | 'sliders' | 'palette'
-  | 'react' | 'share' | 'sun' | 'moon' | 'chevronLeft' | 'chevronRight';
+  | 'react' | 'share' | 'sun' | 'moon' | 'chevronLeft' | 'chevronRight' | 'layout';
 
 /** Inline icon set. Each entry is a component: `<Icon.undo size={18} />`. */
 export declare const Icon: Record<IconName, (props: IconProps) => React.JSX.Element>;

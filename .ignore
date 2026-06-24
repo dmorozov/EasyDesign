@@ -29,6 +29,9 @@ Layout components
 - Separator
 - maybe standard main page layouts: with header/footer/body, just header+body
 
+It looks like the hierarchical (tree like) page structure make it easier to navigate through the page (Frame) child components tree. Please implement new tab "Structure" in the right panel, next to Inspector tab.
+We need to show whole current Frame components tree and highlight the same component that is highlighter within the Frame.
+
 React Aria handles "Grid" in two distinct ways: visual page layout (via React Spectrum’s Grid component) and ARIA grid widgets (via hooks like useGridList or useTable). It provides robust layout structuring and manages complex, focusable data collections with strict accessibility compliance.
 Layouts: React Spectrum https://react-spectrum.adobe.com/
 

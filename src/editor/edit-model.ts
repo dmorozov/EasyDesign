@@ -13,6 +13,7 @@
 // source; RP-3's `TextStyle` = the named-style domain; and THIS resolver = the dynamic medium/state
 // filtering + option/value resolution. Invariant enum option lists (justify/align/wrap/distribute) and
 // the named-style list stay as presenter constants — only the *dynamic* token options live in the model.
+import { OPTIONAL_AREAS, type RegionArea } from '../ir/appshell';
 import { type Align, type Distribute, type Justify, type Node, type Wrap } from '../ir/types';
 import { isLayoutContainer } from '../ir/walk';
 import { catalog, STYLE_KEY_CATEGORY, type Category, type StyleKey } from '../theme/design-tokens';
@@ -44,6 +45,13 @@ export interface LayoutModel {
   readonly wrap?: Wrap;
 }
 
+/** AppShell regions (ADR-0017): which optional side panels are present + the toggleable set (everything
+ *  but `main`), for the Inspector's panel checkboxes. */
+export interface RegionModel {
+  readonly present: readonly RegionArea[];
+  readonly optional: readonly RegionArea[];
+}
+
 /** A Text node's typography: the named style (`heading`, value only — the option list is the static
  *  `TextStyle` set the presenter owns) and the two free-form Type-scale fields. */
 export interface TypographyModel {
@@ -65,6 +73,7 @@ export interface EditModel {
   readonly type: Node['type'];
   readonly text?: readonly TextField[];
   readonly layout?: LayoutModel;
+  readonly regions?: RegionModel;
   readonly typography?: TypographyModel;
   readonly style?: readonly TokenField[];
 }
@@ -119,8 +128,9 @@ export function resolveEditModel(medium: Medium, node: Node, path: NodePath): Ed
   const { controls, styleKeys, textFields } = DESCRIPTORS[node.type];
 
   // Free-text props (Text/Button content, RadioGroup label, Radio value/label) — the descriptor declares
-  // the keys (type-checked to this node) + labels; the values are read structurally.
-  const props = node.props as Record<string, unknown> | undefined;
+  // the keys (type-checked to this node) + labels; the values are read structurally. Some nodes (AppShell)
+  // have no `props` at all, so guard the access.
+  const props = 'props' in node ? (node.props as Record<string, unknown>) : undefined;
   const text = textFields?.map((f) => {
     const v = props?.[f.key];
     return { key: f.key, label: f.label, value: typeof v === 'string' ? v : '' };
@@ -144,6 +154,12 @@ export function resolveEditModel(medium: Medium, node: Node, path: NodePath): Ed
         : {}),
     };
   }
+
+  // Regions (AppShell only): which optional side panels are present, for the Inspector toggle checkboxes.
+  const regions: RegionModel | undefined =
+    controls.includes('regions') && node.type === 'AppShell'
+      ? { present: node.children.map((c) => c.props.area), optional: OPTIONAL_AREAS }
+      : undefined;
 
   // Typography (Text): the named-style picker + the free-form size/weight Type-scale fields. Honoured
   // in every medium — unlike container style keys, these survive into MJML export (RP-3 binding).
@@ -176,6 +192,7 @@ export function resolveEditModel(medium: Medium, node: Node, path: NodePath): Ed
     type: node.type,
     ...(text?.length ? { text } : {}),
     ...(layout ? { layout } : {}),
+    ...(regions ? { regions } : {}),
     ...(typography ? { typography } : {}),
     ...(style ? { style } : {}),
   };

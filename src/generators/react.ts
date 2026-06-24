@@ -7,9 +7,11 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  appShellDecls,
   buttonDecls,
   containerDecls,
   type Decl,
+  gridAreaDecl,
   imageDecls,
   legendDecls,
   radioDecls,
@@ -35,8 +37,15 @@ function escapeSingle(s: string): string {
 }
 // Our decls are camelCase identifiers with string values, so this renders a
 // React inline-style object literal: { display: 'flex', flexDirection: 'column' }.
+// A value that itself contains single quotes (grid-template-areas: 'header' 'main') is wrapped in
+// double quotes instead, so it stays clean rather than a backslash-escaped soup.
 function styleLiteral(decls: Decl[]): string {
-  const entries = decls.map((d) => `${d.prop}: '${escapeSingle(d.value)}'`);
+  const entries = decls.map((d) => {
+    const v = d.value.includes("'")
+      ? `"${d.value.replace(/"/g, '\\"')}"`
+      : `'${escapeSingle(d.value)}'`;
+    return `${d.prop}: ${v}`;
+  });
   return `{ ${entries.join(', ')} }`;
 }
 function jsxText(s: string): string {
@@ -70,6 +79,20 @@ const reactEmitter: Emitter<string, number> = {
       const p = pad(depth);
       const legend = `${pad(depth + 1)}<legend style={${styleLiteral(legendDecls())}}>${jsxText(node.props.label)}</legend>`;
       return `${p}<fieldset style={${styleLiteral(radioGroupDecls(node.style))}}>\n${legend}\n${children.join('\n')}\n${p}</fieldset>`;
+    },
+    AppShell(node, children, depth) {
+      const p = pad(depth);
+      const cp = pad(depth + 1);
+      const areas = node.children.map((c) => c.props.area);
+      const decls = appShellDecls(areas, node.style);
+      // Each child is placed by wrapping it in a grid-area cell div (one level deeper).
+      const inner = children
+        .map(
+          (rendered, i) =>
+            `${cp}<div style={${styleLiteral([gridAreaDecl(areas[i] ?? 'main')])}}>\n${reindent(rendered, 1)}\n${cp}</div>`,
+        )
+        .join('\n');
+      return `${p}<div style={${styleLiteral(decls)}}>\n${inner}\n${p}</div>`;
     },
   },
   leaf: {

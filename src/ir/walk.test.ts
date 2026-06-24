@@ -68,6 +68,10 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           log.push(`component:${node.type}@${depth}`);
           return `<${children.join(',')}>`;
         },
+        AppShell: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<<${children.join(',')}>>`;
+        },
       },
       leaf: {
         Text: (node, depth) => {
@@ -120,6 +124,10 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
         RadioGroup: (node, children, depth) => {
           log.push(`component:${node.type}@${depth}`);
           return `<${children.join(',')}>`;
+        },
+        AppShell: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<<${children.join(',')}>>`;
         },
       },
       leaf: {

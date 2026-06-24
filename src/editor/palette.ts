@@ -1,7 +1,7 @@
 import { type IconName } from '../design-system';
 import { type Node } from '../ir/types';
 
-import { DESCRIPTORS } from './descriptors';
+import { DESCRIPTORS, makeAppShell } from './descriptors';
 
 /** A draggable Component Palette entry. `create()` mints a fresh IR node. */
 export interface PaletteItem {
@@ -34,6 +34,21 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
   'Stack',
   'Row',
   { type: 'Grid', id: 'grid', label: 'Grid (2-col)' },
+  // ADR-0017: the application-shell layout. The default tile seeds header+main+footer (descriptor
+  // create); the presets are just different region sets via makeAppShell. Region itself is NOT a tile.
+  { type: 'AppShell', id: 'app-shell', label: 'App layout' },
+  {
+    type: 'AppShell',
+    id: 'app-holy-grail',
+    label: 'Holy grail',
+    create: () => makeAppShell(['header', 'left', 'main', 'right', 'footer']),
+  },
+  {
+    type: 'AppShell',
+    id: 'app-sidebar-main',
+    label: 'Sidebar + Main',
+    create: () => makeAppShell(['left', 'main']),
+  },
   {
     type: 'Text',
     id: 'heading',

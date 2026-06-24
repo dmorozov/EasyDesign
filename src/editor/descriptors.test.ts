@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type Node } from '../ir/types';
 import { isLayoutContainer } from '../ir/walk';
 
-import { canContain, DESCRIPTORS, RESTRICTED_CHILD_TYPES } from './descriptors';
+import { canContain, DESCRIPTORS, makeAppShell, RESTRICTED_CHILD_TYPES } from './descriptors';
 import { PALETTE } from './palette';
 
 // Mapped-type completeness (a row per node type) is enforced by the COMPILER, not here. These cover the
@@ -17,8 +17,8 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
     }
   });
 
-  it('email-unsafe = Grid + the interactive RadioGroup/Radio (ADR-0006/0016)', () => {
-    const unsafe = new Set<Node['type']>(['Grid', 'RadioGroup', 'Radio']);
+  it('email-unsafe = Grid + the interactive RadioGroup/Radio + the web-only AppShell/Region (ADR-0006/0016/0017)', () => {
+    const unsafe = new Set<Node['type']>(['Grid', 'RadioGroup', 'Radio', 'AppShell', 'Region']);
     for (const type of TYPES) {
       expect(DESCRIPTORS[type].emailSafe).toBe(!unsafe.has(type));
     }
@@ -33,9 +33,11 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
         expect(d.controls).toContain('justify');
         expect(d.controls).not.toContain('content');
       } else if ('children' in node) {
-        // component container (RadioGroup): renders as a Component, so no layout controls/style keys —
-        // it carries a slot rule (allowedChildren) instead (RP-10).
-        expect(d.controls).toHaveLength(0);
+        // component container (RadioGroup, AppShell): renders as a Component, so no LAYOUT controls — it
+        // carries a slot rule (allowedChildren) instead, and may have its own non-layout control
+        // (AppShell's `regions` toggles) (RP-10 / ADR-0016 / ADR-0017).
+        expect(d.controls).not.toContain('justify');
+        expect(d.controls).not.toContain('align');
         expect(d.allowedChildren).toBeDefined();
       } else {
         expect(d.controls).not.toContain('justify');
@@ -71,7 +73,7 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
     for (const type of TYPES) {
       const node = DESCRIPTORS[type].create();
       for (const f of DESCRIPTORS[type].textFields ?? []) {
-        expect(node.props && f.key in node.props).toBe(true);
+        expect('props' in node && f.key in node.props).toBe(true);
       }
     }
   });
@@ -93,6 +95,9 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'stack',
       'row',
       'grid',
+      'app-shell',
+      'app-holy-grail',
+      'app-sidebar-main',
       'heading',
       'text',
       'button-primary',
@@ -125,5 +130,26 @@ describe('canContain — the allowed-children rule (RP-10)', () => {
   it('the restricted-child set is DERIVED from the descriptors (one source)', () => {
     expect(RESTRICTED_CHILD_TYPES.has('Radio')).toBe(true);
     expect(RESTRICTED_CHILD_TYPES.has('Button')).toBe(false);
+  });
+  it('the app-shell slot rule: a Region goes ONLY in an AppShell (ADR-0017)', () => {
+    expect(canContain('AppShell', 'Region')).toBe(true);
+    expect(canContain('AppShell', 'Text')).toBe(false); // AppShell holds only Regions
+    expect(canContain('Stack', 'Region')).toBe(false); // Region is slot-restricted to AppShell
+    expect(RESTRICTED_CHILD_TYPES.has('Region')).toBe(true);
+  });
+});
+
+// ADR-0017 — the app-shell region builder, shared by the descriptor create() and the palette presets.
+describe('makeAppShell — region builder (ADR-0017)', () => {
+  it('orders regions canonically and always includes main', () => {
+    const shell = makeAppShell(['footer', 'header']); // main omitted + out of order
+    expect(shell.children.map((c) => c.props.area)).toEqual(['header', 'main', 'footer']);
+  });
+  it('the default AppShell descriptor seeds header + main + footer', () => {
+    expect(DESCRIPTORS.AppShell.create().children.map((c) => c.props.area)).toEqual([
+      'header',
+      'main',
+      'footer',
+    ]);
   });
 });

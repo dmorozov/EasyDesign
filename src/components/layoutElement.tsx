@@ -57,5 +57,17 @@ export function layoutElement(node: LayoutContainerNode, children: ReactNode): R
           {children}
         </Grid>
       );
+    case 'Region':
+      // A Region renders like a Stack (flow column); its AppShell parent places it into its grid area.
+      return (
+        <Stack
+          style={node.style}
+          justify={node.props.justify}
+          align={node.props.align}
+          wrap={node.props.wrap}
+        >
+          {children}
+        </Stack>
+      );
   }
 }

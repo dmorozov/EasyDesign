@@ -3,6 +3,7 @@ import { Fragment, type ReactElement } from 'react';
 import { type Frame, type Node } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
+import { AppShell } from './AppShell';
 import { Button } from './Button';
 import { layoutElement } from './layoutElement';
 import { Image, Text } from './primitives';
@@ -37,6 +38,13 @@ const canvasEmitter: Emitter<ReactElement, void> = {
           <Fragment key={i}>{c}</Fragment>
         ))}
       </RadioGroup>
+    ),
+    AppShell: (node, children) => (
+      <AppShell
+        areas={node.children.map((c) => c.props.area)}
+        style={node.style}
+        cells={node.children.map((c, i) => ({ area: c.props.area, content: children[i] }))}
+      />
     ),
   },
   leaf: {

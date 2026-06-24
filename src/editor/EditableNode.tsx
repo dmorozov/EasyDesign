@@ -7,6 +7,7 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { type CSSProperties, Fragment, type ReactElement, type ReactNode } from 'react';
 
+import { AppShell } from '../components/AppShell';
 import { Button } from '../components/Button';
 import { layoutElement } from '../components/layoutElement';
 import { Image, Text } from '../components/primitives';
@@ -153,6 +154,19 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
             <RadioGroup label={node.props.label} style={node.style}>
               {body}
             </RadioGroup>
+          </EditableShell>
+        );
+      },
+      AppShell(node, children, ctx) {
+        // The Region children carry their own EditableShell (drop target + selection); AppShell only
+        // places each into its grid area. Its own shell makes the shell itself selectable.
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <AppShell
+              areas={node.children.map((c) => c.props.area)}
+              style={node.style}
+              cells={node.children.map((c, i) => ({ area: c.props.area, content: children[i] }))}
+            />
           </EditableShell>
         );
       },

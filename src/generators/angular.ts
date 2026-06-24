@@ -6,9 +6,11 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  appShellDecls,
   buttonDecls,
   containerDecls,
   type Decl,
+  gridAreaDecl,
   imageDecls,
   legendDecls,
   radioDecls,
@@ -62,6 +64,17 @@ const angularEmitter: Emitter<string, void> = {
       const legend = `<legend style="${inlineStyle(legendDecls())}">${escText(node.props.label)}</legend>`;
       const inner = [legend, ...children].join('\n');
       return `<fieldset style="${inlineStyle(radioGroupDecls(node.style))}">\n${indent(inner, '  ')}\n</fieldset>`;
+    },
+    AppShell(node, children) {
+      const areas = node.children.map((c) => c.props.area);
+      const styleStr = inlineStyle(appShellDecls(areas, node.style));
+      const cells = children
+        .map(
+          (rendered, i) =>
+            `<div style="${inlineStyle([gridAreaDecl(areas[i] ?? 'main')])}">\n${indent(rendered, '  ')}\n</div>`,
+        )
+        .join('\n');
+      return `<div style="${styleStr}">\n${indent(cells, '  ')}\n</div>`;
     },
   },
   leaf: {
