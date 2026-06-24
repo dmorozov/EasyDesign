@@ -241,3 +241,61 @@ describe('resolveDropIntent — allowed-children rule (RP-10): the parent must a
     expect(resolveDropIntent(zone, mv([1], 'Radio'), geomAt(0.5))?.kind).toBe('rejected');
   });
 });
+
+describe('resolveDropIntent — forced mode (an insertion-point / "gap" droppable)', () => {
+  it('a forced `before` ignores the geometry entirely (even a >0.75 pointer reads as before)', () => {
+    const zone: DropZone = {
+      frameId: 'f',
+      path: [0, 2],
+      node: leaf(),
+      medium: 'web',
+      mode: 'before',
+    };
+    const intent = resolveDropIntent(zone, ins(safeItem), geomAt(0.9)); // geometry alone → 'after'
+    expect(intent).toMatchObject({
+      kind: 'insert',
+      parentPath: [0],
+      index: 2,
+      target: { path: [0, 2], mode: 'before' },
+    });
+  });
+
+  it('a forced `after` on the last child appends at the parent (the trailing "gap" = append)', () => {
+    const zone: DropZone = { frameId: 'f', path: [3], node: leaf(), medium: 'web', mode: 'after' };
+    const intent = resolveDropIntent(zone, ins(safeItem), geomAt(0.1)); // geometry alone → 'before'
+    expect(intent).toMatchObject({
+      kind: 'insert',
+      parentPath: [],
+      index: 4,
+      target: { mode: 'after' },
+    });
+  });
+
+  it('a forced mode still runs the allowed-children rule against the parent (gap into a RadioGroup)', () => {
+    const radio: RadioNode = { type: 'Radio', props: { value: 'a', label: 'A' } };
+    const zone: DropZone = {
+      frameId: 'f',
+      path: [0, 1],
+      node: radio,
+      medium: 'web',
+      parentType: 'RadioGroup',
+      mode: 'before',
+    };
+    expect(resolveDropIntent(zone, ins(radioItem), geomAt(0.5))?.kind).toBe('insert');
+  });
+
+  it('a forced mode still runs the email rule (an unsafe item before a node in an email Frame)', () => {
+    const zone: DropZone = {
+      frameId: 'e',
+      path: [1],
+      node: leaf(),
+      medium: 'email',
+      mode: 'before',
+    };
+    expect(resolveDropIntent(zone, ins(unsafeItem), geomAt(0.5))).toMatchObject({
+      kind: 'rejected',
+      reason: 'email-unsafe',
+      target: { blocked: true },
+    });
+  });
+});

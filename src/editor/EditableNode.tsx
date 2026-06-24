@@ -50,6 +50,31 @@ function DragHandle({ frameId, path }: { frameId: string; path: NodePath }): Rea
   );
 }
 
+// An insertion-point ("gap") droppable: a WIDE overlay hit-strip at a sibling boundary, so dropping a
+// node BETWEEN/UNDER siblings catches across the whole gap instead of a node's 25%-tall edge sliver
+// (the "works but only after several tries" reorder bug). It anchors to an existing child + a side
+// (`before` the child, or `after` the last child = append), so the drop resolves through the SAME
+// node-target path and reuses that anchor's before/after indicator line — this element shows nothing
+// itself. `pointer-events: none`: dnd-kit detects droppables by measured rect, not DOM events, so the
+// strip never blocks the selection click beneath it and adds NO layout (the canvas still mirrors the IR).
+function GapDrop({
+  frameId,
+  anchorPath,
+  mode,
+  placement,
+}: {
+  frameId: string;
+  anchorPath: NodePath;
+  mode: 'before' | 'after';
+  placement: 'before' | 'append';
+}): ReactElement {
+  const { setNodeRef } = useDroppable({
+    id: `gap:${frameId}:${anchorPath.join('.')}:${mode}`,
+    data: { kind: 'gap', frameId, anchorPath, mode },
+  });
+  return <div ref={setNodeRef} className={`ed-gap ed-gap-${placement}`} aria-hidden="true" />;
+}
+
 // Per-node editor chrome — the "decorate each node" wrapper, keyed on its path. A
 // child's own before/after drop lines live in the child's wrapper (keyed on the
 // child path), so the parent never interleaves anything.
@@ -78,6 +103,11 @@ function EditableShell({
   );
   const mode = drop?.mode ?? null;
   const blocked = drop?.blocked ?? false;
+  // Insertion points: a leading gap before every non-root node (= "before me" among my siblings), and a
+  // trailing gap on every non-empty container (= "append to the end of me"). Both anchor to an existing
+  // child node, so they drive that node's own before/after line and reuse the whole node-drop path.
+  const lastChildIndex =
+    'children' in node && node.children.length > 0 ? node.children.length - 1 : -1;
   const style: CSSProperties = {
     position: 'relative',
     cursor: blocked ? 'not-allowed' : 'pointer',
@@ -108,12 +138,23 @@ function EditableShell({
       }}
     >
       {path.length > 0 && <DragHandle frameId={frameId} path={path} />}
+      {path.length > 0 && (
+        <GapDrop frameId={frameId} anchorPath={path} mode="before" placement="before" />
+      )}
       {mode === 'before' && (
         <div className={`ed-drop-line ed-drop-before${blocked ? ' ed-drop-blocked' : ''}`} />
       )}
       {children}
       {mode === 'after' && (
         <div className={`ed-drop-line ed-drop-after${blocked ? ' ed-drop-blocked' : ''}`} />
+      )}
+      {lastChildIndex >= 0 && (
+        <GapDrop
+          frameId={frameId}
+          anchorPath={[...path, lastChildIndex]}
+          mode="after"
+          placement="append"
+        />
       )}
     </div>
   );

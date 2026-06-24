@@ -36,10 +36,10 @@ type ActiveData =
   | { kind: 'insert'; item?: PaletteItem }
   | { kind: 'move'; frameId: string; path: NodePath };
 
-interface DropData {
-  frameId: string;
-  path: NodePath;
-}
+// A droppable is either a NODE (its own path) or a GAP (an insertion point anchored to a child + a side).
+type DropData =
+  | { frameId: string; path: NodePath }
+  | { kind: 'gap'; frameId: string; anchorPath: NodePath; mode: 'before' | 'after' };
 
 // Live theme overrides become a stylesheet rendered after the base theme. It targets
 // .ed-board-content (the board-content scope) — NOT :root — so user theming stays off the
@@ -56,13 +56,18 @@ function buildOverrideCss(overrides: Record<string, string>): string {
   return `.ed-board-content {\n${decls.join('\n')}\n}`;
 }
 
-// When the pointer is over several nested nodes, target the deepest (longest path).
+// When the pointer is over several nested nodes, target the deepest (longest path). A gap droppable
+// sits at depth `anchorPath.length + 0.5` so it WINS the thin overlap against its anchor node and its
+// parent container (an insertion point is a more specific intent than "drop onto/into the node").
 function collisionDepth(collision: Collision): number {
   const container = (
     collision.data as { droppableContainer?: { data?: { current?: unknown } } } | undefined
   )?.droppableContainer;
-  const path = (container?.data?.current as { path?: unknown } | undefined)?.path;
-  return Array.isArray(path) ? path.length : 0;
+  const data = container?.data?.current as
+    | { kind?: string; path?: unknown; anchorPath?: unknown }
+    | undefined;
+  if (data?.kind === 'gap' && Array.isArray(data.anchorPath)) return data.anchorPath.length + 0.5;
+  return Array.isArray(data?.path) ? data.path.length : 0;
 }
 
 // Collision detection. `pointerWithin` is precise but returns NOTHING in the blank areas around a
@@ -104,18 +109,23 @@ function readZone(frames: EditorFrame[], over: ResolveOver): DropZone | null {
   const data = over?.data.current as DropData | undefined;
   if (!data) return null;
   const frame = frames.find((f) => f.id === data.frameId);
-  const node = frame ? nodeAt(frame.root, data.path) : undefined;
-  if (!frame || !node) return null;
+  if (!frame) return null;
+  // A gap droppable resolves to its ANCHOR child + a forced before/after side, so the rest of the
+  // pipeline (placeAt, allowed-children, email rule, the indicator line) is the plain node-drop path.
+  const gap = 'kind' in data; // narrows DropData: gap variant carries anchorPath + mode
+  const path = gap ? data.anchorPath : data.path;
+  const node = nodeAt(frame.root, path);
+  if (!node) return null;
   // The hovered node's PARENT type (undefined at the root) — for a before/after drop, the parent is
   // what must accept the dragged type, not the hovered node itself (RP-10).
-  const parentType =
-    data.path.length > 0 ? nodeAt(frame.root, data.path.slice(0, -1))?.type : undefined;
+  const parentType = path.length > 0 ? nodeAt(frame.root, path.slice(0, -1))?.type : undefined;
   return {
     frameId: data.frameId,
-    path: data.path,
+    path,
     node,
     medium: frame.target,
     ...(parentType !== undefined ? { parentType } : {}),
+    ...(gap ? { mode: data.mode } : {}),
   };
 }
 

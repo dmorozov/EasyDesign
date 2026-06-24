@@ -610,6 +610,25 @@ body {
 .ed-drop-blocked {
   background: var(--danger);
 }
+/* Insertion-point hit-strips: WIDE invisible droppables straddling each sibling boundary so a reorder
+   drop catches across the whole gap, not a 25% node edge. No fill / no layout (pointer-events: none —
+   dnd-kit measures rects, so detection still works and selection clicks pass through). The visible bar
+   is the anchor node's own .ed-drop-line, which this strip activates. Vertical-stack oriented (top/bottom
+   edges), matching .ed-drop-line; a horizontal-Row variant can follow the same convention. */
+.ed-gap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16px;
+  z-index: 4;
+  pointer-events: none;
+}
+.ed-gap-before {
+  top: -8px;
+}
+.ed-gap-append {
+  bottom: -8px;
+}
 .ed-empty-hint {
   padding: var(--space-6);
   border: var(--border-w) dashed var(--border-strong);

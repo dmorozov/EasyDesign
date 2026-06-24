@@ -50,6 +50,11 @@ export interface DropZone {
   node: Node;
   medium: FrameTarget;
   parentType?: Node['type'];
+  /** When set, the placement mode is FORCED by an explicit insertion-point ("gap") droppable, bypassing
+   *  the geometry thirds (`computeMode`). A gap anchors to an existing child node + a `before`/`after`
+   *  side, so the SAME placement/indicator/allowed-children/email path serves both gap and node drops.
+   *  Plain node droppables omit it, so `computeMode` runs exactly as before (RP-5 behaviour preserved). */
+  mode?: DropMode;
 }
 
 /** Pointer position vs. the hovered node's rect (`pointerY` already folds dnd-kit's activator-Y +
@@ -126,7 +131,8 @@ export function resolveDropIntent(
   geom: DropGeometry,
 ): DropIntent | null {
   if (!zone) return null;
-  const mode = computeMode(zone.node, zone.path, geom);
+  // A gap droppable forces the mode (it IS an insertion point); a node droppable derives it from geometry.
+  const mode = zone.mode ?? computeMode(zone.node, zone.path, geom);
   const placed = placeAt(zone.node, zone.path, mode);
   if (!placed) return null;
   const target: DropTarget = { frameId: zone.frameId, path: zone.path, mode };

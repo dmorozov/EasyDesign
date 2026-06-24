@@ -504,6 +504,12 @@ keys and richer categories).
 > thin dnd-kit→pure boundary adapter + slim handlers. The email rule now resolves _during_ the drag,
 > so a blocked drop shows a danger-colored indicator (`DropTarget.blocked`) instead of silently
 > dropping. No new ADR (consumes RP-1's op shape + RP-2's email rule). See §4 step 7 for the record.
+>
+> **Follow-up 2026-06-24 (ADR-0018):** the _interaction layer_ over this pure module was made reliable
+> to aim — **insertion-point ("gap") droppables** make before/after between siblings a wide target
+> (not a 25% sliver), and a **`closestCenter` fallback** rescues drops released in the blank dead-zones
+> around a Frame. Both reuse this module unchanged: a gap resolves to an anchor node + a forced
+> `DropZone.mode`, so `placeAt`/email/allowed-children stay the one resolution path.
 
 **Files / sites:** `src/editor/Editor.tsx` (`computeTarget`, `resolveDrop`, `onDragEnd`).
 

@@ -11,11 +11,13 @@ compose UIs from a finite, themed **Component Palette**, then export a **Selecti
 Angular, static HTML, or MJML email. The flagship feature is **export**, and the whole approach is
 gated on clean output to all four targets.
 
-The architecture is settled (seven ADRs) and the package lives at the repo root: the IR, the four
+The architecture is settled (foundational ADRs 0001–0007, extended by implementation ADRs 0008–0018)
+and the package lives at the repo root: the IR, the four
 export generators, a React-Aria component layer, and a **working editor MVP** (`src/editor/`, run
 `npm run dev`) — React Flow workspace of Frames rendering live IR, a dnd-kit Component Palette
 (drag or click to insert), per-node drag handles to **reorder/move** with **before/after/inside drop
-indicators**, selection + inspector, live multi-target export, live theming, the email-mode
+indicators** and **insertion-point (gap) drop targets** (ADR-0018), selection + inspector + a Frame
+**Structure** tree, live multi-target export, live theming, the email-mode
 restriction (Grid is hidden in email Frames), **undo/redo** (coalesced history, Ctrl/⌘+Z), and
 **persistence** (auto-save to localStorage + JSON export/import/reset via `src/editor/document.ts`).
 The throwaway **walking skeleton** in
@@ -25,7 +27,7 @@ The throwaway **walking skeleton** in
 
 - `CONTEXT.md` — domain glossary (Board, Frame, Component, Layout element, Theme, Design Token,
   Design Palette vs Component Palette, Selection, Export Target). Use these exact terms.
-- `docs/adr/` — the decisions and _why_, including the rejected alternatives:
+- `docs/adr/` — the decisions and _why_, including the rejected alternatives. **Foundational (0001–0007)**:
   - `0001` React editor, deliberately decoupled from export targets
   - `0002` Own IR; Mitosis rejected as the export engine; scope fixed to the four named targets
   - `0003` Structured layout tree (auto-layout), **not** free-form absolute positioning
@@ -33,6 +35,15 @@ The throwaway **walking skeleton** in
   - `0005` React Aria Components for primitives (not Radix/shadcn)
   - `0006` Email is an explicit restricted mode (target-aware Frames)
   - `0007` React Aria is the editor runtime, not the export substrate
+- **Implementation seams (0008–0018)** — the editor/IR structure to know before refactoring:
+  - `0008` Node Walk: one shared traversal (`walkNode`/`Emitter`) for all web/React renderers; MJML bespoke
+  - `0009` Responsive layout deferred · `0010` Row is content-flow by default
+  - `0011` Frame lifecycle module + Board seam · `0012` History reducer + `mutate()` funnel + persistence hook
+  - `0013` Frame preview width is a canvas affordance · `0014` Component descriptor = single source of node-type facts
+  - `0015` Typography composite tokens → codegen binding
+  - `0016` Component containers + allowed-children (compound components: RadioGroup→Radio)
+  - `0017` AppShell application-layout component (computed grid-areas + Region slots)
+  - `0018` Insertion-point (gap) drop targets + closest-fallback collision strategy
 
 ## Core architecture (one-screen summary)
 
