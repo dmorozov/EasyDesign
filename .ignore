@@ -1,5 +1,43 @@
 TODO:
 
+I don't like the Editor Chrome design.
+The folded left components and right inspector panels:
+
+- No labels needed, only image buttons
+- The panel has expand/fold button at the top of panel
+- The panel is either folded or full width, not both at the same time (like it is now)
+- The panel both folded and expanded mode should be shown in the floating elevated panel with rounded corners - this way we emphasize the Board and Editor is main thing, those panels are tooling one.
+
+- The first top button - create a new Frame: either Web or Email
+
 - add a display-only Component (Divider/Spacer) to exercise Capability A end-to-end
 - another compound Component: Grid - how to specify demo data?
 - RP-12 (IR migration, bump-and-reset)
+- Select Frame when click grep in title, not just a title
+
+Layout components
+
+- Drawler
+- App Bar
+- Accordion
+- Paper
+- Breadcrumbs
+- Pagination
+- Tabs
+- Stepper (vertical, horizontal)
+- Menu Bar
+- Separator
+- maybe standard main page layouts: with header/footer/body, just header+body
+
+React Aria handles "Grid" in two distinct ways: visual page layout (via React Spectrum’s Grid component) and ARIA grid widgets (via hooks like useGridList or useTable). It provides robust layout structuring and manages complex, focusable data collections with strict accessibility compliance.
+Layouts: React Spectrum https://react-spectrum.adobe.com/
+
+React Spectrum is a complete, pre-styled UI component library built entirely to match Adobe's proprietary design system. In contrast, React Aria is a headless (unstyled) library that provides accessible hooks and building blocks, allowing developers to implement their own custom designs, styling, and DOM structures
+
+https://react-aria.adobe.com/blog/introducing-react-spectrum
+https://react-spectrum.adobe.com/
+
+Note: check what layout components make sense for the Web and which are make sense for Email Frames.
+
+- how to implement the top bar component, like in Stich design
+- Need to make available more space for the Board. Left component panel need to be foldable/expandable - when folder just narrow vertical toolbar, with sections, when click section -> expend the component panel and show the components in the selected section.
