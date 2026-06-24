@@ -5,16 +5,19 @@ import { Icon, IconButton, Tabs } from '../design-system';
 import { ExportPanel } from './ExportPanel';
 import { Inspector } from './Inspector';
 import { useEditor, type RightTab } from './store';
+import { StructurePanel } from './StructurePanel';
 import { ThemePanel } from './ThemePanel';
 
 const TABS = [
   { value: 'inspector', label: 'Inspector' },
+  { value: 'structure', label: 'Structure' },
   { value: 'design', label: 'Design' },
   { value: 'export', label: 'Export' },
 ];
 
 const TITLES: Record<RightTab, string> = {
   inspector: 'Properties',
+  structure: 'Structure',
   design: 'Design Palette',
   export: 'Export',
 };
@@ -76,6 +79,7 @@ export function RightRail({ collapsed, onToggle }: RightRailProps): ReactElement
       </div>
       <div className="ed-rail-body">
         {rightTab === 'inspector' && <Inspector />}
+        {rightTab === 'structure' && <StructurePanel />}
         {rightTab === 'design' && <ThemePanel />}
         {rightTab === 'export' && <ExportPanel />}
       </div>

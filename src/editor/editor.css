@@ -293,6 +293,61 @@ body {
   line-height: var(--lh-normal);
 }
 
+/* ---- structure (layers) panel ---- */
+.ed-structure-frame {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-muted);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
+  border-bottom: var(--border-w) solid var(--border-faint);
+}
+/* Full-bleed rows: cancel the rail body's horizontal padding so hover/selection spans the panel. */
+.ed-structure-tree {
+  margin: 0 calc(-1 * var(--space-8));
+}
+.ed-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding-block: var(--space-3);
+  padding-inline-end: var(--space-6);
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+  font-size: var(--fs-sm);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
+}
+.ed-tree-row:hover {
+  background: var(--surface-hover);
+}
+.ed-tree-row[data-selected='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-press);
+}
+.ed-tree-row:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+.ed-tree-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--icon);
+}
+.ed-tree-row[data-selected='true'] .ed-tree-icon {
+  color: var(--accent-press);
+}
+.ed-tree-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---- inspector ---- */
 .ed-inspector {
   display: flex;

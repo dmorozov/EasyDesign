@@ -2,7 +2,7 @@ import { type KeyboardEvent } from 'react';
 
 import { type Node } from '../ir/types';
 
-import { DESCRIPTORS } from './descriptors';
+import { nodeLabel } from './node-label';
 import { flattenPaths, isContainer, samePath, type NodePath } from './paths';
 import { useEditor } from './store';
 
@@ -16,18 +16,6 @@ export interface CanvasA11yProps {
   'aria-selected'?: boolean | undefined;
   'data-ed-path': string;
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
-}
-
-function describe(node: Node, path: NodePath): string {
-  const where = path.length === 0 ? 'root ' : '';
-  const label = DESCRIPTORS[node.type].label; // one home for the per-type label (RP-2)
-  if (node.type === 'Text' || node.type === 'Button') {
-    const content = node.props.content.trim();
-    return content ? `${where}${label}: ${content}` : `${where}${label}`;
-  }
-  if (node.type === 'Image') return `${where}${label}: ${node.props.alt || 'image'}`;
-  if (node.type === 'Radio') return `${where}${label}: ${node.props.label}`;
-  return `${where}${label}`;
 }
 
 function focusNode(frameId: string, path: NodePath): void {
@@ -111,7 +99,7 @@ export function useCanvasA11y(frameId: string, path: NodePath, node: Node): Canv
   return {
     role: 'treeitem',
     tabIndex: selected || (isRoot && noNodeSelected) ? 0 : -1,
-    'aria-label': describe(node, path),
+    'aria-label': nodeLabel(node, path),
     'aria-level': path.length + 1,
     'aria-expanded': container ? true : undefined,
     'aria-selected': selected ? true : undefined,

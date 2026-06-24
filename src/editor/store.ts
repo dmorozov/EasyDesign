@@ -31,7 +31,13 @@ export type ExportTarget = 'html' | 'react' | 'angular' | 'mjml';
 export type SaveStatus = 'saved' | 'saving';
 
 /** Which right-rail panel is showing (chrome UI state — not part of the document/undo). */
-export type RightTab = 'inspector' | 'design' | 'export';
+export type RightTab = 'inspector' | 'structure' | 'design' | 'export';
+
+// Selecting a node/Frame reveals the Inspector — UNLESS the user is on the Structure (layers) tab, where
+// selecting is how you NAVIGATE the tree, so we keep them there (the row just highlights). Either way it
+// unfolds a folded rail. The other node-context tab (inspector) is also preserved.
+const nodeContextTab = (current: RightTab): RightTab =>
+  current === 'structure' ? 'structure' : 'inspector';
 
 interface EditorState {
   // ── Denormalised present (the live document body; top-level so component selectors stay simple) ──
@@ -193,25 +199,26 @@ export const useEditor = create<EditorState>()((set) => {
     history: emptyHistory,
 
     // ── UI actions (no history) ──
-    // Selecting a node/Frame is an intent to edit it → show the inspector AND unfold it if folded.
+    // Selecting a node/Frame reveals the Inspector (or stays on Structure, where selecting = navigating)
+    // and unfolds a folded rail.
     selectNode: (frameId, path) =>
-      set({
+      set((s) => ({
         selectedFrameId: frameId,
         selectedPath: path,
-        rightTab: 'inspector',
+        rightTab: nodeContextTab(s.rightTab),
         rightCollapsed: false,
-      }),
+      })),
     setRightTab: (tab) => set({ rightTab: tab }),
     setRightCollapsed: (collapsed) => set({ rightCollapsed: collapsed }),
     clearSelection: () => set({ selectedFrameId: null, selectedPath: null }),
     setDropTarget: (target) => set({ dropTarget: target }),
     selectFrame: (frameId) =>
-      set({
+      set((s) => ({
         selectedFrameId: frameId,
         selectedPath: null,
-        rightTab: 'inspector',
+        rightTab: nodeContextTab(s.rightTab),
         rightCollapsed: false,
-      }),
+      })),
     clearPendingFocus: () => set({ pendingFocusFrameId: null }),
     setExportTarget: (target) => set({ exportTarget: target }),
     setSaveStatus: (status) => set({ saveStatus: status }),
