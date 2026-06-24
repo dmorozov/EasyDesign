@@ -6,6 +6,7 @@ import { type Emitter, walkNode } from '../ir/walk';
 import { AppShell } from './AppShell';
 import { Button } from './Button';
 import { layoutElement } from './layoutElement';
+import { AppBar, Breadcrumb, NavLink, SideNav, TopNav } from './Nav';
 import { Image, Text } from './primitives';
 import { Radio, RadioGroup } from './RadioGroup';
 
@@ -46,6 +47,34 @@ const canvasEmitter: Emitter<ReactElement, void> = {
         cells={node.children.map((c, i) => ({ area: c.props.area, content: children[i] }))}
       />
     ),
+    AppBar: (node, children) => (
+      <AppBar style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </AppBar>
+    ),
+    TopNav: (node, children) => (
+      <TopNav style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </TopNav>
+    ),
+    SideNav: (node, children) => (
+      <SideNav style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </SideNav>
+    ),
+    Breadcrumb: (node, children) => (
+      <Breadcrumb style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </Breadcrumb>
+    ),
   },
   leaf: {
     Text: (node) => (
@@ -56,6 +85,11 @@ const canvasEmitter: Emitter<ReactElement, void> = {
     Button: (node) => <Button variant={node.props.variant}>{node.props.content}</Button>,
     Image: (node) => <Image src={node.props.src} alt={node.props.alt} width={node.props.width} />,
     Radio: (node) => <Radio value={node.props.value}>{node.props.label}</Radio>,
+    NavLink: (node) => (
+      <NavLink href={node.props.href} active={node.props.active}>
+        {node.props.label}
+      </NavLink>
+    ),
   },
   descend() {
     /* void context: the canvas threads no per-node state */

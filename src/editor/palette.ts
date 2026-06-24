@@ -49,6 +49,11 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
     label: 'Sidebar + Main',
     create: () => makeAppShell(['left', 'main']),
   },
+  // ADR-0019 — application chrome. AppBar seeds a brand + logout; the nav menus/trail seed NavLinks.
+  'AppBar',
+  'TopNav',
+  'SideNav',
+  'Breadcrumb',
   {
     type: 'Text',
     id: 'heading',
@@ -74,6 +79,9 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
   // (the drop validator rejects it elsewhere) — the proof of the allowed-children rule.
   'RadioGroup',
   'Radio',
+  // ADR-0019: NavLink is draggable but lands ONLY in a nav Component (TopNav/SideNav/Breadcrumb) — the
+  // same allowed-children rule as Radio→RadioGroup, the drop validator rejects it anywhere else.
+  'NavLink',
 ];
 
 function project(spec: PaletteSpec): PaletteItem {

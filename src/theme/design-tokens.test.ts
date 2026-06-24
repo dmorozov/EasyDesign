@@ -13,10 +13,14 @@ describe('catalog — query + validation', () => {
   it('get returns the entry for a valid ref, undefined for a typo (= isValidRef)', () => {
     expect(catalog.get('color.brand')?.literal).toBe('#4f46e5');
     expect(catalog.get('color.surfce')).toBeUndefined();
+    // ADR-0019: the explicit zero spacing token resolves to a real var + 0px literal everywhere.
+    expect(catalog.resolveVar('space.none')).toBe('var(--space-none)');
+    expect(catalog.resolveLiteral('space.none')).toBe('0px');
   });
 
   it('byCategory returns every token of a category, in catalog order', () => {
     expect(catalog.byCategory('space').map((t) => t.ref)).toEqual([
+      'space.none', // 0px — the explicit zero spacing option (ADR-0019)
       'space.sm',
       'space.md',
       'space.lg',

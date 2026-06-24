@@ -13,7 +13,7 @@ import { emitAngularSource } from '../generators/angular';
 import { emitHTML } from '../generators/html';
 import { emitMJML } from '../generators/mjml';
 import { emitReactSource } from '../generators/react';
-import { sampleCard } from '../ir/sample';
+import { sampleAppLayout, sampleCard } from '../ir/sample';
 import { catalog } from '../theme/design-tokens';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -23,8 +23,9 @@ mkdirSync(outDir, { recursive: true });
 
 const theme = readFileSync(resolve(generatedDir, 'theme.css'), 'utf8');
 
-// Wrap a card fragment in a standalone, offline-renderable HTML document.
-function page(title: string, cardHtml: string): string {
+// Wrap a card fragment in a standalone, offline-renderable HTML document. `maxWidth` lets a wide
+// app-layout (ADR-0019) fill the page while the email card stays at its 600px column.
+function page(title: string, cardHtml: string, maxWidth = '600px'): string {
   return `<!doctype html>
 <html>
   <head>
@@ -33,7 +34,7 @@ function page(title: string, cardHtml: string): string {
     <style>
 ${theme}
       body { background: var(--color-page); margin: 0; padding: var(--space-lg); }
-      .ed-frame { max-width: 600px; margin: 0 auto; }
+      .ed-frame { max-width: ${maxWidth}; margin: 0 auto; }
     </style>
   </head>
   <body><div class="ed-frame">${cardHtml}</div></body>
@@ -64,6 +65,21 @@ writeFileSync(resolve(outDir, 'email.html'), compiled.html, 'utf8');
 const canvasHtml = renderToStaticMarkup(<CanvasFrame frame={sampleCard} />);
 writeFileSync(resolve(outDir, 'canvas.html'), page('React Aria canvas render', canvasHtml), 'utf8');
 
+// 6. Web app-layout (ADR-0019): the AppShell + AppBar/SideNav/Breadcrumb chrome, both as static HTML
+// and as a live canvas render. Web-only — never routed through MJML (it would throw).
+const appLayoutHtml = emitHTML(sampleAppLayout);
+writeFileSync(
+  resolve(outDir, 'app-layout.html'),
+  page('App-layout export (ADR-0019)', appLayoutHtml, '1200px'),
+  'utf8',
+);
+const appLayoutCanvasHtml = renderToStaticMarkup(<CanvasFrame frame={sampleAppLayout} />);
+writeFileSync(
+  resolve(outDir, 'app-layout-canvas.html'),
+  page('App-layout canvas render (ADR-0019)', appLayoutCanvasHtml, '1200px'),
+  'utf8',
+);
+
 // Self-checks.
 const checks: [string, boolean][] = [
   ['mjml errors empty', compiled.errors.length === 0],
@@ -72,6 +88,24 @@ const checks: [string, boolean][] = [
   [
     'canvas has both labels',
     canvasHtml.includes('Get started') && canvasHtml.includes('Learn more'),
+  ],
+  // ADR-0019: the app-layout exports semantic landmarks + the computed grid, on both targets.
+  ['app-layout html has <header>', appLayoutHtml.includes('<header')],
+  ['app-layout html has <nav>', appLayoutHtml.includes('<nav')],
+  [
+    'app-layout html has the breadcrumb landmark',
+    appLayoutHtml.includes('aria-label="Breadcrumb"'),
+  ],
+  ['app-layout html has the computed grid', appLayoutHtml.includes('grid-template-areas')],
+  // Web exports reference CSS vars (--space-none: 0px lives in theme.css), so the full-bleed Region
+  // reads padding:var(--space-none) — the explicit zero-spacing token reaching the output (ADR-0019).
+  [
+    'app-layout html pins a full-bleed region (space.none)',
+    appLayoutHtml.includes('padding:var(--space-none)'),
+  ],
+  [
+    'app-layout canvas rendered <header> + <nav>',
+    appLayoutCanvasHtml.includes('<header') && appLayoutCanvasHtml.includes('<nav'),
   ],
 ];
 let ok = true;

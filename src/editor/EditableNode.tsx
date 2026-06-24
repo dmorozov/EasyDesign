@@ -10,6 +10,7 @@ import { type CSSProperties, Fragment, type ReactElement, type ReactNode } from 
 import { AppShell } from '../components/AppShell';
 import { Button } from '../components/Button';
 import { layoutElement } from '../components/layoutElement';
+import { AppBar, Breadcrumb, NavLink, SideNav, TopNav } from '../components/Nav';
 import { Image, Text } from '../components/primitives';
 import { Radio, RadioGroup } from '../components/RadioGroup';
 import { Icon } from '../design-system';
@@ -211,6 +212,58 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
           </EditableShell>
         );
       },
+      AppBar(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop into App bar…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <AppBar style={node.style}>{body}</AppBar>
+          </EditableShell>
+        );
+      },
+      TopNav(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Nav link here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <TopNav style={node.style}>{body}</TopNav>
+          </EditableShell>
+        );
+      },
+      SideNav(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Nav link here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <SideNav style={node.style}>{body}</SideNav>
+          </EditableShell>
+        );
+      },
+      Breadcrumb(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Nav link here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Breadcrumb style={node.style}>{body}</Breadcrumb>
+          </EditableShell>
+        );
+      },
     },
     leaf: {
       Text(node, ctx) {
@@ -240,6 +293,15 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
         return (
           <EditableShell frameId={frameId} path={ctx} node={node}>
             <Radio value={node.props.value}>{node.props.label}</Radio>
+          </EditableShell>
+        );
+      },
+      NavLink(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <NavLink href={node.props.href} active={node.props.active}>
+              {node.props.label}
+            </NavLink>
           </EditableShell>
         );
       },

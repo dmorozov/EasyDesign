@@ -11,15 +11,17 @@ compose UIs from a finite, themed **Component Palette**, then export a **Selecti
 Angular, static HTML, or MJML email. The flagship feature is **export**, and the whole approach is
 gated on clean output to all four targets.
 
-The architecture is settled (foundational ADRs 0001–0007, extended by implementation ADRs 0008–0018)
+The architecture is settled (foundational ADRs 0001–0007, extended by implementation ADRs 0008–0019)
 and the package lives at the repo root: the IR, the four
 export generators, a React-Aria component layer, and a **working editor MVP** (`src/editor/`, run
 `npm run dev`) — React Flow workspace of Frames rendering live IR, a dnd-kit Component Palette
 (drag or click to insert), per-node drag handles to **reorder/move** with **before/after/inside drop
 indicators** and **insertion-point (gap) drop targets** (ADR-0018), selection + inspector + a Frame
-**Structure** tree, live multi-target export, live theming, the email-mode
-restriction (Grid is hidden in email Frames), **undo/redo** (coalesced history, Ctrl/⌘+Z), and
-**persistence** (auto-save to localStorage + JSON export/import/reset via `src/editor/document.ts`).
+**Structure** tree, an `AppShell` application layout (ADR-0017) hosting **application chrome** — AppBar,
+top/side navigation, breadcrumb (ADR-0019) — live multi-target export, live theming, the email-mode
+restriction (Grid + the web-only chrome are hidden in email Frames), **undo/redo** (coalesced history,
+Ctrl/⌘+Z), and **persistence** (auto-save to localStorage + JSON export/import/reset via
+`src/editor/document.ts`).
 
 **Read these first — they are the source of truth, not this file:**
 
@@ -33,7 +35,7 @@ restriction (Grid is hidden in email Frames), **undo/redo** (coalesced history, 
   - `0005` React Aria Components for primitives (not Radix/shadcn)
   - `0006` Email is an explicit restricted mode (target-aware Frames)
   - `0007` React Aria is the editor runtime, not the export substrate
-- **Implementation seams (0008–0018)** — the editor/IR structure to know before refactoring:
+- **Implementation seams (0008–0019)** — the editor/IR structure to know before refactoring:
   - `0008` Node Walk: one shared traversal (`walkNode`/`Emitter`) for all web/React renderers; MJML bespoke
   - `0009` Responsive layout deferred · `0010` Row is content-flow by default
   - `0011` Frame lifecycle module + Board seam · `0012` History reducer + `mutate()` funnel + persistence hook
@@ -42,6 +44,8 @@ restriction (Grid is hidden in email Frames), **undo/redo** (coalesced history, 
   - `0016` Component containers + allowed-children (compound components: RadioGroup→Radio)
   - `0017` AppShell application-layout component (computed grid-areas + Region slots)
   - `0018` Insertion-point (gap) drop targets + closest-fallback collision strategy
+  - `0019` Application chrome (AppBar/TopNav/SideNav/Breadcrumb + NavLink slot leaf) on the ADR-0016
+    component-container seam; `space.none` (0px) zero-spacing token
 
 ## Core architecture (one-screen summary)
 

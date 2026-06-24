@@ -17,8 +17,19 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
     }
   });
 
-  it('email-unsafe = Grid + the interactive RadioGroup/Radio + the web-only AppShell/Region (ADR-0006/0016/0017)', () => {
-    const unsafe = new Set<Node['type']>(['Grid', 'RadioGroup', 'Radio', 'AppShell', 'Region']);
+  it('email-unsafe = Grid + the interactive RadioGroup/Radio + the web-only AppShell/Region + nav chrome (ADR-0006/0016/0017/0019)', () => {
+    const unsafe = new Set<Node['type']>([
+      'Grid',
+      'RadioGroup',
+      'Radio',
+      'AppShell',
+      'Region',
+      'AppBar',
+      'TopNav',
+      'SideNav',
+      'Breadcrumb',
+      'NavLink',
+    ]);
     for (const type of TYPES) {
       expect(DESCRIPTORS[type].emailSafe).toBe(!unsafe.has(type));
     }
@@ -33,12 +44,12 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
         expect(d.controls).toContain('justify');
         expect(d.controls).not.toContain('content');
       } else if ('children' in node) {
-        // component container (RadioGroup, AppShell): renders as a Component, so no LAYOUT controls — it
-        // carries a slot rule (allowedChildren) instead, and may have its own non-layout control
-        // (AppShell's `regions` toggles) (RP-10 / ADR-0016 / ADR-0017).
+        // component container: renders as a Component, so no LAYOUT controls (justify/align). Most carry
+        // a slot rule (allowedChildren) — RadioGroup→Radio, AppShell→Region, the nav menus→NavLink; the
+        // AppBar is the one OPEN component container, composed freely (ADR-0016 / ADR-0017 / ADR-0019).
         expect(d.controls).not.toContain('justify');
         expect(d.controls).not.toContain('align');
-        expect(d.allowedChildren).toBeDefined();
+        if (type !== 'AppBar') expect(d.allowedChildren).toBeDefined();
       } else {
         expect(d.controls).not.toContain('justify');
       }
@@ -98,6 +109,10 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'app-shell',
       'app-holy-grail',
       'app-sidebar-main',
+      'appbar',
+      'topnav',
+      'sidenav',
+      'breadcrumb',
       'heading',
       'text',
       'button-primary',
@@ -105,6 +120,7 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'image',
       'radiogroup',
       'radio',
+      'navlink',
     ]);
   });
   it('every entry carries its underlying node type (read by the drop validator, RP-10)', () => {
@@ -136,6 +152,21 @@ describe('canContain — the allowed-children rule (RP-10)', () => {
     expect(canContain('AppShell', 'Text')).toBe(false); // AppShell holds only Regions
     expect(canContain('Stack', 'Region')).toBe(false); // Region is slot-restricted to AppShell
     expect(RESTRICTED_CHILD_TYPES.has('Region')).toBe(true);
+  });
+  it('the nav slot rule: a NavLink goes ONLY in a nav menu (TopNav/SideNav/Breadcrumb) (ADR-0019)', () => {
+    for (const menu of ['TopNav', 'SideNav', 'Breadcrumb'] as const) {
+      expect(canContain(menu, 'NavLink')).toBe(true);
+      expect(canContain(menu, 'Button')).toBe(false); // menus hold ONLY links
+    }
+    expect(canContain('Stack', 'NavLink')).toBe(false); // NavLink is slot-restricted to nav menus
+    expect(RESTRICTED_CHILD_TYPES.has('NavLink')).toBe(true);
+  });
+  it('AppBar is the OPEN component container: admits content, never slot-restricted children (ADR-0019)', () => {
+    expect(canContain('AppBar', 'Text')).toBe(true);
+    expect(canContain('AppBar', 'TopNav')).toBe(true); // compose a menu inside the bar
+    expect(canContain('AppBar', 'Button')).toBe(true);
+    expect(canContain('AppBar', 'NavLink')).toBe(false); // a bare NavLink still belongs in a nav menu
+    expect(canContain('AppBar', 'Region')).toBe(false);
   });
 });
 

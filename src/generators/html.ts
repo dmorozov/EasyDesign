@@ -6,13 +6,19 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  appBarDecls,
   appShellDecls,
+  breadcrumbItemDecls,
+  breadcrumbListDecls,
+  breadcrumbSeparatorDecls,
   buttonDecls,
   containerDecls,
   type Decl,
   gridAreaDecl,
   imageDecls,
   legendDecls,
+  navDecls,
+  navLinkDecls,
   radioDecls,
   radioGroupDecls,
   structuralDecls,
@@ -67,6 +73,31 @@ const htmlEmitter: Emitter<string, void> = {
         .join('');
       return `<div style="${inlineStyle(decls)}">${cells}</div>`;
     },
+    // AppBar → a semantic <header> bar (flex row, brand left / actions right). Open children (ADR-0019).
+    AppBar(node, children) {
+      return `<header style="${inlineStyle(appBarDecls(node.style))}">${children.join('')}</header>`;
+    },
+    // TopNav → a semantic horizontal <nav> (ADR-0019). The NavLink children are already rendered <a>s.
+    TopNav(node, children) {
+      return `<nav style="${inlineStyle(navDecls('row', node.style))}">${children.join('')}</nav>`;
+    },
+    // SideNav → a vertical <nav> (same slot rule, stacked).
+    SideNav(node, children) {
+      return `<nav style="${inlineStyle(navDecls('column', node.style))}">${children.join('')}</nav>`;
+    },
+    // Breadcrumb → <nav aria-label="Breadcrumb"><ol> of crumbs, a muted "/" between each (ADR-0019).
+    Breadcrumb(node, children) {
+      const items = children
+        .map((rendered, i) => {
+          const sep =
+            i < children.length - 1
+              ? `<span aria-hidden="true" style="${inlineStyle(breadcrumbSeparatorDecls())}">/</span>`
+              : '';
+          return `<li style="${inlineStyle(breadcrumbItemDecls())}">${rendered}${sep}</li>`;
+        })
+        .join('');
+      return `<nav aria-label="Breadcrumb"><ol style="${inlineStyle(breadcrumbListDecls(node.style))}">${items}</ol></nav>`;
+    },
   },
   leaf: {
     Text(node) {
@@ -83,6 +114,11 @@ const htmlEmitter: Emitter<string, void> = {
     Radio(node) {
       const input = `<input type="radio" value="${escapeAttr(node.props.value)}">`;
       return `<label style="${inlineStyle(radioDecls())}">${input}${escapeText(node.props.label)}</label>`;
+    },
+    // NavLink → a semantic <a href>; the current page carries aria-current (ADR-0019).
+    NavLink(node) {
+      const current = node.props.active ? ' aria-current="page"' : '';
+      return `<a href="${escapeAttr(node.props.href)}"${current} style="${inlineStyle(navLinkDecls(node))}">${escapeText(node.props.label)}</a>`;
     },
   },
   descend() {

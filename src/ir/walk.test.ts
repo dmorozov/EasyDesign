@@ -72,6 +72,22 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           log.push(`component:${node.type}@${depth}`);
           return `<<${children.join(',')}>>`;
         },
+        AppBar: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        TopNav: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        SideNav: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        Breadcrumb: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
       },
       leaf: {
         Text: (node, depth) => {
@@ -89,6 +105,10 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
         Radio: (node, depth) => {
           log.push(`${node.type}@${depth}`);
           return 'R';
+        },
+        NavLink: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'N';
         },
       },
       descend: (depth) => depth + 1,
@@ -129,6 +149,22 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           log.push(`component:${node.type}@${depth}`);
           return `<<${children.join(',')}>>`;
         },
+        AppBar: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        TopNav: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        SideNav: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        Breadcrumb: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
       },
       leaf: {
         Text: () => 'T',
@@ -138,6 +174,7 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           log.push(`Radio@${depth}`);
           return 'R';
         },
+        NavLink: () => 'N',
       },
       descend: (depth) => depth + 1,
     };

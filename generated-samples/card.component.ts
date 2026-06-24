@@ -11,8 +11,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Welcome aboard</h2>
       <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Your account is ready. Start building your first design in minutes.</p>
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Get started</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Get started</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a>
       </div>
     </div>
   `,

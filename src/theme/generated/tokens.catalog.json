@@ -36,6 +36,12 @@
     "literal": "#6b7280"
   },
   {
+    "ref": "space.none",
+    "category": "space",
+    "cssVarName": "--space-none",
+    "literal": "0px"
+  },
+  {
     "ref": "space.sm",
     "category": "space",
     "cssVarName": "--space-sm",

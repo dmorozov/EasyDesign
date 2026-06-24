@@ -6,13 +6,19 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  appBarDecls,
   appShellDecls,
+  breadcrumbItemDecls,
+  breadcrumbListDecls,
+  breadcrumbSeparatorDecls,
   buttonDecls,
   containerDecls,
   type Decl,
   gridAreaDecl,
   imageDecls,
   legendDecls,
+  navDecls,
+  navLinkDecls,
   radioDecls,
   radioGroupDecls,
   structuralDecls,
@@ -76,6 +82,31 @@ const angularEmitter: Emitter<string, void> = {
         .join('\n');
       return `<div style="${styleStr}">\n${indent(cells, '  ')}\n</div>`;
     },
+    AppBar(node, children) {
+      const inner = children.join('\n');
+      return `<header style="${inlineStyle(appBarDecls(node.style))}">\n${indent(inner, '  ')}\n</header>`;
+    },
+    TopNav(node, children) {
+      const inner = children.join('\n');
+      return `<nav style="${inlineStyle(navDecls('row', node.style))}">\n${indent(inner, '  ')}\n</nav>`;
+    },
+    SideNav(node, children) {
+      const inner = children.join('\n');
+      return `<nav style="${inlineStyle(navDecls('column', node.style))}">\n${indent(inner, '  ')}\n</nav>`;
+    },
+    Breadcrumb(node, children) {
+      const items = children
+        .map((rendered, i) => {
+          const sep =
+            i < children.length - 1
+              ? `\n<span aria-hidden="true" style="${inlineStyle(breadcrumbSeparatorDecls())}">/</span>`
+              : '';
+          return `<li style="${inlineStyle(breadcrumbItemDecls())}">\n${indent(`${rendered}${sep}`, '  ')}\n</li>`;
+        })
+        .join('\n');
+      const ol = `<ol style="${inlineStyle(breadcrumbListDecls(node.style))}">\n${indent(items, '  ')}\n</ol>`;
+      return `<nav aria-label="Breadcrumb">\n${indent(ol, '  ')}\n</nav>`;
+    },
   },
   leaf: {
     Text(node) {
@@ -83,7 +114,8 @@ const angularEmitter: Emitter<string, void> = {
       return `<${tag} style="${inlineStyle(textDecls(node))}">${escText(node.props.content)}</${tag}>`;
     },
     Button(node) {
-      return `<a style="${inlineStyle(buttonDecls(node))}">${escText(node.props.content)}</a>`;
+      // A bare <a> is not a valid link — match the html/react targets' href="#" (cross-target parity).
+      return `<a href="#" style="${inlineStyle(buttonDecls(node))}">${escText(node.props.content)}</a>`;
     },
     Image(node) {
       const { src, alt } = node.props;
@@ -92,6 +124,10 @@ const angularEmitter: Emitter<string, void> = {
     Radio(node) {
       const input = `<input type="radio" value="${escAttr(node.props.value)}">`;
       return `<label style="${inlineStyle(radioDecls())}">${input}${escText(node.props.label)}</label>`;
+    },
+    NavLink(node) {
+      const current = node.props.active ? ' aria-current="page"' : '';
+      return `<a href="${escAttr(node.props.href)}"${current} style="${inlineStyle(navLinkDecls(node))}">${escText(node.props.label)}</a>`;
     },
   },
   descend() {

@@ -135,17 +135,17 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column; gap:var(--space-sm)">
       <div style="display:flex; flex-direction:column; align-items:flex-start; flex-wrap:nowrap">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a>
       </div>
       <div style="display:flex; flex-direction:column; align-items:center">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a>
       </div>
       <div style="display:flex; flex-direction:column; align-items:flex-end">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a>
       </div>
       <div style="display:flex; flex-direction:column; align-items:stretch; flex-wrap:wrap">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">stretch</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">wrap</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">stretch</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">wrap</a>
       </div>
     </div>
   \`,
@@ -193,8 +193,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column">
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Save</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Cancel</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Save</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Cancel</a>
       </div>
     </div>
   \`,
@@ -232,8 +232,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: \`
     <div style="display:flex; flex-direction:column; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:var(--space-sm)">
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a>
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
+      <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a>
+      <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
     </div>
   \`,
 })
@@ -269,7 +269,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:grid; grid-template-columns:repeat(3, 1fr); justify-content:center; align-items:flex-end; gap:var(--space-md); padding:var(--space-lg)">
       <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">One</p>
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Two</a>
+      <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Two</a>
       <img src="https://cdn.example.com/banner.png" alt="Three" style="display:block; width:100%; max-width:80px; height:auto; border-radius:var(--radius-lg)">
     </div>
   \`,
@@ -343,24 +343,24 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column; gap:var(--space-sm)">
       <div style="display:flex; flex-direction:row; justify-content:flex-start">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">start</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:center">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">center</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:flex-end">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">end</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:space-between">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-between</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-between</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
       <div style="display:flex; flex-direction:row; justify-content:space-around">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-around</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">space-around</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">x</a>
       </div>
     </div>
   \`,
@@ -420,7 +420,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
           <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">col body</p>
         </div>
         <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-sm)">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">x</a>
+          <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">x</a>
           <img src="https://cdn.example.com/banner.png" alt="thumb" style="display:block; width:100%; max-width:60px; height:auto; border-radius:var(--radius-lg)">
         </div>
       </div>
@@ -510,13 +510,13 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     <div style="display:flex; flex-direction:column">
       <div style="display:flex; flex-direction:row; gap:var(--space-sm)">
         <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a>
+          <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">A</a>
         </div>
         <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
+          <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">B</a>
         </div>
         <div style="flex:1">
-          <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">C</a>
+          <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">C</a>
         </div>
       </div>
     </div>
@@ -563,8 +563,8 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   template: \`
     <div style="display:flex; flex-direction:column">
       <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:var(--space-md)">
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Left</a>
-        <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Right</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Left</a>
+        <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Right</a>
       </div>
     </div>
   \`,
@@ -604,7 +604,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
     <div style="display:flex; flex-direction:column; justify-content:center; align-items:stretch; background:var(--color-surface); padding:var(--space-lg); border-radius:var(--radius-lg); gap:var(--space-md)">
       <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Title</h2>
       <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Subtitle</p>
-      <a style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Go</a>
+      <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Go</a>
     </div>
   \`,
 })

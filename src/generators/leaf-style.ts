@@ -6,8 +6,14 @@
 // instead of three. The React targets (canvas / EditableNode) do NOT import this;
 // they delegate β to src/components (ADR-0005), so β has one home per side, not three.
 import { APPSHELL_MIN_HEIGHT, appShellTemplate, type RegionArea } from '../ir/appshell';
-import { type Align, type Justify, type StyleMap } from '../ir/types';
-import { type ButtonNode, type ContainerShape, type ImageNode, type TextNode } from '../ir/walk';
+import { type Align, type Justify, type NavLinkNode, type StyleMap } from '../ir/types';
+import {
+  type Axis,
+  type ButtonNode,
+  type ContainerShape,
+  type ImageNode,
+  type TextNode,
+} from '../ir/walk';
 import { catalog, STYLE_KEY_CATEGORY } from '../theme/design-tokens';
 import { TEXT_STYLE_BINDING, type TextStyle } from '../theme/generated/typography';
 
@@ -177,6 +183,79 @@ export function radioDecls(): Decl[] {
     { prop: 'fontFamily', value: 'var(--font-family)' },
     { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
     { prop: 'color', value: 'var(--color-text)' },
+  ];
+}
+
+// Application chrome (ADR-0019) β — shared by the three string targets; the React canvas/editor keep
+// their copy in src/components/Nav. The AppBar is a flex-row `<header>` (brand left / actions right via
+// space-between); a nav Component is a flex `<nav>` (row for TopNav, column for SideNav). The gap/
+// background/etc. come from the node's token style (containerDecls), so clearing `gap`/`padding` to
+// space.none butts children together / spans full width — the full-width-chrome story (ADR-0019).
+export function appBarDecls(style: StyleMap | undefined): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'row' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'justifyContent', value: 'space-between' },
+    ...containerDecls(style),
+  ];
+}
+
+export function navDecls(axis: Axis, style: StyleMap | undefined): Decl[] {
+  const out: Decl[] = [
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: axis },
+  ];
+  if (axis === 'row') out.push({ prop: 'alignItems', value: 'center' });
+  out.push(...containerDecls(style));
+  return out;
+}
+
+/** One nav link: an `<a>` styled as a menu item. `active` (the current page) reads brand + semibold. */
+export function navLinkDecls(node: NavLinkNode): Decl[] {
+  const active = node.props.active === true;
+  return [
+    { prop: 'textDecoration', value: 'none' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
+    {
+      prop: 'fontWeight',
+      value: catalog.resolveVar(active ? 'font.weight.semibold' : 'font.weight.medium'),
+    },
+    { prop: 'color', value: active ? 'var(--color-brand)' : 'var(--color-text)' },
+  ];
+}
+
+// Breadcrumb (ADR-0019): a horizontal <ol> of crumbs with a muted separator between each. The <ol> is
+// the styled element (token gap controls crumb spacing); the <nav> is a bare aria-label landmark.
+export function breadcrumbListDecls(style: StyleMap | undefined): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'row' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'flexWrap', value: 'wrap' },
+    { prop: 'listStyle', value: 'none' },
+    { prop: 'margin', value: '0' },
+    { prop: 'padding', value: '0' },
+    ...containerDecls(style),
+  ];
+}
+
+/** One crumb (`<li>`): holds the link and (for all but the last) its trailing separator. */
+export function breadcrumbItemDecls(): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'gap', value: catalog.resolveVar('space.sm') },
+  ];
+}
+
+/** The `/` separator between crumbs — muted, and aria-hidden in the markup (decorative). */
+export function breadcrumbSeparatorDecls(): Decl[] {
+  return [
+    { prop: 'color', value: 'var(--color-muted)' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
   ];
 }
 

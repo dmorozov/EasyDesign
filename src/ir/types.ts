@@ -56,6 +56,16 @@ export interface RegionNode {
   children: Node[];
 }
 
+/** A navigation link (ADR-0019). A leaf that renders as a semantic `<a href>` (NOT a `<button>` — a
+ *  menu of buttons is wrong, inaccessible markup), with `active` marking the current page (→ `aria-
+ *  current`). Its ONLY valid parents are the navigation Components (TopNav/SideNav/Breadcrumb) — the
+ *  descriptor's `allowedChildren` at runtime + the parents' `children: NavLinkNode[]` at compile time. */
+export interface NavLinkNode {
+  type: 'NavLink';
+  props: { label: string; href: string; active?: boolean };
+  style?: StyleMap;
+}
+
 export type Node =
   | { type: 'Stack'; props?: FlowProps; style?: StyleMap; children: Node[] }
   | { type: 'Row'; props?: RowProps; style?: StyleMap; children: Node[] }
@@ -78,6 +88,19 @@ export type Node =
   // Web-only (emailSafe:false). Children CONSTRAINED to Region (compile + runtime halves, as above).
   | { type: 'AppShell'; style?: StyleMap; children: RegionNode[] }
   | RegionNode
+  // Navigation chrome (ADR-0019): semantic application-layout Components. Like RadioGroup/AppShell they
+  // render as a SPECIFIC element (a `<nav>`), not a layout box, so they dispatch via `emit.component`.
+  // AppBar is the top application bar — an OPEN component container rendered as a <header> (flex row,
+  // brand left / actions right via space-between). Unlike the nav menus it admits any child (a brand
+  // Text/Image + a TopNav + action Buttons), so it has no `allowedChildren`. Web-only (emailSafe:false).
+  | { type: 'AppBar'; style?: StyleMap; children: Node[] }
+  // TopNav is a horizontal menu, SideNav a vertical one, Breadcrumb a trail (rendered as <nav><ol>); all
+  // three are CONSTRAINED to NavLink (compile half: `NavLinkNode[]`; runtime half: allowedChildren +
+  // canContain). Web-only (emailSafe:false, ADR-0006).
+  | { type: 'TopNav'; style?: StyleMap; children: NavLinkNode[] }
+  | { type: 'SideNav'; style?: StyleMap; children: NavLinkNode[] }
+  | { type: 'Breadcrumb'; style?: StyleMap; children: NavLinkNode[] }
+  | NavLinkNode
   | { type: 'Text'; props: { content: string; variant: TextStyle }; style?: StyleMap }
   | {
       type: 'Button';

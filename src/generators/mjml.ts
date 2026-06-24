@@ -111,6 +111,11 @@ const MJML_LEAVES: {
   Radio: () => {
     throw new Error('MJML email cannot render a Radio (RadioGroup is email-unsafe, ADR-0016).');
   },
+  // NavLink only lives inside a nav Component (TopNav/SideNav/Breadcrumb), all web-only — so a valid
+  // email tree never reaches it. RP-9 still requires the entry; it throws as a guardrail (ADR-0019).
+  NavLink: () => {
+    throw new Error('MJML email cannot render a NavLink (navigation is web-only, ADR-0019).');
+  },
 };
 
 function renderLeaf(lit: Lit, node: Node, depth: number): string {
@@ -144,8 +149,13 @@ export function classifyCardChild(node: Node): CardChild {
     case 'RadioGroup':
     case 'AppShell':
     case 'Region':
-      // Stack/Column/Grid don't flatten; Grid/RadioGroup/AppShell/Region are web-only (emailSafe:false),
-      // so a valid email tree never reaches them — the arms keep the switch compile-exhaustive (ADR-0017).
+    case 'AppBar':
+    case 'TopNav':
+    case 'SideNav':
+    case 'Breadcrumb':
+      // Stack/Column/Grid don't flatten; the rest are web-only (emailSafe:false) — Grid/RadioGroup/
+      // AppShell/Region and the application chrome (AppBar/TopNav/SideNav/Breadcrumb) — so a valid email
+      // tree never reaches them. The arms keep the switch compile-exhaustive (ADR-0017/0019).
       return { role: 'unsupported', type: node.type };
     default:
       // Exhaustiveness: `node` is `never` here. A new container type makes it non-never → a compile

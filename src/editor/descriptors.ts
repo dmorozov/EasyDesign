@@ -230,6 +230,108 @@ export const DESCRIPTORS: Descriptors = {
     styleKeys: CONTAINER_STYLE_KEYS,
     controls: ['justify', 'align'],
   },
+  // ADR-0019 — the top application bar. AppBar is the one OPEN component container: it renders a
+  // semantic <header> (flex row, brand left / actions right) but admits ANY child, so the user composes
+  // it freely (a brand Text/Image + a TopNav for links + action Buttons). Web-only (a <header> bar has
+  // no MJML equivalent). A fresh AppBar seeds a brand + a logout action so the shape reads immediately.
+  AppBar: {
+    label: 'App bar',
+    icon: 'web',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'AppBar',
+      style: { background: 'color.surface', padding: 'space.md' },
+      children: [
+        { type: 'Text', props: { content: 'Brand', variant: 'h3' } },
+        {
+          type: 'Row',
+          style: { gap: 'space.sm' },
+          children: [{ type: 'Button', props: { content: 'Log out', variant: 'secondary' } }],
+        },
+      ],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+  },
+  // ADR-0019 — navigation chrome. TopNav is a COMPONENT container (a horizontal <nav>, not a layout
+  // box) constrained to NavLink children; NavLink is its slot leaf (an <a href>). Both web-only — a
+  // menu has no MJML equivalent (ADR-0006), so they're locked out of email Frames like RadioGroup/Radio.
+  // A fresh TopNav seeds three links (the first marked current) so it reads as a real menu; the user
+  // drags more NavLinks in — and ONLY into a nav Component (allowedChildren + canContain reject them
+  // anywhere else, exactly as Radio is bound to RadioGroup).
+  TopNav: {
+    label: 'Top nav',
+    icon: 'row',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'TopNav',
+      style: { gap: 'space.md' },
+      children: [
+        { type: 'NavLink', props: { label: 'Home', href: '#', active: true } },
+        { type: 'NavLink', props: { label: 'About', href: '#' } },
+        { type: 'NavLink', props: { label: 'Contact', href: '#' } },
+      ],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['NavLink'],
+  },
+  // A vertical navigation menu (a sidebar's links) — same slot rule as TopNav, stacked.
+  SideNav: {
+    label: 'Side nav',
+    icon: 'column',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'SideNav',
+      style: { gap: 'space.sm' },
+      children: [
+        { type: 'NavLink', props: { label: 'Dashboard', href: '#', active: true } },
+        { type: 'NavLink', props: { label: 'Projects', href: '#' } },
+        { type: 'NavLink', props: { label: 'Team', href: '#' } },
+        { type: 'NavLink', props: { label: 'Settings', href: '#' } },
+      ],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['NavLink'],
+  },
+  // A breadcrumb trail — renders as <nav aria-label="Breadcrumb"><ol> of NavLinks, separators between.
+  // The current page is the NavLink marked `active` (the WAI-ARIA pattern keeps it a link w/ aria-current);
+  // a fresh Breadcrumb seeds the last crumb active.
+  Breadcrumb: {
+    label: 'Breadcrumb',
+    icon: 'chevronRight',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'Breadcrumb',
+      style: { gap: 'space.sm' },
+      children: [
+        { type: 'NavLink', props: { label: 'Home', href: '#' } },
+        { type: 'NavLink', props: { label: 'Library', href: '#' } },
+        { type: 'NavLink', props: { label: 'Current page', href: '#', active: true } },
+      ],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['NavLink'],
+  },
+  NavLink: {
+    label: 'Nav link',
+    icon: 'share',
+    group: 'content',
+    emailSafe: false,
+    create: () => ({ type: 'NavLink', props: { label: 'Link', href: '#' } }),
+    styleKeys: [],
+    controls: [],
+    textFields: [
+      { key: 'label', label: 'Label' },
+      { key: 'href', label: 'Link URL' },
+    ],
+  },
 };
 
 /** Node types that may ONLY appear where a descriptor explicitly lists them in `allowedChildren` —

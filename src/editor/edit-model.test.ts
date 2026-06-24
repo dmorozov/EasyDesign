@@ -97,6 +97,19 @@ describe('resolveEditModel — containers (layout + style)', () => {
     expect(bg?.options.some((o) => o.value === 'color.brand')).toBe(true);
   });
 
+  // ADR-0019: an explicit zero. 'Default' (value '') only *clears* the key (CSS default, and in MJML a
+  // non-zero fallback); `space.none` is the discoverable way to pin padding/gap to 0 — full-width chrome.
+  it('padding and gap offer an explicit "none · 0px" zero option (space.none)', () => {
+    const node: Node = { type: 'Stack', children: [] };
+    const style = resolveEditModel('web', node, []).style;
+    for (const key of ['padding', 'gap'] as const) {
+      const field = style?.find((f) => f.key === key);
+      expect(field?.options.some((o) => o.value === 'space.none' && o.label === 'none · 0px')).toBe(
+        true,
+      );
+    }
+  });
+
   it('Row (fit) offers distribute + justify + align + wrap', () => {
     const node: Node = { type: 'Row', props: { distribute: 'fit' }, children: [] };
     const layout = resolveEditModel('web', node, []).layout;

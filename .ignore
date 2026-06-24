@@ -1,13 +1,22 @@
 TODO:
 
-- how to implement the top bar component, like in Stich design
-- Need to make available more space for the Board. Left component panel need to be foldable/expandable - when folder just narrow vertical toolbar, with sections, when click section -> expend the component panel and show the components in the selected section.
-- allow Zero padding / Gap in the Inspector panel This is especially important for layout components.
+Let's do a new refactoring targeting ability to define real web page layout with header, and navigation components.
+We have already implemented AppShell that is probably biggest part. What we are missing is the following:
 
+- allow Zero padding / Gap in the Inspector panel This is especially important for layout components.
+  I.e. the top application bar usually takes the whole width and there are no spaced between left side navigation panel (if any) and body.
+  It is usually visually separated by background panel color. Note: having spaces are still useful, there are design options that are requiring that.
+- We need to be able to design top AppBar (branding logo, logout url, etc)
+- top horizontal (menu like) navigation - option one
+- left panel navigation - option two
+- breadcrumb component
+
+- how to implement the top bar component, like in Stich design
 - add a display-only Component (Divider/Spacer) to exercise Capability A end-to-end
-- another compound Component: Grid - how to specify demo data?
-- RP-12 (IR migration, bump-and-reset)
 - Select Frame when click grep in title, not just a title
+- RP-12 (IR migration, bump-and-reset)
+
+- Please move all tests in the separate tests folder (preserve the folders). It is bloating the production source code
 
 Layout components
 
@@ -23,3 +32,8 @@ Layout components
 - Drawler
 
 Note: check what layout components make sense for the Web and which are make sense for Email Frames.
+
+## Bric documents design system
+
+Idea: Bric adaptation. Can we merry this design system with email/PDF receipts and make a designer for them with branding support?
+Note: take a look how did I implemented API Subscription console to integrate react UI with Spring Boot.

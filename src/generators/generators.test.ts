@@ -203,3 +203,105 @@ describe('AppShell (ADR-0017) — computed grid-areas on every web target', () =
     expect(() => emitMJML(email, catalog.withOverrides({}))).toThrow(/AppShell/);
   });
 });
+
+// ADR-0019 — navigation chrome. A TopNav is a semantic <nav> of NavLink <a>s (NOT buttons), the current
+// page carrying aria-current. Web-only: a menu has no MJML equivalent, so it's rejected in email Frames.
+describe('TopNav + NavLink (ADR-0019) — semantic navigation on every web target', () => {
+  const topNav: Node = {
+    type: 'TopNav',
+    children: [
+      { type: 'NavLink', props: { label: 'Home', href: '/home', active: true } },
+      { type: 'NavLink', props: { label: 'About', href: '/about' } },
+    ],
+  };
+  const navFrame: Frame = { target: 'web', root: topNav };
+
+  const WEB = [
+    { name: 'html', emit: emitHTML },
+    { name: 'react', emit: emitReactSource },
+    { name: 'angular', emit: emitAngularSource },
+  ] as const;
+
+  for (const { name, emit } of WEB) {
+    it(`${name}: a <nav> of <a href> links, the active one carrying aria-current`, () => {
+      const out = emit(navFrame);
+      expect(out).toContain('<nav');
+      expect(out).toContain('href="/home"');
+      expect(out).toContain('href="/about"');
+      expect(out).toContain('Home');
+      // exactly ONE aria-current — only the active (current-page) link gets it.
+      expect(out.split('aria-current="page"').length - 1).toBe(1);
+      // a NavLink is an anchor, never a <button> (accessible menu markup, the flagship gate).
+      expect(out).not.toContain('<button');
+    });
+  }
+
+  it('classifyCardChild marks TopNav unsupported, and a TopNav in an email Frame is rejected (web-only)', () => {
+    expect(classifyCardChild(topNav).role).toBe('unsupported');
+    const email: Frame = { target: 'email', root: { type: 'Stack', children: [topNav] } };
+    expect(() => emitMJML(email, catalog.withOverrides({}))).toThrow(/TopNav/);
+  });
+
+  it('AppBar is a semantic <header> (flex space-between) admitting open children (brand + actions)', () => {
+    const appBar: Frame = {
+      target: 'web',
+      root: {
+        type: 'AppBar',
+        children: [
+          { type: 'Text', props: { content: 'Brand', variant: 'h3' } },
+          { type: 'Button', props: { content: 'Log out', variant: 'secondary' } },
+        ],
+      },
+    };
+    for (const { emit } of WEB) {
+      const out = emit(appBar);
+      expect(out).toContain('<header');
+      expect(out).toContain('Brand');
+      expect(out).toContain('Log out');
+    }
+    expect(emitHTML(appBar)).toContain('justify-content:space-between');
+    expect(emitReactSource(appBar)).toContain("justifyContent: 'space-between'");
+    expect(emitAngularSource(appBar)).toContain('justify-content:space-between');
+  });
+
+  it('SideNav is a vertical <nav> (flex column) of the same NavLink anchors', () => {
+    const sideNav: Frame = {
+      target: 'web',
+      root: {
+        type: 'SideNav',
+        children: [
+          { type: 'NavLink', props: { label: 'A', href: '/a' } },
+          { type: 'NavLink', props: { label: 'B', href: '/b' } },
+        ],
+      },
+    };
+    expect(emitHTML(sideNav)).toContain('flex-direction:column');
+    expect(emitReactSource(sideNav)).toContain("flexDirection: 'column'");
+    expect(emitAngularSource(sideNav)).toContain('flex-direction:column');
+    for (const { emit } of WEB) expect(emit(sideNav)).toContain('<nav');
+  });
+
+  it('Breadcrumb is a <nav aria-label><ol> trail of <li> crumbs with separators between', () => {
+    const crumbs: Frame = {
+      target: 'web',
+      root: {
+        type: 'Breadcrumb',
+        children: [
+          { type: 'NavLink', props: { label: 'Home', href: '/' } },
+          { type: 'NavLink', props: { label: 'Docs', href: '/docs' } },
+          { type: 'NavLink', props: { label: 'Now', href: '/docs/now', active: true } },
+        ],
+      },
+    };
+    for (const { emit } of WEB) {
+      const out = emit(crumbs);
+      expect(out).toContain('aria-label="Breadcrumb"');
+      expect(out).toContain('<ol');
+      // three crumbs → three <li>, two "/" separators between them.
+      expect(out.split('<li').length - 1).toBe(3);
+      expect(out.split('aria-hidden="true"').length - 1).toBe(2);
+      // only the current page (active) carries aria-current.
+      expect(out.split('aria-current="page"').length - 1).toBe(1);
+    }
+  });
+});

@@ -7,13 +7,19 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  appBarDecls,
   appShellDecls,
+  breadcrumbItemDecls,
+  breadcrumbListDecls,
+  breadcrumbSeparatorDecls,
   buttonDecls,
   containerDecls,
   type Decl,
   gridAreaDecl,
   imageDecls,
   legendDecls,
+  navDecls,
+  navLinkDecls,
   radioDecls,
   radioGroupDecls,
   structuralDecls,
@@ -94,6 +100,32 @@ const reactEmitter: Emitter<string, number> = {
         .join('\n');
       return `${p}<div style={${styleLiteral(decls)}}>\n${inner}\n${p}</div>`;
     },
+    AppBar(node, children, depth) {
+      const p = pad(depth);
+      return `${p}<header style={${styleLiteral(appBarDecls(node.style))}}>\n${children.join('\n')}\n${p}</header>`;
+    },
+    TopNav(node, children, depth) {
+      const p = pad(depth);
+      return `${p}<nav style={${styleLiteral(navDecls('row', node.style))}}>\n${children.join('\n')}\n${p}</nav>`;
+    },
+    SideNav(node, children, depth) {
+      const p = pad(depth);
+      return `${p}<nav style={${styleLiteral(navDecls('column', node.style))}}>\n${children.join('\n')}\n${p}</nav>`;
+    },
+    Breadcrumb(node, children, depth) {
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const items = children
+        .map((rendered, i) => {
+          const sep =
+            i < children.length - 1
+              ? `\n${pad(depth + 2)}<span aria-hidden="true" style={${styleLiteral(breadcrumbSeparatorDecls())}}>/</span>`
+              : '';
+          return `${ip}<li style={${styleLiteral(breadcrumbItemDecls())}}>\n${reindent(rendered, 2)}${sep}\n${ip}</li>`;
+        })
+        .join('\n');
+      return `${p}<nav aria-label="Breadcrumb">\n${ip}<ol style={${styleLiteral(breadcrumbListDecls(node.style))}}>\n${items}\n${ip}</ol>\n${p}</nav>`;
+    },
   },
   leaf: {
     Text(node, depth) {
@@ -110,6 +142,10 @@ const reactEmitter: Emitter<string, number> = {
     Radio(node, depth) {
       const input = `<input type="radio" value="${jsxAttr(node.props.value)}" />`;
       return `${pad(depth)}<label style={${styleLiteral(radioDecls())}}>${input} ${jsxText(node.props.label)}</label>`;
+    },
+    NavLink(node, depth) {
+      const current = node.props.active ? ' aria-current="page"' : '';
+      return `${pad(depth)}<a href="${jsxAttr(node.props.href)}"${current} style={${styleLiteral(navLinkDecls(node))}}>${jsxText(node.props.label)}</a>`;
     },
   },
   descend(depth) {

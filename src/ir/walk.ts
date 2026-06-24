@@ -45,7 +45,13 @@ export type ContainerType = ContainerNode['type'];
  * through `emit.leaf`. The rest are LAYOUT containers (Stack/Row/Column/Grid/Region), which share the
  * one shape-driven `container()` renderer.
  */
-export type ComponentContainerType = 'RadioGroup' | 'AppShell';
+export type ComponentContainerType =
+  | 'RadioGroup'
+  | 'AppShell'
+  | 'AppBar'
+  | 'TopNav'
+  | 'SideNav'
+  | 'Breadcrumb';
 export type ComponentContainerNode = Extract<Node, { type: ComponentContainerType }>;
 export type LayoutContainerNode = Exclude<ContainerNode, ComponentContainerNode>;
 export type LayoutContainerType = LayoutContainerNode['type'];
@@ -55,6 +61,12 @@ export type LayoutContainerType = LayoutContainerNode['type'];
 export const COMPONENT_CONTAINERS: Record<ComponentContainerType, true> = {
   RadioGroup: true,
   AppShell: true,
+  // ADR-0019: application chrome — AppBar renders a bespoke <header>; the nav menus render a <nav>
+  // (TopNav/SideNav) or <nav><ol> (Breadcrumb). None go through a layout shape.
+  AppBar: true,
+  TopNav: true,
+  SideNav: true,
+  Breadcrumb: true,
 };
 
 /** A container that renders via a layout shape (Stack/Row/Column/Grid), not as a Component. A real type

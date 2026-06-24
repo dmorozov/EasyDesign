@@ -120,7 +120,7 @@ All should pass. Visual outputs land in `generated-samples/` — open
 │   ├── dev/                   # generate-sample runner (not in the library build)
 │   └── main.tsx               # editor bootstrap
 ├── docs/
-│   ├── adr/                   # architecture decision records (0001–0018)
+│   ├── adr/                   # architecture decision records (0001–0019)
 │   └── design-system/         # the EasyDesign design system (chrome kit + SKILL.md)
 ├── CLAUDE.md                  # architecture + commands (source of truth)
 └── CONTEXT.md                 # domain glossary
