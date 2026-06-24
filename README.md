@@ -83,13 +83,14 @@ npm run tokens && npm run build   # -> dist/
 
 ## Testing & verification
 
-> **There is no unit-test runner yet.** Standing up `vitest` is Phase 0 of
-> [`refactoring_plan.md`](./refactoring_plan.md) — the planned deep modules (the Node Walk, the
-> Design-Token Model, the Frame lifecycle) are pure and meant to be unit-tested at their interfaces.
+**Unit tests run on `vitest`** — `npm run test` (with `test:watch` and `test:coverage`). The deep
+modules (the Node Walk, the Design-Token Model, the Frame lifecycle) are pure and unit-tested at
+their interfaces.
 
-Today, "tests" means the **quality-gate suite** plus a **self-checking generate** step:
+Alongside the unit tests, the **quality-gate suite** plus a **self-checking generate** step:
 
 ```bash
+npm run test           # vitest unit tests
 npm run tokens         # prerequisite for generate
 npm run generate       # runs the 4 generators + SSR-renders the React-Aria canvas;
                        # asserts: MJML compiles cleanly, HTML has the expected elements,
@@ -99,11 +100,8 @@ npm run lint           # ESLint 9
 npm run format:check   # Prettier
 ```
 
-All five should pass. Visual outputs land in `generated-samples/` — open
+All should pass. Visual outputs land in `generated-samples/` — open
 `generated-samples/{html.html,react/…,email.html,canvas.html}` in a browser to eyeball the exports.
-
-The standalone **walking skeleton** (see below) has its own self-checking build that additionally
-renders the Angular output through a real Angular runtime.
 
 ---
 
@@ -121,29 +119,12 @@ renders the Angular output through a real Angular runtime.
 │   ├── editor/                # the editor app (store, React Flow board, palette, panels)
 │   ├── dev/                   # generate-sample runner (not in the library build)
 │   └── main.tsx               # editor bootstrap
-├── skeleton/                  # standalone reference proof (its own toolchain)
 ├── docs/
-│   ├── adr/                   # architecture decision records (0001–0007)
-│   └── walking-skeleton.md    # how the export pipeline was proven first
+│   ├── adr/                   # architecture decision records (0001–0018)
+│   └── design-system/         # the EasyDesign design system (chrome kit + SKILL.md)
 ├── CLAUDE.md                  # architecture + commands (source of truth)
-├── CONTEXT.md                 # domain glossary
-└── refactoring_plan.md        # deepening opportunities + upcoming features
+└── CONTEXT.md                 # domain glossary
 ```
-
-### The walking skeleton
-
-`skeleton/` is a throwaway proof that one IR exports cleanly to all four targets (it predates the
-real package). It has its own dependencies and commands:
-
-```bash
-cd skeleton
-npm install
-npm run build       # compiles tokens + emits all four outputs, each self-checking,
-                    # including a real Angular SSR render
-npm run typecheck
-```
-
-Outputs land in `skeleton/out/<target>/`. See [`docs/walking-skeleton.md`](./docs/walking-skeleton.md).
 
 ---
 

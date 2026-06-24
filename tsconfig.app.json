@@ -24,7 +24,7 @@
 
     /* The Angular generator emits decorator metadata. KEEP these — and as a direct
        consequence do NOT add erasableSyntaxOnly or verbatimModuleSyntax, which would
-       reject decorators (see docs/adr/0004 / walking-skeleton notes). */
+       reject decorators (see docs/adr/0004). */
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 

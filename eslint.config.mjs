@@ -13,7 +13,6 @@ import globals from 'globals';
 
 export default tseslint.config(
   // 1. Global ignores — MUST be the only key in this object to apply globally.
-  // `skeleton/` is the standalone reference proof with its own toolchain.
   {
     ignores: [
       'dist',
@@ -22,10 +21,9 @@ export default tseslint.config(
       'coverage',
       'node_modules',
       '.claude',
-      'skeleton',
       'generated-samples',
       'src/theme/generated/**',
-      // Vendored design system (delivered .jsx + .d.ts) — not linted, like skeleton/.
+      // Vendored design system (delivered .jsx + .d.ts) — not linted.
       'src/design-system/**',
       '**/*.d.ts',
     ],

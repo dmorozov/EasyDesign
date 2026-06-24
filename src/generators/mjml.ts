@@ -4,7 +4,8 @@
 // Key mapping: MJML cannot nest <mj-section> inside an <mj-column>, so the tree
 // FLATTENS into sibling sections. A nested Row becomes its OWN <mj-section> with
 // one <mj-column> per child (the Row -> two-column mapping), carrying the surface
-// background so the card reads continuous. See docs/walking-skeleton.md findings.
+// background so the card reads continuous (see ADR-0008 for the flattening strategy,
+// ADR-0006 for email constraints).
 import { type Frame, type Node, type StyleMap, type TokenRef } from '../ir/types';
 import { type ContainerType, type LeafNode, type LeafType } from '../ir/walk';
 import { TEXT_STYLE_BINDING } from '../theme/generated/typography';

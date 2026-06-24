@@ -20,8 +20,6 @@ indicators** and **insertion-point (gap) drop targets** (ADR-0018), selection + 
 **Structure** tree, live multi-target export, live theming, the email-mode
 restriction (Grid is hidden in email Frames), **undo/redo** (coalesced history, Ctrl/⌘+Z), and
 **persistence** (auto-save to localStorage + JSON export/import/reset via `src/editor/document.ts`).
-The throwaway **walking skeleton** in
-`skeleton/` proved the export pipeline first (`docs/walking-skeleton.md`).
 
 **Read these first — they are the source of truth, not this file:**
 
@@ -75,8 +73,7 @@ code (AGPL-3.0 — never fork into this SaaS).
 
 ## Build / test / run
 
-The real package is at the **repo root** (`easydesign`). `skeleton/` is the standalone reference
-proof with its own toolchain, excluded from the root tooling.
+The real package is at the **repo root** (`easydesign`).
 
 Source layout (`src/`): `ir/` (types + sample), `theme/` (DTCG tokens + Style Dictionary →
 `generated/`), `generators/` (`html`/`react`/`angular`/`mjml`, pure string emitters), `components/`
@@ -110,5 +107,3 @@ Tooling invariants (deliberate — don't "fix" them):
   LF, single quotes) and Prettier reads `.editorconfig` as a fallback — so they can't drift.
 - **`tsconfig.app.json` keeps `experimentalDecorators` and omits `verbatimModuleSyntax` /
   `erasableSyntaxOnly`** — the Angular generator emits decorators, which those flags reject.
-
-`skeleton/` still builds independently (its own `npm run build` includes the Angular **runtime** render).
