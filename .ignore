@@ -17,6 +17,7 @@ We have already implemented AppShell that is probably biggest part. What we are 
 - RP-12 (IR migration, bump-and-reset)
 
 - Please move all tests in the separate tests folder (preserve the folders). It is bloating the production source code
+- Migrate to pnpm package manager, upgrade Vite to the latest version. Check if we can upgrade Typescript to the latest version.
 
 Layout components
 
