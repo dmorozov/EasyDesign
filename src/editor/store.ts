@@ -41,6 +41,7 @@ interface EditorState {
   selectedPath: NodePath | null;
   exportTarget: ExportTarget;
   rightTab: RightTab;
+  rightCollapsed: boolean; // right rail folded to its tab bar (chrome UI — not in the document/undo)
   dropTarget: DropTarget | null;
   pendingFocusFrameId: string | null; // id of a just-added Frame the Board should pan into view
   saveStatus: SaveStatus;
@@ -50,6 +51,7 @@ interface EditorState {
   // ── Actions ──
   selectNode: (frameId: string, path: NodePath) => void;
   setRightTab: (tab: RightTab) => void;
+  setRightCollapsed: (collapsed: boolean) => void;
   clearSelection: () => void;
   insertChild: (frameId: string, parentPath: NodePath, node: Node) => void;
   insertAt: (frameId: string, parentPath: NodePath, index: number, node: Node) => void;
@@ -181,6 +183,7 @@ export const useEditor = create<EditorState>()((set) => {
     selectedPath: null,
     exportTarget: 'react',
     rightTab: 'inspector',
+    rightCollapsed: false,
     dropTarget: null,
     pendingFocusFrameId: null,
     saveStatus: 'saved',
@@ -188,13 +191,25 @@ export const useEditor = create<EditorState>()((set) => {
     history: emptyHistory,
 
     // ── UI actions (no history) ──
+    // Selecting a node/Frame is an intent to edit it → show the inspector AND unfold it if folded.
     selectNode: (frameId, path) =>
-      set({ selectedFrameId: frameId, selectedPath: path, rightTab: 'inspector' }),
+      set({
+        selectedFrameId: frameId,
+        selectedPath: path,
+        rightTab: 'inspector',
+        rightCollapsed: false,
+      }),
     setRightTab: (tab) => set({ rightTab: tab }),
+    setRightCollapsed: (collapsed) => set({ rightCollapsed: collapsed }),
     clearSelection: () => set({ selectedFrameId: null, selectedPath: null }),
     setDropTarget: (target) => set({ dropTarget: target }),
     selectFrame: (frameId) =>
-      set({ selectedFrameId: frameId, selectedPath: null, rightTab: 'inspector' }),
+      set({
+        selectedFrameId: frameId,
+        selectedPath: null,
+        rightTab: 'inspector',
+        rightCollapsed: false,
+      }),
     clearPendingFocus: () => set({ pendingFocusFrameId: null }),
     setExportTarget: (target) => set({ exportTarget: target }),
     setSaveStatus: (status) => set({ saveStatus: status }),

@@ -51,6 +51,8 @@ const Icon = {
   share:    (p) => <Svg {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></Svg>,
   sun:      (p) => <Svg {...p}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></Svg>,
   moon:     (p) => <Svg {...p}><path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5Z"/></Svg>,
+  chevronLeft:  (p) => <Svg {...p}><path d="m15 6-6 6 6 6"/></Svg>,
+  chevronRight: (p) => <Svg {...p}><path d="m9 6 6 6-6 6"/></Svg>,
 };
 
 export { Icon, Svg };

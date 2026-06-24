@@ -1,21 +1,48 @@
 import { useDraggable } from '@dnd-kit/core';
 import { useState, type ReactElement } from 'react';
 
-import { Icon, Input, PaletteItem as PaletteTile } from '../design-system';
+import { Icon, IconButton, Input, PaletteItem as PaletteTile } from '../design-system';
 
 import { canInsertComponent, canInsertInTarget, insertHint } from './frames';
 import { PALETTE, type PaletteItem } from './palette';
 import { nodeAt, type NodePath } from './paths';
 import { useEditor } from './store';
 
-/** The Component Palette — searchable, grouped, draggable (or click-to-insert) components.
- *  Items not available in the current Frame medium are shown locked (ADR-0006). */
-export function Palette(): ReactElement {
+interface PaletteProps {
+  /** Whether the palette is folded to its collapsed strip. */
+  collapsed: boolean;
+  /** Fold / unfold the palette. */
+  onToggle: (collapsed: boolean) => void;
+}
+
+/** The Component Palette — searchable, grouped, draggable (or click-to-insert) components. Foldable to a
+ *  thin strip with a single expand button, handing the width to the Board. Items not available in the
+ *  current Frame medium are shown locked (ADR-0006). */
+export function Palette({ collapsed, onToggle }: PaletteProps): ReactElement {
   const selectedFrameId = useEditor((s) => s.selectedFrameId);
   const frames = useEditor((s) => s.frames);
   const selectedFrame = frames.find((f) => f.id === selectedFrameId);
   const target = selectedFrame?.target ?? 'web';
   const [query, setQuery] = useState('');
+
+  // Collapsed: just a thin strip with an expand button (the panel content is unmounted).
+  if (collapsed) {
+    return (
+      <aside className="ed-palette" data-collapsed="true">
+        <div className="ed-rail-strip">
+          <IconButton
+            size="sm"
+            aria-label="Expand components"
+            onClick={() => {
+              onToggle(false);
+            }}
+          >
+            <Icon.chevronRight />
+          </IconButton>
+        </div>
+      </aside>
+    );
+  }
 
   const q = query.trim().toLowerCase();
   const matches = PALETTE.filter((item) => item.label.toLowerCase().includes(q));
@@ -23,7 +50,20 @@ export function Palette(): ReactElement {
   const content = matches.filter((item) => item.group === 'content');
 
   return (
-    <aside className="ed-palette">
+    <aside className="ed-palette" data-collapsed="false">
+      <div className="ed-rail-head">
+        <span className="ed-rail-title">Components</span>
+        <IconButton
+          size="sm"
+          aria-label="Collapse components"
+          onClick={() => {
+            onToggle(true);
+          }}
+        >
+          <Icon.chevronLeft />
+        </IconButton>
+      </div>
+
       <div className="ed-palette-search">
         <Input
           aria-label="Search components"

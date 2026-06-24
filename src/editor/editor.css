@@ -25,6 +25,10 @@
   --ed-on-accent: var(--on-accent);
   --ed-danger: var(--danger);
   --ed-radius: var(--radius-md);
+
+  /* Foldable panels: expanded, each column is the DS rail width (--rail-left-w / --rail-right-w);
+     collapsed, the column shrinks to this thin strip — just an expand button. The Board (1fr) takes the gap. */
+  --rail-collapsed-w: 40px;
 }
 
 * {
@@ -52,8 +56,17 @@ body {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: var(--rail-left-w) 1fr var(--rail-right-w);
+  --col-left: var(--rail-left-w);
+  --col-right: var(--rail-right-w);
+  grid-template-columns: var(--col-left) 1fr var(--col-right);
   grid-template-rows: minmax(0, 1fr);
+}
+/* A folded panel shrinks its column to the thin strip — the Board (1fr) absorbs the freed width. */
+.ed-app[data-left-collapsed='true'] {
+  --col-left: var(--rail-collapsed-w);
+}
+.ed-app[data-right-collapsed='true'] {
+  --col-right: var(--rail-collapsed-w);
 }
 .ed-board {
   min-width: 0;
@@ -131,6 +144,18 @@ body {
   }
 }
 
+/* ---- foldable panels (shared by the left palette + right inspector) ---- */
+/* Collapsed, a panel is a thin vertical strip holding a single expand button. Expanded, it shows the
+   full panel with a collapse button in its header (.ed-rail-head). */
+.ed-rail-strip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-4) 0;
+  background: var(--surface-sunken);
+}
+
 /* ---- left rail: component palette ---- */
 .ed-palette {
   display: flex;
@@ -198,7 +223,7 @@ body {
   color: var(--warning);
 }
 
-/* ---- right rail: tabbed inspector / design / export ---- */
+/* ---- right rail: foldable inspector / design / export ---- */
 .ed-right {
   display: flex;
   flex-direction: column;
@@ -206,8 +231,13 @@ body {
   background: var(--surface);
   border-left: var(--border-w) solid var(--border);
 }
+/* Panel header: title on the left, the collapse (fold) button on the right. */
 .ed-rail-head {
-  padding: var(--space-8) var(--space-8) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0 var(--space-8);
 }
 .ed-rail-title {
   font-size: var(--fs-lg);
@@ -413,7 +443,7 @@ body {
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  font-size: var(--fs-caption);
+  font-size: var(--fs-md);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
   overflow: hidden;

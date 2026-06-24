@@ -137,7 +137,12 @@ export function Editor(): ReactElement {
   const docKey = useEditor((s) => s.docKey);
   const undo = useEditor((s) => s.undo);
   const redo = useEditor((s) => s.redo);
+  // Foldable panels (give the Board more room). The right inspector's fold lives in the store because
+  // selecting a node unfolds it; the left palette's fold is pure local chrome.
+  const rightCollapsed = useEditor((s) => s.rightCollapsed);
+  const setRightCollapsed = useEditor((s) => s.setRightCollapsed);
   const [activeLabel, setActiveLabel] = useState<string | null>(null);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
   const pointerY = useRef(0);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -207,12 +212,16 @@ export function Editor(): ReactElement {
       {overrideCss ? <style>{overrideCss}</style> : null}
       <div className="ed-shell">
         <Toolbar />
-        <div className="ed-app">
-          <Palette />
+        <div
+          className="ed-app"
+          data-left-collapsed={leftCollapsed}
+          data-right-collapsed={rightCollapsed}
+        >
+          <Palette collapsed={leftCollapsed} onToggle={setLeftCollapsed} />
           <div className="ed-board">
             <Board key={docKey} />
           </div>
-          <RightRail />
+          <RightRail collapsed={rightCollapsed} onToggle={setRightCollapsed} />
         </div>
       </div>
       <DragOverlay>
