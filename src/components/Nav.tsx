@@ -61,6 +61,49 @@ function breadcrumbListStyle(style: StyleMap | undefined): CSSProperties {
   };
 }
 
+function menuBarListStyle(style: StyleMap | undefined): CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    ...styleFromTokens(style),
+  };
+}
+const menuItemStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  padding: 'var(--space-sm) var(--space-md)',
+};
+
+// Pagination (ADR-0021): a <nav aria-label="Pagination"><ul> of BOXED page links — reuses the NavLink
+// leaf for the `<a aria-current>`, so this owns only the bar (the <ul>) and the boxed page item (<li>).
+// Byte-aligned with leaf-style's paginationListDecls/paginationItemDecls.
+function paginationListStyle(style: StyleMap | undefined): CSSProperties {
+  return {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 'var(--space-sm)',
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    ...styleFromTokens(style),
+  };
+}
+const paginationItemStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 'var(--space-sm) var(--space-md)',
+  border: '1px solid var(--color-muted)',
+  borderRadius: 'var(--radius-lg)',
+};
+
 export interface NavLinkProps {
   href: string;
   active?: boolean | undefined;
@@ -122,6 +165,42 @@ export function Breadcrumb({ style, children }: NavProps) {
           </li>
         ))}
       </ol>
+    </nav>
+  );
+}
+
+/** An application menu bar: a semantic `<nav aria-label><ul>` of `<li>` links styled as a full bar (the
+ *  File/Edit/View look, this ADR), distinct from TopNav's bare inline links. NOT `role="menubar"`: that
+ *  ARIA widget pattern is for application command menus (it requires `role="menuitem"` children +
+ *  roving-tabindex/arrow-key handling), wrong for real `<a href>` navigation links. */
+export function MenuBar({ style, children }: NavProps) {
+  const items = Children.toArray(children);
+  return (
+    <nav aria-label="Menu">
+      <ul style={menuBarListStyle(style)}>
+        {items.map((item, i) => (
+          <li key={i} style={menuItemStyle}>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+/** A pagination bar: a semantic `<nav aria-label="Pagination"><ul>` of boxed `<li>` page links. Reuses
+ *  the NavLink leaf (the current page carries aria-current); this only adds the bar + the boxed item. */
+export function Pagination({ style, children }: NavProps) {
+  const pages = Children.toArray(children);
+  return (
+    <nav aria-label="Pagination">
+      <ul style={paginationListStyle(style)}>
+        {pages.map((page, i) => (
+          <li key={i} style={paginationItemStyle}>
+            {page}
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }

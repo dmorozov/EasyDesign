@@ -88,6 +88,30 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           log.push(`component:${node.type}@${depth}`);
           return `<${children.join(',')}>`;
         },
+        MenuBar: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        Stepper: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        ToolBar: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        DataTable: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        TableRow: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        Pagination: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
       },
       leaf: {
         Text: (node, depth) => {
@@ -109,6 +133,26 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
         NavLink: (node, depth) => {
           log.push(`${node.type}@${depth}`);
           return 'N';
+        },
+        Step: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'S';
+        },
+        ToolButton: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'TB';
+        },
+        Divider: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'D';
+        },
+        Spacer: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'SP';
+        },
+        TableCell: (node, depth) => {
+          log.push(`${node.type}@${depth}`);
+          return 'TC';
         },
       },
       descend: (depth) => depth + 1,
@@ -165,6 +209,30 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           log.push(`component:${node.type}@${depth}`);
           return `<${children.join(',')}>`;
         },
+        MenuBar: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        Stepper: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        ToolBar: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        DataTable: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        TableRow: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
+        Pagination: (node, children, depth) => {
+          log.push(`component:${node.type}@${depth}`);
+          return `<${children.join(',')}>`;
+        },
       },
       leaf: {
         Text: () => 'T',
@@ -175,6 +243,11 @@ describe('walkNode — dispatch, document order, recursion contract', () => {
           return 'R';
         },
         NavLink: () => 'N',
+        Step: () => 'S',
+        ToolButton: () => 'TB',
+        Divider: () => 'D',
+        Spacer: () => 'SP',
+        TableCell: () => 'TC',
       },
       descend: (depth) => depth + 1,
     };

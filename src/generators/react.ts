@@ -14,17 +14,38 @@ import {
   breadcrumbSeparatorDecls,
   buttonDecls,
   containerDecls,
+  dataTableDecls,
   type Decl,
+  dividerDecls,
   gridAreaDecl,
+  ICON_SVG_STYLE,
   imageDecls,
   legendDecls,
+  menuBarListDecls,
+  menuItemDecls,
   navDecls,
   navLinkDecls,
+  paginationItemDecls,
+  paginationListDecls,
   radioDecls,
   radioGroupDecls,
+  spacerDecls,
+  stepBadgeDecls,
+  stepDecls,
+  stepItemDecls,
+  stepLabelDecls,
+  stepperConnectorDecls,
+  stepperListDecls,
   structuralDecls,
+  tableCaptionDecls,
+  tableCellDecls,
+  tableHeaderCellDecls,
   textDecls,
   textTag,
+  TOOL_ICON_LABEL,
+  TOOLBAR_ICON_INNER,
+  toolBarDecls,
+  toolButtonDecls,
 } from './leaf-style';
 
 const INDENT = '  ';
@@ -126,6 +147,84 @@ const reactEmitter: Emitter<string, number> = {
         .join('\n');
       return `${p}<nav aria-label="Breadcrumb">\n${ip}<ol style={${styleLiteral(breadcrumbListDecls(node.style))}}>\n${items}\n${ip}</ol>\n${p}</nav>`;
     },
+    // A semantic navigation bar (this ADR), NOT role="menubar" — see html.ts MenuBar for why.
+    MenuBar(node, children, depth) {
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const items = children
+        .map(
+          (rendered) =>
+            `${ip}<li style={${styleLiteral(menuItemDecls())}}>\n${reindent(rendered, 2)}\n${ip}</li>`,
+        )
+        .join('\n');
+      return `${p}<nav aria-label="Menu">\n${ip}<ul style={${styleLiteral(menuBarListDecls(node.style))}}>\n${items}\n${ip}</ul>\n${p}</nav>`;
+    },
+    // The connector is its OWN aria-hidden <li> so the <ol> holds only <li> children — see html.ts Stepper.
+    Stepper(node, children, depth) {
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const last = children.length - 1;
+      const items = children
+        .map((rendered, i) => {
+          const connector =
+            i < last
+              ? `\n${ip}<li aria-hidden="true" style={${styleLiteral(stepperConnectorDecls(node.props.orientation))}} />`
+              : '';
+          return `${ip}<li style={${styleLiteral(stepItemDecls())}}>\n${reindent(rendered, 2)}\n${ip}</li>${connector}`;
+        })
+        .join('\n');
+      return `${p}<ol style={${styleLiteral(stepperListDecls(node.props.orientation, node.style))}}>\n${items}\n${p}</ol>`;
+    },
+    ToolBar(node, children, depth) {
+      const p = pad(depth);
+      return `${p}<div role="toolbar" aria-label="${jsxAttr(node.props.label)}" style={${styleLiteral(toolBarDecls(node.style))}}>\n${children.join('\n')}\n${p}</div>`;
+    },
+    // DataTable → a semantic <table>; rendered rows partition into <thead>/<tbody> by their `header` flag,
+    // nested one level deeper inside the grouping element (ADR-0021). See html.ts DataTable.
+    DataTable(node, children, depth) {
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const header = children
+        .filter((_, i) => node.children[i]?.props.header)
+        .map((r) => reindent(r, 1))
+        .join('\n');
+      const body = children
+        .filter((_, i) => !node.children[i]?.props.header)
+        .map((r) => reindent(r, 1))
+        .join('\n');
+      const caption = node.props.caption
+        ? `${ip}<caption style={${styleLiteral(tableCaptionDecls())}}>${jsxText(node.props.caption)}</caption>\n`
+        : '';
+      const thead = header ? `${ip}<thead>\n${header}\n${ip}</thead>\n` : '';
+      const tbody = body ? `${ip}<tbody>\n${body}\n${ip}</tbody>\n` : '';
+      return `${p}<table style={${styleLiteral(dataTableDecls(node.style))}}>\n${caption}${thead}${tbody}${p}</table>`;
+    },
+    // TableRow → a <tr> wrapping each rendered cell in <th scope="col"> (header row) or <td> (body row).
+    TableRow(node, children, depth) {
+      const p = pad(depth);
+      const cp = pad(depth + 1);
+      const cellStyle = styleLiteral(node.props.header ? tableHeaderCellDecls() : tableCellDecls());
+      const cells = children
+        .map((c) =>
+          node.props.header
+            ? `${cp}<th scope="col" style={${cellStyle}}>${c}</th>`
+            : `${cp}<td style={${cellStyle}}>${c}</td>`,
+        )
+        .join('\n');
+      return `${p}<tr>\n${cells}\n${p}</tr>`;
+    },
+    // Pagination → <nav aria-label="Pagination"><ul> of boxed <li> page links (reuses NavLink). See html.ts.
+    Pagination(node, children, depth) {
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const items = children
+        .map(
+          (rendered) =>
+            `${ip}<li style={${styleLiteral(paginationItemDecls())}}>\n${reindent(rendered, 2)}\n${ip}</li>`,
+        )
+        .join('\n');
+      return `${p}<nav aria-label="Pagination">\n${ip}<ul style={${styleLiteral(paginationListDecls(node.style))}}>\n${items}\n${ip}</ul>\n${p}</nav>`;
+    },
   },
   leaf: {
     Text(node, depth) {
@@ -146,6 +245,30 @@ const reactEmitter: Emitter<string, number> = {
     NavLink(node, depth) {
       const current = node.props.active ? ' aria-current="page"' : '';
       return `${pad(depth)}<a href="${jsxAttr(node.props.href)}"${current} style={${styleLiteral(navLinkDecls(node))}}>${jsxText(node.props.label)}</a>`;
+    },
+    Step(node, depth) {
+      const { status, label } = node.props;
+      const current = status === 'current' ? ' aria-current="step"' : '';
+      const badge = `<span style={${styleLiteral(stepBadgeDecls(status))}}>${status === 'complete' ? '✓' : ''}</span>`;
+      const text = `<span style={${styleLiteral(stepLabelDecls(status))}}>${jsxText(label)}</span>`;
+      return `${pad(depth)}<div${current} style={${styleLiteral(stepDecls())}}>${badge}${text}</div>`;
+    },
+    ToolButton(node, depth) {
+      const { icon, label } = node.props;
+      const svg = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style={${styleLiteral(ICON_SVG_STYLE)}}>${TOOLBAR_ICON_INNER[icon]}</svg>`;
+      const text = label ? `<span>${jsxText(label)}</span>` : '';
+      const name = label ? '' : ` aria-label="${jsxAttr(TOOL_ICON_LABEL[icon])}"`;
+      return `${pad(depth)}<button type="button"${name} style={${styleLiteral(toolButtonDecls())}}>${svg}${text}</button>`;
+    },
+    Divider(_node, depth) {
+      return `${pad(depth)}<hr style={${styleLiteral(dividerDecls())}} />`;
+    },
+    Spacer(_node, depth) {
+      return `${pad(depth)}<div aria-hidden="true" style={${styleLiteral(spacerDecls())}} />`;
+    },
+    // TableCell → just its escaped text; the parent TableRow wraps it in <th>/<td> (ADR-0021).
+    TableCell(node) {
+      return jsxText(node.props.content);
     },
   },
   descend(depth) {

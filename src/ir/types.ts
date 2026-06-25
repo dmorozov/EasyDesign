@@ -58,12 +58,72 @@ export interface RegionNode {
 
 /** A navigation link (ADR-0019). A leaf that renders as a semantic `<a href>` (NOT a `<button>` — a
  *  menu of buttons is wrong, inaccessible markup), with `active` marking the current page (→ `aria-
- *  current`). Its ONLY valid parents are the navigation Components (TopNav/SideNav/Breadcrumb) — the
- *  descriptor's `allowedChildren` at runtime + the parents' `children: NavLinkNode[]` at compile time. */
+ *  current`). Its ONLY valid parents are the navigation Components (TopNav/SideNav/Breadcrumb) and the
+ *  application MenuBar — the descriptor's `allowedChildren` at runtime + the parents'
+ *  `children: NavLinkNode[]` at compile time. */
 export interface NavLinkNode {
   type: 'NavLink';
   props: { label: string; href: string; active?: boolean };
   style?: StyleMap;
+}
+
+/** One step in a Stepper. A leaf whose ONLY valid parent is Stepper (the slot pattern — descriptor
+ *  `allowedChildren` at runtime + `Stepper.children: StepNode[]` at compile time). `status` drives the
+ *  rendered badge (a number, a check when `complete`) + `aria-current="step"` when `current`; like
+ *  `NavLink.active`, editing it is a deferred follow-up (the `label` is the editable prop). */
+export type StepStatus = 'complete' | 'current' | 'upcoming';
+export interface StepNode {
+  type: 'Step';
+  props: { label: string; status: StepStatus };
+  style?: StyleMap;
+}
+
+/** The curated icon set a ToolButton may show. Kept as its own string union (NOT the chrome `IconName`)
+ *  so the dependency-free IR never imports the design-system (ADR-0007); the values are chosen to match
+ *  `IconName` keys so the canvas can render `<Icon[icon]>`, while the export targets inline the matching
+ *  SVG from `generators/toolbar-icons.ts`. */
+export type ToolIcon =
+  | 'undo'
+  | 'redo'
+  | 'copy'
+  | 'trash'
+  | 'image'
+  | 'code'
+  | 'search'
+  | 'alignL'
+  | 'alignC'
+  | 'alignR';
+
+/** One button in a Tool Bar. A leaf whose ONLY valid parent is ToolBar (the slot pattern). Renders a
+ *  `<button>` showing `icon`, plus the `label` text only when non-empty — so clearing the label yields
+ *  an icon-only button ("buttons with/without labels"). The icon picker is a deferred follow-up. */
+export interface ToolButtonNode {
+  type: 'ToolButton';
+  props: { icon: ToolIcon; label: string };
+  style?: StyleMap;
+}
+
+/** One cell in a Data Table. A leaf whose ONLY valid parent is TableRow (the slot pattern — descriptor
+ *  `allowedChildren` at runtime + `TableRow.children: TableCellNode[]` at compile time). It holds plain
+ *  text (`content`, the editable prop); the ROW renders it into a `<th scope="col">` (header row) or
+ *  `<td>` (body row). Plain text is exactly what email's `<mj-table>` accepts, which is what lets the
+ *  Data Table reach all four targets (the 2nd email-SAFE Component after Divider — ADR-0021). */
+export interface TableCellNode {
+  type: 'TableCell';
+  props: { content: string };
+  style?: StyleMap;
+}
+
+/** One row in a Data Table. A COMPONENT container CONSTRAINED to TableCell (compile half:
+ *  `children: TableCellNode[]`; runtime half: allowedChildren + canContain). `header` is the SINGLE
+ *  source of truth for header-ness: a header row's cells render as `<th scope="col">` inside `<thead>`,
+ *  a body row's as `<td>` inside `<tbody>` (set at creation via the two palette presets, like the two
+ *  Buttons — editing it is a deferred follow-up, ADR-0021). */
+export interface TableRowNode {
+  type: 'TableRow';
+  props: { header: boolean };
+  style?: StyleMap;
+  children: TableCellNode[];
 }
 
 export type Node =
@@ -76,6 +136,11 @@ export type Node =
       style?: StyleMap;
       children: Node[];
     }
+  // Paper is a surface LAYOUT container: a flow column (like Stack) rendered as a styled `<div>` surface
+  // (its `create()` seeds background/padding/borderRadius defaults). It shares the layout `shapeOf`/
+  // `container()` path, so it needs no bespoke per-target renderer. Web-only (emailSafe:false): the MJML
+  // flattener only handles the root Stack + Rows + leaf-runs, so a nested surface can't flatten (ADR-0006).
+  | { type: 'Paper'; props?: FlowProps; style?: StyleMap; children: Node[] }
   // RadioGroup is the first COMPOUND Component: a container that renders as a specific Component (a RAC
   // RadioGroup, not a layout box) and whose children are CONSTRAINED to Radio. The narrowed
   // `children: RadioNode[]` is RP-10's compile-time half (hand-authored IR + the generators can't put a
@@ -100,14 +165,52 @@ export type Node =
   | { type: 'TopNav'; style?: StyleMap; children: NavLinkNode[] }
   | { type: 'SideNav'; style?: StyleMap; children: NavLinkNode[] }
   | { type: 'Breadcrumb'; style?: StyleMap; children: NavLinkNode[] }
+  // MenuBar is a semantic application menu bar — rendered as `<nav><ul role="menubar">` of links, the
+  // File/Edit/View pattern (distinct from TopNav's bare inline `<nav>`). A COMPONENT container CONSTRAINED
+  // to NavLink (it reuses the same slot leaf as the nav menus). Web-only (emailSafe:false, ADR-0006).
+  | { type: 'MenuBar'; style?: StyleMap; children: NavLinkNode[] }
+  // Pagination is a page-navigation bar — rendered as `<nav aria-label="Pagination"><ul>` of boxed page
+  // links, the current page marked `aria-current="page"`. A COMPONENT container CONSTRAINED to NavLink:
+  // it REUSES the same slot leaf as the nav menus (like MenuBar), so it adds no new leaf. Web-only
+  // (emailSafe:false, ADR-0006/0021).
+  | { type: 'Pagination'; style?: StyleMap; children: NavLinkNode[] }
   | NavLinkNode
+  // Stepper (+ its Step slot leaf): a COMPONENT container rendered as a semantic `<ol>` of steps with a
+  // numbered/check badge + connectors; `orientation` lays them out in a row or column (set at creation
+  // via the two palette presets, like the two Buttons). CONSTRAINED to Step. Web-only (emailSafe:false).
+  | {
+      type: 'Stepper';
+      props: { orientation: 'horizontal' | 'vertical' };
+      style?: StyleMap;
+      children: StepNode[];
+    }
+  | StepNode
+  // ToolBar (+ its ToolButton slot leaf): a COMPONENT container rendered as a `<div role="toolbar">` of
+  // icon/label buttons. `label` is the toolbar's accessible name (aria-label). CONSTRAINED to ToolButton.
+  // Web-only (emailSafe:false).
+  | { type: 'ToolBar'; props: { label: string }; style?: StyleMap; children: ToolButtonNode[] }
+  | ToolButtonNode
+  // DataTable (+ its TableRow / TableCell slots): the first THREE-level compound (container → container →
+  // leaf) and the 2nd email-SAFE Component after Divider. A COMPONENT container CONSTRAINED to TableRow,
+  // rendered as a semantic `<table>` — a `<caption>` (the editable accessible title), a `<thead>` of the
+  // header rows and a `<tbody>` of the body rows. Email exports through MJML's native `<mj-table>`, so it
+  // reaches ALL FOUR targets (cells are plain text, exactly what mj-table accepts — ADR-0021).
+  | { type: 'DataTable'; props: { caption: string }; style?: StyleMap; children: TableRowNode[] }
+  | TableRowNode
+  | TableCellNode
   | { type: 'Text'; props: { content: string; variant: TextStyle }; style?: StyleMap }
   | {
       type: 'Button';
       props: { content: string; variant: 'primary' | 'secondary' };
       style?: StyleMap;
     }
-  | { type: 'Image'; props: { src: string; alt: string; width?: number }; style?: StyleMap };
+  | { type: 'Image'; props: { src: string; alt: string; width?: number }; style?: StyleMap }
+  // Display-only leaves (no props, no editing half — the Capability-A exercise). Divider renders a
+  // semantic horizontal rule (`<hr>` / `mj-divider`) and is email-SAFE (reaches all four targets).
+  // Spacer is a flexible `flex:1` gap that pushes siblings apart; flex has no equivalent in email's
+  // table model, so it is web-only (emailSafe:false) and its MJML leaf is a guardrail (like Radio).
+  | { type: 'Divider'; style?: StyleMap }
+  | { type: 'Spacer'; style?: StyleMap };
 
 export interface Frame {
   target: 'web' | 'email';

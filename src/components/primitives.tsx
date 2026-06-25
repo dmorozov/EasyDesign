@@ -50,3 +50,29 @@ export function Image({ src, alt, width }: ImageProps) {
     />
   );
 }
+
+// Display-only leaves (this ADR) — the canvas/editor twins of leaf-style's dividerDecls/spacerDecls, on
+// the same CSS-var token graph, so the live canvas and the string exports stay aligned (ADR-0005).
+
+/** A semantic horizontal rule: a 1px muted line with vertical breathing room. */
+export function Divider() {
+  return (
+    <hr
+      style={{
+        border: 'none',
+        borderTop: '1px solid var(--color-muted)',
+        margin: 'var(--space-md) 0',
+      }}
+    />
+  );
+}
+
+/** A flexible spacer that grows to push siblings apart along the parent's main axis (Chakra-style). */
+export function Spacer() {
+  return (
+    <div
+      aria-hidden="true"
+      style={{ flex: '1 1 auto', minWidth: 'var(--space-md)', minHeight: 'var(--space-md)' }}
+    />
+  );
+}

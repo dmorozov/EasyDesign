@@ -107,6 +107,40 @@ const checks: [string, boolean][] = [
     'app-layout canvas rendered <header> + <nav>',
     appLayoutCanvasHtml.includes('<header') && appLayoutCanvasHtml.includes('<nav'),
   ],
+  // This ADR — the common design components. The email-SAFE Divider reaches MJML (and compiles cleanly
+  // under strict validation, via the 'mjml errors empty' check above); the web-only components land in
+  // the app-layout export + the live canvas with their semantic markup.
+  ['email mjml has the divider rule (mj-divider)', mjmlSource.includes('<mj-divider')],
+  // ADR-0021: the Data Table is the 2nd email-safe Component — it reaches email via MJML's native
+  // <mj-table> (compiling cleanly under strict validation, via 'mjml errors empty' above). On the web it
+  // exports as a semantic <table> (caption + <th scope> header), with a Pagination nav bar beside it.
+  ['email mjml has the data table (mj-table)', mjmlSource.includes('<mj-table')],
+  ['app-layout html has the data table (<table>)', appLayoutHtml.includes('<table')],
+  [
+    'app-layout html has a table header (<th scope="col">)',
+    appLayoutHtml.includes('<th scope="col"'),
+  ],
+  ['app-layout html has the table caption (<caption>)', appLayoutHtml.includes('<caption')],
+  [
+    'app-layout html has the pagination bar (nav aria-label=Pagination)',
+    appLayoutHtml.includes('aria-label="Pagination"'),
+  ],
+  ['app-layout canvas rendered the data table (<table>)', appLayoutCanvasHtml.includes('<table')],
+  ['app-layout html has the tool bar (role=toolbar)', appLayoutHtml.includes('role="toolbar"')],
+  [
+    'app-layout html has the menu bar (nav aria-label=Menu)',
+    appLayoutHtml.includes('aria-label="Menu"'),
+  ],
+  [
+    'app-layout html has the stepper (aria-current=step)',
+    appLayoutHtml.includes('aria-current="step"'),
+  ],
+  ['app-layout html has a divider rule (<hr>)', appLayoutHtml.includes('<hr')],
+  [
+    'app-layout canvas rendered the tool bar + menu bar',
+    appLayoutCanvasHtml.includes('role="toolbar"') &&
+      appLayoutCanvasHtml.includes('aria-label="Menu"'),
+  ],
 ];
 let ok = true;
 for (const [label, passed] of checks) {

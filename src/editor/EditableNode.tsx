@@ -9,10 +9,21 @@ import { type CSSProperties, Fragment, type ReactElement, type ReactNode } from 
 
 import { AppShell } from '../components/AppShell';
 import { Button } from '../components/Button';
+import { DataTable, TableRow } from '../components/DataTable';
 import { layoutElement } from '../components/layoutElement';
-import { AppBar, Breadcrumb, NavLink, SideNav, TopNav } from '../components/Nav';
-import { Image, Text } from '../components/primitives';
+import {
+  AppBar,
+  Breadcrumb,
+  MenuBar,
+  NavLink,
+  Pagination,
+  SideNav,
+  TopNav,
+} from '../components/Nav';
+import { Divider, Image, Spacer, Text } from '../components/primitives';
 import { Radio, RadioGroup } from '../components/RadioGroup';
+import { Step, Stepper } from '../components/Stepper';
+import { ToolBar, ToolButton } from '../components/ToolBar';
 import { Icon } from '../design-system';
 import { type Node } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
@@ -264,6 +275,95 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
           </EditableShell>
         );
       },
+      MenuBar(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Nav link here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <MenuBar style={node.style}>{body}</MenuBar>
+          </EditableShell>
+        );
+      },
+      Stepper(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Step here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Stepper orientation={node.props.orientation} style={node.style}>
+              {body}
+            </Stepper>
+          </EditableShell>
+        );
+      },
+      ToolBar(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Tool button here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <ToolBar label={node.props.label} style={node.style}>
+              {body}
+            </ToolBar>
+          </EditableShell>
+        );
+      },
+      // ADR-0021: a <table>'s interior can't carry the per-node chrome `<div role="treeitem">` (a div
+      // can't sit between <table>/<tbody> and <tr>). So the WHOLE table is ONE editable node — its rows
+      // and cells render clean (no shell), edited via the Structure tree + Inspector. The rows partition
+      // into thead/tbody exactly as on the canvas; an empty table shows the drop hint instead.
+      DataTable(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Table row here…</div>
+          ) : (
+            <DataTable
+              caption={node.props.caption}
+              style={node.style}
+              headerRows={children.filter((_, i) => node.children[i]?.props.header)}
+              bodyRows={children.filter((_, i) => !node.children[i]?.props.header)}
+            />
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            {body}
+          </EditableShell>
+        );
+      },
+      // A TableRow renders a clean <tr> with NO EditableShell — a shell `<div>` is illegal inside a
+      // <table> (this ADR). Its DataTable carries the only shell.
+      TableRow(node, children) {
+        return (
+          <TableRow header={node.props.header}>
+            {children.map((c, i) => (
+              <Fragment key={i}>{c}</Fragment>
+            ))}
+          </TableRow>
+        );
+      },
+      Pagination(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Nav link here…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Pagination style={node.style}>{body}</Pagination>
+          </EditableShell>
+        );
+      },
     },
     leaf: {
       Text(node, ctx) {
@@ -304,6 +404,39 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
             </NavLink>
           </EditableShell>
         );
+      },
+      Step(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Step status={node.props.status} label={node.props.label} />
+          </EditableShell>
+        );
+      },
+      ToolButton(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <ToolButton icon={node.props.icon} label={node.props.label} />
+          </EditableShell>
+        );
+      },
+      Divider(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Divider />
+          </EditableShell>
+        );
+      },
+      Spacer(node, ctx) {
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <Spacer />
+          </EditableShell>
+        );
+      },
+      // A TableCell renders its bare text with NO EditableShell — a shell `<div>` is illegal inside a
+      // <tr> (this ADR). The cell is selected/edited via the Structure tree + Inspector, not the canvas.
+      TableCell(node) {
+        return <>{node.props.content}</>;
       },
     },
     descend(ctx, index) {

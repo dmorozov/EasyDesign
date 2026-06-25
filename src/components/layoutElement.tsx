@@ -69,5 +69,18 @@ export function layoutElement(node: LayoutContainerNode, children: ReactNode): R
           {children}
         </Stack>
       );
+    case 'Paper':
+      // A surface container — a flow column like Stack, distinguished by its surface default styling
+      // (background/padding/borderRadius from the descriptor's create()), this ADR.
+      return (
+        <Stack
+          style={node.style}
+          justify={node.props?.justify}
+          align={node.props?.align}
+          wrap={node.props?.wrap}
+        >
+          {children}
+        </Stack>
+      );
   }
 }

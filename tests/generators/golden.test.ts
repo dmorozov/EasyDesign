@@ -155,6 +155,63 @@ const FIXTURES: readonly GoldenFixture[] = [
       },
     },
   },
+  {
+    // This ADR — the email-SAFE display-only leaf: a Divider in a leaf-run, exercised through ALL FOUR
+    // targets (it lands as <hr> on web and <mj-divider> in email — the Capability-A path end to end).
+    name: 'divider',
+    emailSafe: true,
+    frame: {
+      target: 'email',
+      root: {
+        type: 'Stack',
+        style: { gap: 'space.md' },
+        children: [
+          { type: 'Text', props: { content: 'Above the rule', variant: 'body' } },
+          { type: 'Divider' },
+          { type: 'Text', props: { content: 'Below the rule', variant: 'body' } },
+        ],
+      },
+    },
+  },
+
+  {
+    // ADR-0021 — the Data Table: the 2nd email-SAFE Component, exercised through ALL FOUR targets. It
+    // exports as a semantic <table> (caption + <thead> of <th scope="col"> + <tbody> of <td>) on web and
+    // through MJML's native <mj-table> in email. Header lives on the ROW (the single source of truth).
+    name: 'datatable',
+    emailSafe: true,
+    frame: {
+      target: 'email',
+      root: {
+        type: 'Stack',
+        style: { gap: 'space.md' },
+        children: [
+          {
+            type: 'DataTable',
+            props: { caption: 'People' },
+            children: [
+              {
+                type: 'TableRow',
+                props: { header: true },
+                children: [
+                  { type: 'TableCell', props: { content: 'Name' } },
+                  { type: 'TableCell', props: { content: 'Role' } },
+                ],
+              },
+              {
+                type: 'TableRow',
+                props: { header: false },
+                children: [
+                  { type: 'TableCell', props: { content: 'Ada Lovelace' } },
+                  { type: 'TableCell', props: { content: 'Engineer' } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    },
+  },
 
   // ---- web-only (html / react / angular; MJML rejects these shapes) ------
   {
@@ -268,6 +325,128 @@ const FIXTURES: readonly GoldenFixture[] = [
               { type: 'Radio', props: { value: 'pro', label: 'Pro' } },
             ],
           },
+        ],
+      },
+    },
+  },
+  {
+    // This ADR — Paper: a surface LAYOUT container (a styled flow column). Web-only.
+    name: 'paper',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Paper',
+        style: {
+          background: 'color.surface',
+          padding: 'space.lg',
+          borderRadius: 'radius.lg',
+          gap: 'space.md',
+        },
+        children: [
+          { type: 'Text', props: { content: 'On paper', variant: 'h3' } },
+          { type: 'Text', props: { content: 'A surface you fill.', variant: 'body' } },
+        ],
+      },
+    },
+  },
+  {
+    // This ADR — Stepper (component container) of Steps in both orientations + every status. Web-only.
+    name: 'stepper-horizontal',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Stepper',
+        props: { orientation: 'horizontal' },
+        children: [
+          { type: 'Step', props: { label: 'Account', status: 'complete' } },
+          { type: 'Step', props: { label: 'Profile', status: 'current' } },
+          { type: 'Step', props: { label: 'Done', status: 'upcoming' } },
+        ],
+      },
+    },
+  },
+  {
+    name: 'stepper-vertical',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Stepper',
+        props: { orientation: 'vertical' },
+        children: [
+          { type: 'Step', props: { label: 'Account', status: 'complete' } },
+          { type: 'Step', props: { label: 'Profile', status: 'current' } },
+        ],
+      },
+    },
+  },
+  {
+    // This ADR — ToolBar (component container) of ToolButtons: labeled AND icon-only (cleared label).
+    // Web-only. Locks the <div role="toolbar"> + <button><svg>... export markup.
+    name: 'toolbar',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'ToolBar',
+        props: { label: 'Formatting' },
+        style: { background: 'color.surface', padding: 'space.sm', gap: 'space.sm' },
+        children: [
+          { type: 'ToolButton', props: { icon: 'undo', label: 'Undo' } },
+          { type: 'ToolButton', props: { icon: 'image', label: '' } },
+        ],
+      },
+    },
+  },
+  {
+    // This ADR — MenuBar (component container) reusing the NavLink slot leaf. Web-only. Locks the
+    // <nav><ul role="menubar"><li role="none"> application-bar markup (distinct from TopNav).
+    name: 'menubar',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'MenuBar',
+        style: { background: 'color.surface', padding: 'space.sm' },
+        children: [
+          { type: 'NavLink', props: { label: 'File', href: '#', active: true } },
+          { type: 'NavLink', props: { label: 'Edit', href: '#' } },
+        ],
+      },
+    },
+  },
+  {
+    // ADR-0021 — Pagination: a <nav aria-label="Pagination"><ul> of boxed page links, reusing the NavLink
+    // slot leaf (the current page carries aria-current). Web-only (a page nav has no MJML equivalent).
+    name: 'pagination',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Pagination',
+        children: [
+          { type: 'NavLink', props: { label: 'Prev', href: '#' } },
+          { type: 'NavLink', props: { label: '1', href: '#' } },
+          { type: 'NavLink', props: { label: '2', href: '#', active: true } },
+          { type: 'NavLink', props: { label: 'Next', href: '#' } },
+        ],
+      },
+    },
+  },
+  {
+    // This ADR — Spacer: a flexible flex:1 gap pushing siblings apart. Web-only (flex has no email model).
+    name: 'spacer',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Row',
+        children: [
+          { type: 'Button', props: { content: 'Left', variant: 'primary' } },
+          { type: 'Spacer' },
+          { type: 'Button', props: { content: 'Right', variant: 'secondary' } },
         ],
       },
     },

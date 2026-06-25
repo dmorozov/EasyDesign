@@ -5,10 +5,13 @@ import { type Emitter, walkNode } from '../ir/walk';
 
 import { AppShell } from './AppShell';
 import { Button } from './Button';
+import { DataTable, TableRow } from './DataTable';
 import { layoutElement } from './layoutElement';
-import { AppBar, Breadcrumb, NavLink, SideNav, TopNav } from './Nav';
-import { Image, Text } from './primitives';
+import { AppBar, Breadcrumb, MenuBar, NavLink, Pagination, SideNav, TopNav } from './Nav';
+import { Divider, Image, Spacer, Text } from './primitives';
 import { Radio, RadioGroup } from './RadioGroup';
+import { Step, Stepper } from './Stepper';
+import { ToolBar, ToolButton } from './ToolBar';
 
 /**
  * The canvas runtime — render IR as live React-Aria elements (ADR-0001/0005). It
@@ -75,6 +78,51 @@ const canvasEmitter: Emitter<ReactElement, void> = {
         ))}
       </Breadcrumb>
     ),
+    MenuBar: (node, children) => (
+      <MenuBar style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </MenuBar>
+    ),
+    Stepper: (node, children) => (
+      <Stepper orientation={node.props.orientation} style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </Stepper>
+    ),
+    ToolBar: (node, children) => (
+      <ToolBar label={node.props.label} style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </ToolBar>
+    ),
+    // DataTable → a real <table>; the emitter (holding the IR) partitions the rendered rows into
+    // thead/tbody by their `header` flag (ADR-0021). Canvas markup == exported markup.
+    DataTable: (node, children) => (
+      <DataTable
+        caption={node.props.caption}
+        style={node.style}
+        headerRows={children.filter((_, i) => node.children[i]?.props.header)}
+        bodyRows={children.filter((_, i) => !node.children[i]?.props.header)}
+      />
+    ),
+    TableRow: (node, children) => (
+      <TableRow header={node.props.header}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </TableRow>
+    ),
+    Pagination: (node, children) => (
+      <Pagination style={node.style}>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </Pagination>
+    ),
   },
   leaf: {
     Text: (node) => (
@@ -90,6 +138,12 @@ const canvasEmitter: Emitter<ReactElement, void> = {
         {node.props.label}
       </NavLink>
     ),
+    Step: (node) => <Step status={node.props.status} label={node.props.label} />,
+    ToolButton: (node) => <ToolButton icon={node.props.icon} label={node.props.label} />,
+    Divider: () => <Divider />,
+    Spacer: () => <Spacer />,
+    // TableCell → just its text; the parent TableRow wraps it in <th>/<td> (ADR-0021).
+    TableCell: (node) => <>{node.props.content}</>,
   },
   descend() {
     /* void context: the canvas threads no per-node state */

@@ -21,9 +21,10 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
     }
   });
 
-  it('email-unsafe = Grid + the interactive RadioGroup/Radio + the web-only AppShell/Region + nav chrome (ADR-0006/0016/0017/0019)', () => {
+  it('email-unsafe = Grid + the interactive RadioGroup/Radio + the web-only AppShell/Region + nav chrome + the common design components + Pagination; Divider AND the Data Table stay email-SAFE (ADR-0006/0016/0017/0019/0020/0021)', () => {
     const unsafe = new Set<Node['type']>([
       'Grid',
+      'Paper', // a nested surface can't flatten to MJML (like Grid)
       'RadioGroup',
       'Radio',
       'AppShell',
@@ -33,6 +34,15 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
       'SideNav',
       'Breadcrumb',
       'NavLink',
+      'MenuBar',
+      'Stepper',
+      'Step',
+      'ToolBar',
+      'ToolButton',
+      'Spacer', // flex has no email equivalent
+      'Pagination', // a page nav has no email equivalent (web-only, ADR-0021)
+      // NB: Divider (→ mj-divider) AND the Data Table (DataTable/TableRow/TableCell → mj-table) are
+      // email-SAFE — the Components that reach all four targets.
     ]);
     for (const type of TYPES) {
       expect(DESCRIPTORS[type].emailSafe).toBe(!unsafe.has(type));
@@ -110,6 +120,7 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'stack',
       'row',
       'grid',
+      'paper',
       'app-shell',
       'app-holy-grail',
       'app-sidebar-main',
@@ -117,6 +128,10 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'topnav',
       'sidenav',
       'breadcrumb',
+      'menubar',
+      'stepper',
+      'stepper-vertical',
+      'toolbar',
       'heading',
       'text',
       'button-primary',
@@ -125,6 +140,14 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'radiogroup',
       'radio',
       'navlink',
+      'step',
+      'toolbutton',
+      'datatable',
+      'table-row',
+      'table-row-header',
+      'pagination',
+      'divider',
+      'spacer',
     ]);
   });
   it('every entry carries its underlying node type (read by the drop validator, RP-10)', () => {
@@ -171,6 +194,50 @@ describe('canContain — the allowed-children rule (RP-10)', () => {
     expect(canContain('AppBar', 'Button')).toBe(true);
     expect(canContain('AppBar', 'NavLink')).toBe(false); // a bare NavLink still belongs in a nav menu
     expect(canContain('AppBar', 'Region')).toBe(false);
+  });
+  it('a MenuBar reuses the NavLink slot leaf (this ADR)', () => {
+    expect(canContain('MenuBar', 'NavLink')).toBe(true);
+    expect(canContain('MenuBar', 'Button')).toBe(false); // a menu bar holds ONLY links
+  });
+  it('the new slot rules: a Step goes ONLY in a Stepper, a ToolButton ONLY in a ToolBar (this ADR)', () => {
+    expect(canContain('Stepper', 'Step')).toBe(true);
+    expect(canContain('Stepper', 'Button')).toBe(false);
+    expect(canContain('ToolBar', 'ToolButton')).toBe(true);
+    expect(canContain('ToolBar', 'Button')).toBe(false); // the ToolBar's slot is ToolButton, not Button
+    expect(canContain('Stack', 'Step')).toBe(false); // Step/ToolButton are slot-restricted
+    expect(canContain('Stack', 'ToolButton')).toBe(false);
+    expect(RESTRICTED_CHILD_TYPES.has('Step')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('ToolButton')).toBe(true);
+  });
+  it('the Data Table slot rules + Pagination reuse NavLink (ADR-0021)', () => {
+    // The three-level compound: DataTable → TableRow → TableCell, each level its own slot.
+    expect(canContain('DataTable', 'TableRow')).toBe(true);
+    expect(canContain('DataTable', 'TableCell')).toBe(false); // a cell goes in a row, not the table
+    expect(canContain('DataTable', 'Text')).toBe(false);
+    expect(canContain('TableRow', 'TableCell')).toBe(true);
+    expect(canContain('TableRow', 'TableRow')).toBe(false);
+    // Pagination reuses the NavLink slot leaf (like MenuBar).
+    expect(canContain('Pagination', 'NavLink')).toBe(true);
+    expect(canContain('Pagination', 'Button')).toBe(false);
+    // TableRow/TableCell are slot-restricted; a DataTable/Pagination is a free (open-droppable) Component.
+    expect(canContain('Stack', 'TableRow')).toBe(false);
+    expect(canContain('Stack', 'TableCell')).toBe(false);
+    expect(canContain('Stack', 'DataTable')).toBe(true);
+    expect(canContain('Stack', 'Pagination')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('TableRow')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('TableCell')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('DataTable')).toBe(false);
+  });
+  it('Paper is an OPEN surface container; Divider/Spacer are unrestricted display-only leaves (this ADR)', () => {
+    expect(canContain('Paper', 'Text')).toBe(true);
+    expect(canContain('Paper', 'Stack')).toBe(true);
+    expect(canContain('Paper', 'Radio')).toBe(false); // still rejects slot-restricted children
+    // Divider/Spacer drop into any open container, and are NOT slot-restricted.
+    expect(canContain('Stack', 'Divider')).toBe(true);
+    expect(canContain('Paper', 'Spacer')).toBe(true);
+    expect(canContain('ToolBar', 'Divider')).toBe(false); // a constrained parent still admits only its slot
+    expect(RESTRICTED_CHILD_TYPES.has('Divider')).toBe(false);
+    expect(RESTRICTED_CHILD_TYPES.has('Spacer')).toBe(false);
   });
 });
 

@@ -7,6 +7,26 @@ export default function Card(): React.ReactElement {
       <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" style={{ display: 'block', width: '100%', maxWidth: '560px', height: 'auto', borderRadius: 'var(--radius-lg)' }} />
       <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-2xl)', lineHeight: 'var(--font-line-height-tight)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-bold)' }}>Welcome aboard</h2>
       <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', lineHeight: 'var(--font-line-height-normal)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-regular)' }}>Your account is ready. Start building your first design in minutes.</p>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', color: 'var(--color-text)' }}>
+        <caption style={{ textAlign: 'left', fontFamily: 'var(--font-family)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)', paddingBottom: 'var(--space-sm)' }}>Your plan</caption>
+        <thead>
+          <tr>
+            <th scope="col" style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '2px solid var(--color-muted)', fontFamily: 'var(--font-family)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)' }}>Feature</th>
+            <th scope="col" style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '2px solid var(--color-muted)', fontFamily: 'var(--font-family)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)' }}>Included</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>Projects</td>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>Unlimited</td>
+          </tr>
+          <tr>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>Seats</td>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>5</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr style={{ border: 'none', borderTop: '1px solid var(--color-muted)', margin: 'var(--space-md) 0' }} />
       <div style={{ display: 'flex', flexDirection: 'row', gap: 'var(--space-md)' }}>
         <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Get started</a>
         <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Learn more</a>

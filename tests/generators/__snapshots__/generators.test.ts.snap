@@ -13,6 +13,26 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" style="display:block; width:100%; max-width:560px; height:auto; border-radius:var(--radius-lg)">
       <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Welcome aboard</h2>
       <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Your account is ready. Start building your first design in minutes.</p>
+      <table style="width:100%; border-collapse:collapse; font-family:var(--font-family); font-size:var(--font-size-base); color:var(--color-text)">
+        <caption style="text-align:left; font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text); padding-bottom:var(--space-sm)">Your plan</caption>
+        <thead>
+          <tr>
+            <th scope="col" style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:2px solid var(--color-muted); font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text)">Feature</th>
+            <th scope="col" style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:2px solid var(--color-muted); font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text)">Included</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Projects</td>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Unlimited</td>
+          </tr>
+          <tr>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Seats</td>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">5</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr style="border:none; border-top:1px solid var(--color-muted); margin:var(--space-md) 0">
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
         <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Get started</a>
         <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a>
@@ -24,7 +44,7 @@ export class CardComponent {}
 "
 `;
 
-exports[`generators — golden output on the sample (regression guard) > html 1`] = `"<div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); border-radius:var(--radius-lg); gap:var(--space-md)"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" style="display:block; width:100%; max-width:560px; height:auto; border-radius:var(--radius-lg)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Welcome aboard</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Your account is ready. Start building your first design in minutes.</p><div style="display:flex; flex-direction:row; gap:var(--space-md)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Get started</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a></div></div>"`;
+exports[`generators — golden output on the sample (regression guard) > html 1`] = `"<div style="display:flex; flex-direction:column; background:var(--color-surface); padding:var(--space-lg); border-radius:var(--radius-lg); gap:var(--space-md)"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" style="display:block; width:100%; max-width:560px; height:auto; border-radius:var(--radius-lg)"><h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Welcome aboard</h2><p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Your account is ready. Start building your first design in minutes.</p><table style="width:100%; border-collapse:collapse; font-family:var(--font-family); font-size:var(--font-size-base); color:var(--color-text)"><caption style="text-align:left; font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text); padding-bottom:var(--space-sm)">Your plan</caption><thead><tr><th scope="col" style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:2px solid var(--color-muted); font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text)">Feature</th><th scope="col" style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:2px solid var(--color-muted); font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text)">Included</th></tr></thead><tbody><tr><td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Projects</td><td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Unlimited</td></tr><tr><td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Seats</td><td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">5</td></tr></tbody></table><hr style="border:none; border-top:1px solid var(--color-muted); margin:var(--space-md) 0"><div style="display:flex; flex-direction:row; gap:var(--space-md)"><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Get started</a><a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a></div></div>"`;
 
 exports[`generators — golden output on the sample (regression guard) > mjml 1`] = `
 "<mjml>
@@ -39,6 +59,25 @@ exports[`generators — golden output on the sample (regression guard) > mjml 1`
         <mj-image src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" width="560px" border-radius="12px" padding="0" />
         <mj-text font-family="Helvetica, Arial, sans-serif" font-size="24px" line-height="30px" font-weight="700" color="#111827" padding="0">Welcome aboard</mj-text>
         <mj-text font-family="Helvetica, Arial, sans-serif" font-size="16px" line-height="24px" font-weight="400" color="#111827" padding="0">Your account is ready. Start building your first design in minutes.</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#ffffff" padding="0 24px 24px">
+      <mj-column>
+        <mj-table font-family="Helvetica, Arial, sans-serif" font-size="16px" color="#111827" padding="0">
+          <caption style="text-align:left;font-weight:600;color:#111827;padding-bottom:8px;">Your plan</caption>
+          <thead>
+            <tr><th scope="col" style="text-align:left;padding:8px 16px;border-bottom:2px solid #6b7280;color:#111827;font-weight:600;">Feature</th><th scope="col" style="text-align:left;padding:8px 16px;border-bottom:2px solid #6b7280;color:#111827;font-weight:600;">Included</th></tr>
+          </thead>
+          <tbody>
+            <tr><td style="text-align:left;padding:8px 16px;border-bottom:1px solid #6b7280;color:#111827;">Projects</td><td style="text-align:left;padding:8px 16px;border-bottom:1px solid #6b7280;color:#111827;">Unlimited</td></tr>
+            <tr><td style="text-align:left;padding:8px 16px;border-bottom:1px solid #6b7280;color:#111827;">Seats</td><td style="text-align:left;padding:8px 16px;border-bottom:1px solid #6b7280;color:#111827;">5</td></tr>
+          </tbody>
+        </mj-table>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#ffffff" padding="0 24px 24px">
+      <mj-column>
+        <mj-divider border-width="1px" border-color="#6b7280" padding="16px 0" />
       </mj-column>
     </mj-section>
     <mj-section background-color="#ffffff" padding="0 24px 24px">
@@ -64,6 +103,26 @@ export default function Card(): React.ReactElement {
       <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" style={{ display: 'block', width: '100%', maxWidth: '560px', height: 'auto', borderRadius: 'var(--radius-lg)' }} />
       <h2 style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-2xl)', lineHeight: 'var(--font-line-height-tight)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-bold)' }}>Welcome aboard</h2>
       <p style={{ margin: '0', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', lineHeight: 'var(--font-line-height-normal)', color: 'var(--color-text)', fontWeight: 'var(--font-weight-regular)' }}>Your account is ready. Start building your first design in minutes.</p>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', color: 'var(--color-text)' }}>
+        <caption style={{ textAlign: 'left', fontFamily: 'var(--font-family)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)', paddingBottom: 'var(--space-sm)' }}>Your plan</caption>
+        <thead>
+          <tr>
+            <th scope="col" style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '2px solid var(--color-muted)', fontFamily: 'var(--font-family)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)' }}>Feature</th>
+            <th scope="col" style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '2px solid var(--color-muted)', fontFamily: 'var(--font-family)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)' }}>Included</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>Projects</td>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>Unlimited</td>
+          </tr>
+          <tr>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>Seats</td>
+            <td style={{ textAlign: 'left', padding: 'var(--space-sm) var(--space-md)', borderBottom: '1px solid var(--color-muted)', color: 'var(--color-text)' }}>5</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr style={{ border: 'none', borderTop: '1px solid var(--color-muted)', margin: 'var(--space-md) 0' }} />
       <div style={{ display: 'flex', flexDirection: 'row', gap: 'var(--space-md)' }}>
         <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'var(--color-brand)', color: 'var(--color-on-brand)' }}>Get started</a>
         <a href="#" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', padding: 'var(--space-sm) var(--space-md)', borderRadius: 'var(--radius-lg)', fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-base)', fontWeight: 'var(--font-weight-semibold)', background: 'transparent', color: 'var(--color-brand)', border: '1px solid var(--color-brand)' }}>Learn more</a>

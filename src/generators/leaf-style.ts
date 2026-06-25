@@ -6,7 +6,13 @@
 // instead of three. The React targets (canvas / EditableNode) do NOT import this;
 // they delegate β to src/components (ADR-0005), so β has one home per side, not three.
 import { APPSHELL_MIN_HEIGHT, appShellTemplate, type RegionArea } from '../ir/appshell';
-import { type Align, type Justify, type NavLinkNode, type StyleMap } from '../ir/types';
+import {
+  type Align,
+  type Justify,
+  type NavLinkNode,
+  type StepStatus,
+  type StyleMap,
+} from '../ir/types';
 import {
   type Axis,
   type ButtonNode,
@@ -16,6 +22,8 @@ import {
 } from '../ir/walk';
 import { catalog, STYLE_KEY_CATEGORY } from '../theme/design-tokens';
 import { TEXT_STYLE_BINDING, type TextStyle } from '../theme/generated/typography';
+
+import { TOOL_ICON_LABEL, TOOLBAR_ICON_INNER } from './toolbar-icons';
 
 export interface Decl {
   readonly prop: string; // camelCase: 'borderRadius', 'flexDirection'
@@ -88,6 +96,15 @@ export function gridAreaDecl(area: RegionArea): Decl {
   return { prop: 'gridArea', value: area };
 }
 
+/** Collapse repeated props to a single, LAST-wins declaration (preserving order) — so a list reset
+ *  (`padding:0`/`margin:0`) followed by a token override from `containerDecls` yields one clean decl,
+ *  not a duplicate key (harmless in inline CSS, but a dup key in the React `style` object). */
+export function dedupeDecls(decls: Decl[]): Decl[] {
+  const lastIndex = new Map<string, number>();
+  decls.forEach((d, i) => lastIndex.set(d.prop, i));
+  return decls.filter((d, i) => lastIndex.get(d.prop) === i);
+}
+
 /** Token-bound container decls: the bound style keys (STYLE_KEYS) resolved by the Design-Token Model
  *  (D2). One home for which keys bind + the dot->var resolution (camelCase-correct). */
 export function containerDecls(style: StyleMap | undefined): Decl[] {
@@ -152,7 +169,7 @@ export function buttonDecls(node: ButtonNode): Decl[] {
 
 /** The <fieldset> wrapper for a RadioGroup: a borderless vertical stack of options + its token style. */
 export function radioGroupDecls(style: StyleMap | undefined): Decl[] {
-  return [
+  return dedupeDecls([
     { prop: 'display', value: 'flex' },
     { prop: 'flexDirection', value: 'column' },
     { prop: 'gap', value: catalog.resolveVar('space.sm') },
@@ -160,7 +177,7 @@ export function radioGroupDecls(style: StyleMap | undefined): Decl[] {
     { prop: 'margin', value: '0' },
     { prop: 'padding', value: '0' },
     ...containerDecls(style),
-  ];
+  ]);
 }
 
 /** The <legend> (the group's label). */
@@ -229,7 +246,7 @@ export function navLinkDecls(node: NavLinkNode): Decl[] {
 // Breadcrumb (ADR-0019): a horizontal <ol> of crumbs with a muted separator between each. The <ol> is
 // the styled element (token gap controls crumb spacing); the <nav> is a bare aria-label landmark.
 export function breadcrumbListDecls(style: StyleMap | undefined): Decl[] {
-  return [
+  return dedupeDecls([
     { prop: 'display', value: 'flex' },
     { prop: 'flexDirection', value: 'row' },
     { prop: 'alignItems', value: 'center' },
@@ -238,7 +255,7 @@ export function breadcrumbListDecls(style: StyleMap | undefined): Decl[] {
     { prop: 'margin', value: '0' },
     { prop: 'padding', value: '0' },
     ...containerDecls(style),
-  ];
+  ]);
 }
 
 /** One crumb (`<li>`): holds the link and (for all but the last) its trailing separator. */
@@ -269,4 +286,282 @@ export function imageDecls(node: ImageNode): Decl[] {
   }
   out.push({ prop: 'height', value: 'auto' }, { prop: 'borderRadius', value: 'var(--radius-lg)' });
   return out;
+}
+
+// Display-only leaves (this ADR) — the Capability-A exercise. β shared by the three string targets; the
+// canvas/editor keep their copy in src/components/primitives (ADR-0005).
+
+/** A horizontal rule (`<hr>`): a 1px muted line with vertical breathing room. */
+export function dividerDecls(): Decl[] {
+  return [
+    { prop: 'border', value: 'none' },
+    { prop: 'borderTop', value: '1px solid var(--color-muted)' },
+    { prop: 'margin', value: 'var(--space-md) 0' },
+  ];
+}
+
+/** A flexible spacer: grows to push siblings apart along the parent's main axis (Chakra-style `flex:1`),
+ *  with a minimum so it stays visible/selectable in an auto-sized container. */
+export function spacerDecls(): Decl[] {
+  return [
+    { prop: 'flex', value: '1 1 auto' },
+    { prop: 'minWidth', value: 'var(--space-md)' },
+    { prop: 'minHeight', value: 'var(--space-md)' },
+  ];
+}
+
+// Stepper / Step (this ADR) β — a semantic <ol> of steps with a status badge (a check when complete, a
+// brand ring when current, a muted ring when upcoming) and connector lines between. orientation lays the
+// steps in a row or column. Shared by the three string targets; the canvas keeps its copy in components.
+
+/** The <ol> container: a flex row (horizontal) or column (vertical) of steps + connectors. */
+export function stepperListDecls(
+  orientation: 'horizontal' | 'vertical',
+  style: StyleMap | undefined,
+): Decl[] {
+  return dedupeDecls([
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: orientation === 'horizontal' ? 'row' : 'column' },
+    { prop: 'alignItems', value: orientation === 'horizontal' ? 'center' : 'stretch' },
+    { prop: 'listStyle', value: 'none' },
+    { prop: 'margin', value: '0' },
+    { prop: 'padding', value: '0' },
+    ...containerDecls(style),
+  ]);
+}
+
+/** One step's <li> wrapper (the Step content sits inside; flex:0 so connectors take the slack). */
+export function stepItemDecls(): Decl[] {
+  return [
+    { prop: 'listStyle', value: 'none' },
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'flex', value: '0 0 auto' },
+  ];
+}
+
+/** The Step's inner [badge, label] flex group (rendered by the Step leaf itself). */
+export function stepDecls(): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'gap', value: 'var(--space-sm)' },
+  ];
+}
+
+/** The round status badge: a check on `complete` (brand fill), a brand ring on `current`, a muted ring
+ *  on `upcoming`. */
+export function stepBadgeDecls(status: StepStatus): Decl[] {
+  const base: Decl[] = [
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'justifyContent', value: 'center' },
+    { prop: 'width', value: '24px' },
+    { prop: 'height', value: '24px' },
+    { prop: 'borderRadius', value: '50%' },
+    { prop: 'flex', value: '0 0 auto' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.sm') },
+    { prop: 'fontWeight', value: catalog.resolveVar('font.weight.semibold') },
+  ];
+  if (status === 'complete') {
+    return [
+      ...base,
+      { prop: 'background', value: 'var(--color-brand)' },
+      { prop: 'color', value: 'var(--color-on-brand)' },
+    ];
+  }
+  const ring = status === 'current' ? 'var(--color-brand)' : 'var(--color-muted)';
+  return [
+    ...base,
+    { prop: 'background', value: 'transparent' },
+    { prop: 'color', value: ring },
+    { prop: 'border', value: `2px solid ${ring}` },
+  ];
+}
+
+/** The step label: muted when upcoming, semibold when current. */
+export function stepLabelDecls(status: StepStatus): Decl[] {
+  return [
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.sm') },
+    { prop: 'color', value: status === 'upcoming' ? 'var(--color-muted)' : 'var(--color-text)' },
+    {
+      prop: 'fontWeight',
+      value: catalog.resolveVar(
+        status === 'current' ? 'font.weight.semibold' : 'font.weight.medium',
+      ),
+    },
+  ];
+}
+
+/** The line drawn between two steps — horizontal (grows to fill) or a short vertical rail. */
+export function stepperConnectorDecls(orientation: 'horizontal' | 'vertical'): Decl[] {
+  return orientation === 'horizontal'
+    ? [
+        { prop: 'flex', value: '1 1 auto' },
+        { prop: 'height', value: '2px' },
+        { prop: 'minWidth', value: 'var(--space-lg)' },
+        { prop: 'background', value: 'var(--color-muted)' },
+        { prop: 'alignSelf', value: 'center' },
+      ]
+    : [
+        { prop: 'width', value: '2px' },
+        { prop: 'minHeight', value: 'var(--space-md)' },
+        { prop: 'marginLeft', value: '11px' }, // centers the rail under the 24px badge
+        { prop: 'background', value: 'var(--color-muted)' },
+      ];
+}
+
+// ToolBar / ToolButton (this ADR) β — a <div role="toolbar"> of icon/label <button>s. Shared by the
+// three string targets; the canvas keeps its copy in components, and the icon glyph in toolbar-icons.
+
+/** The toolbar bar: a wrapping flex row of buttons, on the node's token surface. */
+export function toolBarDecls(style: StyleMap | undefined): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'row' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'flexWrap', value: 'wrap' },
+    ...containerDecls(style),
+  ];
+}
+
+/** One tool button: an icon, plus the label text when present (the renderer omits an empty label). */
+export function toolButtonDecls(): Decl[] {
+  return [
+    { prop: 'display', value: 'inline-flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'gap', value: 'var(--space-sm)' },
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+    { prop: 'border', value: '1px solid transparent' },
+    { prop: 'borderRadius', value: 'var(--radius-lg)' },
+    { prop: 'background', value: 'transparent' },
+    { prop: 'color', value: 'var(--color-text)' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.sm') },
+    { prop: 'fontWeight', value: catalog.resolveVar('font.weight.medium') },
+    { prop: 'lineHeight', value: '1' },
+    { prop: 'cursor', value: 'pointer' },
+  ];
+}
+
+/** The inline-SVG presentation, kept as `style` (not SVG attributes) so ONE inner-markup source serves
+ *  HTML's string style and React's object style alike (see toolbar-icons.ts). 16px is set as attributes. */
+export const ICON_SVG_STYLE: Decl[] = [
+  { prop: 'fill', value: 'none' },
+  { prop: 'stroke', value: 'currentColor' },
+  { prop: 'strokeWidth', value: '2' },
+  { prop: 'strokeLinecap', value: 'round' },
+  { prop: 'strokeLinejoin', value: 'round' },
+];
+export { TOOL_ICON_LABEL, TOOLBAR_ICON_INNER };
+
+// MenuBar (this ADR) β — a <nav><ul role="menubar"> of links, styled as a full application bar. Shared
+// by the three string targets; the canvas keeps its copy in components/Nav. Reuses the NavLink leaf, so
+// the link markup is navLinkDecls; this owns the bar (the <ul>) and the menu item (the <li>).
+
+/** The menu bar (`<ul role="menubar">`): a wrapping flex row of items on the node's token surface. */
+export function menuBarListDecls(style: StyleMap | undefined): Decl[] {
+  return dedupeDecls([
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'row' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'flexWrap', value: 'wrap' },
+    { prop: 'listStyle', value: 'none' },
+    { prop: 'margin', value: '0' },
+    { prop: 'padding', value: '0' },
+    ...containerDecls(style),
+  ]);
+}
+
+/** One menu item (`<li>`): padding around the link gives the bar item its hit area. */
+export function menuItemDecls(): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+  ];
+}
+
+// DataTable / TableRow / TableCell (ADR-0021) β — a semantic <table> (caption + thead/tbody) of plain-
+// text cells. Shared by the three string targets; the canvas keeps its copy in components/DataTable, and
+// MJML resolves these same intentions to literals inline (mj-table). The ROW owns the th/td decision, so
+// there is one cell-style home per cell kind (header vs body).
+
+/** The <table> element: full width, collapsed borders, on the node's token type/colour. DataTable's
+ *  styleKeys are [] today, so `containerDecls` is a no-op — kept for when surface styling is exposed. */
+export function dataTableDecls(style: StyleMap | undefined): Decl[] {
+  return [
+    { prop: 'width', value: '100%' },
+    { prop: 'borderCollapse', value: 'collapse' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
+    { prop: 'color', value: 'var(--color-text)' },
+    ...containerDecls(style),
+  ];
+}
+
+/** The <caption> (the table's accessible title): left-aligned, semibold, with breathing room below. */
+export function tableCaptionDecls(): Decl[] {
+  return [
+    { prop: 'textAlign', value: 'left' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontWeight', value: catalog.resolveVar('font.weight.semibold') },
+    { prop: 'color', value: 'var(--color-text)' },
+    { prop: 'paddingBottom', value: 'var(--space-sm)' },
+  ];
+}
+
+/** A header cell (`<th scope="col">`): left-aligned, semibold, with a heavier bottom rule. */
+export function tableHeaderCellDecls(): Decl[] {
+  return [
+    { prop: 'textAlign', value: 'left' },
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+    { prop: 'borderBottom', value: '2px solid var(--color-muted)' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontWeight', value: catalog.resolveVar('font.weight.semibold') },
+    { prop: 'color', value: 'var(--color-text)' },
+  ];
+}
+
+/** A body cell (`<td>`): left-aligned, a light bottom rule between rows. */
+export function tableCellDecls(): Decl[] {
+  return [
+    { prop: 'textAlign', value: 'left' },
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+    { prop: 'borderBottom', value: '1px solid var(--color-muted)' },
+    { prop: 'color', value: 'var(--color-text)' },
+  ];
+}
+
+// Pagination (ADR-0021) β — a <nav aria-label="Pagination"><ul> of boxed page links. Reuses the NavLink
+// leaf for the `<a aria-current>`, so this owns the bar (the <ul>) and the boxed page item (the <li>).
+// Shared by the three string targets; the canvas keeps its copy in components/Nav.
+
+/** The pagination bar (`<ul>`): a wrapping flex row of page items on the node's token surface. */
+export function paginationListDecls(style: StyleMap | undefined): Decl[] {
+  return dedupeDecls([
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'row' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'flexWrap', value: 'wrap' },
+    { prop: 'gap', value: catalog.resolveVar('space.sm') },
+    { prop: 'listStyle', value: 'none' },
+    { prop: 'margin', value: '0' },
+    { prop: 'padding', value: '0' },
+    ...containerDecls(style),
+  ]);
+}
+
+/** One page (`<li>`): a boxed cell so each NavLink reads as a page button (a token border + radius). */
+export function paginationItemDecls(): Decl[] {
+  return [
+    { prop: 'display', value: 'flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'justifyContent', value: 'center' },
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+    { prop: 'border', value: '1px solid var(--color-muted)' },
+    { prop: 'borderRadius', value: 'var(--radius-lg)' },
+  ];
 }

@@ -10,12 +10,20 @@ import { type NodePath } from './paths';
 export function nodeLabel(node: Node, path: NodePath): string {
   const where = path.length === 0 ? 'root ' : '';
   const label = DESCRIPTORS[node.type].label;
-  if (node.type === 'Text' || node.type === 'Button') {
+  // Text/Button carry `content`; a TableCell holds the same (its plain text) — ADR-0021.
+  if (node.type === 'Text' || node.type === 'Button' || node.type === 'TableCell') {
     const content = node.props.content.trim();
     return content ? `${where}${label}: ${content}` : `${where}${label}`;
   }
   if (node.type === 'Image') return `${where}${label}: ${node.props.alt || 'image'}`;
   if (node.type === 'Radio') return `${where}${label}: ${node.props.label}`;
   if (node.type === 'Region') return `${where}${label}: ${node.props.area}`;
+  // A Table row reads as "header" or a plain body row, so the tree distinguishes the two (ADR-0021).
+  if (node.type === 'TableRow')
+    return node.props.header ? `${where}${label}: header` : `${where}${label}`;
+  // The labelled slot/leaf types surface their label as the distinguishing detail (this ADR + ADR-0019).
+  if (node.type === 'NavLink' || node.type === 'Step' || node.type === 'ToolButton') {
+    return node.props.label ? `${where}${label}: ${node.props.label}` : `${where}${label}`;
+  }
   return `${where}${label}`;
 }

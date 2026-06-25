@@ -29,6 +29,41 @@ export const sampleCard: Frame = {
           variant: 'body',
         },
       },
+      // A Data Table (ADR-0021) INSIDE the email card — proving the all-four-target path: it exports to
+      // MJML's native <mj-table> (cells are plain text, exactly what mj-table accepts). The 2nd email-safe
+      // Component after Divider.
+      {
+        type: 'DataTable',
+        props: { caption: 'Your plan' },
+        children: [
+          {
+            type: 'TableRow',
+            props: { header: true },
+            children: [
+              { type: 'TableCell', props: { content: 'Feature' } },
+              { type: 'TableCell', props: { content: 'Included' } },
+            ],
+          },
+          {
+            type: 'TableRow',
+            props: { header: false },
+            children: [
+              { type: 'TableCell', props: { content: 'Projects' } },
+              { type: 'TableCell', props: { content: 'Unlimited' } },
+            ],
+          },
+          {
+            type: 'TableRow',
+            props: { header: false },
+            children: [
+              { type: 'TableCell', props: { content: 'Seats' } },
+              { type: 'TableCell', props: { content: '5' } },
+            ],
+          },
+        ],
+      },
+      // The email-SAFE display-only leaf (this ADR): a rule before the CTA, exported to <mj-divider>.
+      { type: 'Divider' },
       {
         type: 'Row',
         style: { gap: 'space.md' },
@@ -80,6 +115,18 @@ export const sampleAppLayout: Frame = {
               { type: 'Button', props: { content: 'Log out', variant: 'secondary' } },
             ],
           },
+          // A MenuBar (this ADR): a semantic role="menubar" application menu, distinct from the AppBar's
+          // TopNav site links.
+          {
+            type: 'MenuBar',
+            style: { background: 'color.surface', padding: 'space.sm' },
+            children: [
+              { type: 'NavLink', props: { label: 'File', href: '#', active: true } },
+              { type: 'NavLink', props: { label: 'Edit', href: '#' } },
+              { type: 'NavLink', props: { label: 'View', href: '#' } },
+              { type: 'NavLink', props: { label: 'Help', href: '#' } },
+            ],
+          },
         ],
       },
       {
@@ -127,6 +174,101 @@ export const sampleAppLayout: Frame = {
             children: [
               { type: 'Button', props: { content: 'New task', variant: 'primary' } },
               { type: 'Button', props: { content: 'Invite', variant: 'secondary' } },
+            ],
+          },
+          // The common design components (this ADR): a ToolBar of icon/label buttons, a Stepper, a
+          // Divider rule, and a Paper surface whose Row uses a Spacer to push the action to the right.
+          {
+            type: 'ToolBar',
+            props: { label: 'Formatting' },
+            style: {
+              background: 'color.page',
+              padding: 'space.sm',
+              borderRadius: 'radius.lg',
+              gap: 'space.sm',
+            },
+            children: [
+              { type: 'ToolButton', props: { icon: 'undo', label: 'Undo' } },
+              { type: 'ToolButton', props: { icon: 'redo', label: 'Redo' } },
+              { type: 'ToolButton', props: { icon: 'image', label: '' } },
+              { type: 'ToolButton', props: { icon: 'code', label: '' } },
+            ],
+          },
+          {
+            type: 'Stepper',
+            props: { orientation: 'horizontal' },
+            children: [
+              { type: 'Step', props: { label: 'Account', status: 'complete' } },
+              { type: 'Step', props: { label: 'Profile', status: 'current' } },
+              { type: 'Step', props: { label: 'Done', status: 'upcoming' } },
+            ],
+          },
+          { type: 'Divider' },
+          {
+            type: 'Paper',
+            style: {
+              background: 'color.page',
+              padding: 'space.lg',
+              borderRadius: 'radius.lg',
+              gap: 'space.md',
+            },
+            children: [
+              { type: 'Text', props: { content: 'Surface panel', variant: 'h3' } },
+              {
+                type: 'Row',
+                props: { align: 'center' },
+                style: { gap: 'space.md' },
+                children: [
+                  { type: 'Text', props: { content: 'Pushed apart by a Spacer', variant: 'body' } },
+                  { type: 'Spacer' },
+                  { type: 'Button', props: { content: 'Action', variant: 'secondary' } },
+                ],
+              },
+            ],
+          },
+          // The complex compound components (ADR-0021): a Data Table (caption + a header row + body rows)
+          // and a Pagination bar beneath it.
+          {
+            type: 'DataTable',
+            props: { caption: 'Team members' },
+            children: [
+              {
+                type: 'TableRow',
+                props: { header: true },
+                children: [
+                  { type: 'TableCell', props: { content: 'Name' } },
+                  { type: 'TableCell', props: { content: 'Role' } },
+                  { type: 'TableCell', props: { content: 'Status' } },
+                ],
+              },
+              {
+                type: 'TableRow',
+                props: { header: false },
+                children: [
+                  { type: 'TableCell', props: { content: 'Ada Lovelace' } },
+                  { type: 'TableCell', props: { content: 'Engineer' } },
+                  { type: 'TableCell', props: { content: 'Active' } },
+                ],
+              },
+              {
+                type: 'TableRow',
+                props: { header: false },
+                children: [
+                  { type: 'TableCell', props: { content: 'Alan Turing' } },
+                  { type: 'TableCell', props: { content: 'Researcher' } },
+                  { type: 'TableCell', props: { content: 'Active' } },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'Pagination',
+            children: [
+              { type: 'NavLink', props: { label: '‹ Prev', href: '#' } },
+              { type: 'NavLink', props: { label: '1', href: '#' } },
+              { type: 'NavLink', props: { label: '2', href: '#', active: true } },
+              { type: 'NavLink', props: { label: '3', href: '#' } },
+              { type: 'NavLink', props: { label: 'Next ›', href: '#' } },
             ],
           },
         ],

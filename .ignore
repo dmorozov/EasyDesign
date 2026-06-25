@@ -1,25 +1,30 @@
 TODO:
 
-- Please move all tests in the separate tests folder (preserve the folders). It is bloating the production source code
-- Migrate to pnpm package manager, upgrade Vite to the latest version. Check if we can upgrade Typescript to the latest version.
-- add a display-only Component (Divider/Spacer) to exercise Capability A end-to-end
-- Select Frame when click grep in title, not just a title
-- RP-12 (IR migration, bump-and-reset)
-
 Layout components
 
-- App Bar
-- Accordion
-- Paper
-- Breadcrumbs
+Please plan and implement more complex compound components:
+
+- Data Table
 - Pagination
+
 - Tabs
-- Stepper (vertical, horizontal)
-- Menu Bar
-- Separator
+- Accordion
 - Drawler
 
-Note: check what layout components make sense for the Web and which are make sense for Email Frames.
+- Document all available components in a separate document as cross reference table with information on how that built and what export target is supported
+- Select Frame when click grep in title, not just a title
+- RP-12 (IR migration, bump-and-reset)
+- NavLink need to have color INthe inspector. To show active / not active. Right now in the Breadcrumb component the "Current page" link color seems to be hardcoded.
+
+I have tested Data Table component. Please evaluate the possibility to have two separate components: "SimpleTable" and "Table". Rename existing implementation to the "SimpleTable" and it will be available for both Web and Email. Implement new "Table" component based on React Aria's Table and make it available for the Web Frames only.
+Make sure we will be able to render new React Aria's Table based component to all Web targets (React, Angular, Html)
+
+Table Component:
+
+- MJML has a real mj-table — it accepts plain <tr>/<th>/<td> HTML with inline styles (it's an "ending tag", no nested MJML). So a Data Table can export to email, making it a candidate
+  second all-four-target component (after Divider) — provided cells stay plain.
+- React Aria's Table is a heavyweight stateful collection component (Table/TableHeader/Column/TableBody/Row/Cell, selection/keyboard/drag) — powerful, but SSR-risky and divergent from the
+  static markup the generators emit.
 
 ## Bric documents design system
 

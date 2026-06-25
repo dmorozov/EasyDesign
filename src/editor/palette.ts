@@ -1,7 +1,7 @@
 import { type IconName } from '../design-system';
 import { type Node } from '../ir/types';
 
-import { DESCRIPTORS, makeAppShell } from './descriptors';
+import { DESCRIPTORS, makeAppShell, makeStepper } from './descriptors';
 
 /** A draggable Component Palette entry. `create()` mints a fresh IR node. */
 export interface PaletteItem {
@@ -34,6 +34,8 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
   'Stack',
   'Row',
   { type: 'Grid', id: 'grid', label: 'Grid (2-col)' },
+  // A surface container (this ADR) — a pre-styled Stack the user fills.
+  'Paper',
   // ADR-0017: the application-shell layout. The default tile seeds header+main+footer (descriptor
   // create); the presets are just different region sets via makeAppShell. Region itself is NOT a tile.
   { type: 'AppShell', id: 'app-shell', label: 'App layout' },
@@ -54,6 +56,17 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
   'TopNav',
   'SideNav',
   'Breadcrumb',
+  // The common design components (this ADR). MenuBar/ToolBar seed their items; the Stepper ships as two
+  // orientation presets over one seed (makeStepper) — "(vertical, horizontal)" as palette variants.
+  'MenuBar',
+  { type: 'Stepper', id: 'stepper', label: 'Stepper' },
+  {
+    type: 'Stepper',
+    id: 'stepper-vertical',
+    label: 'Stepper (vertical)',
+    create: () => makeStepper('vertical'),
+  },
+  'ToolBar',
   {
     type: 'Text',
     id: 'heading',
@@ -79,9 +92,37 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
   // (the drop validator rejects it elsewhere) — the proof of the allowed-children rule.
   'RadioGroup',
   'Radio',
-  // ADR-0019: NavLink is draggable but lands ONLY in a nav Component (TopNav/SideNav/Breadcrumb) — the
-  // same allowed-children rule as Radio→RadioGroup, the drop validator rejects it anywhere else.
+  // ADR-0019: NavLink is draggable but lands ONLY in a nav Component (TopNav/SideNav/Breadcrumb/MenuBar) —
+  // the same allowed-children rule as Radio→RadioGroup, the drop validator rejects it anywhere else.
   'NavLink',
+  // Slot leaves (this ADR): a Step lands ONLY in a Stepper, a ToolButton ONLY in a ToolBar — the same
+  // allowed-children rule as Radio/NavLink.
+  'Step',
+  'ToolButton',
+  // The complex compound components (ADR-0021). DataTable seeds a header + two body rows; its TableRow
+  // lands ONLY in a DataTable (allowed-children rule) and ships as a body + a header preset. There is NO
+  // TableCell tile: a TableRow is not a canvas drop target, so a cell tile would be undroppable — cells
+  // are seeded with each row and edited via the Structure tree + Inspector. Pagination reuses NavLink.
+  'DataTable',
+  { type: 'TableRow', id: 'table-row', label: 'Table row' },
+  {
+    type: 'TableRow',
+    id: 'table-row-header',
+    label: 'Table row (header)',
+    create: () => ({
+      type: 'TableRow',
+      props: { header: true },
+      children: [
+        { type: 'TableCell', props: { content: 'Heading' } },
+        { type: 'TableCell', props: { content: 'Heading' } },
+        { type: 'TableCell', props: { content: 'Heading' } },
+      ],
+    }),
+  },
+  'Pagination',
+  // Display-only leaves (this ADR): droppable into any open container.
+  'Divider',
+  'Spacer',
 ];
 
 function project(spec: PaletteSpec): PaletteItem {

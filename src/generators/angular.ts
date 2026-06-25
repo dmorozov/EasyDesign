@@ -13,17 +13,38 @@ import {
   breadcrumbSeparatorDecls,
   buttonDecls,
   containerDecls,
+  dataTableDecls,
   type Decl,
+  dividerDecls,
   gridAreaDecl,
+  ICON_SVG_STYLE,
   imageDecls,
   legendDecls,
+  menuBarListDecls,
+  menuItemDecls,
   navDecls,
   navLinkDecls,
+  paginationItemDecls,
+  paginationListDecls,
   radioDecls,
   radioGroupDecls,
+  spacerDecls,
+  stepBadgeDecls,
+  stepDecls,
+  stepItemDecls,
+  stepLabelDecls,
+  stepperConnectorDecls,
+  stepperListDecls,
   structuralDecls,
+  tableCaptionDecls,
+  tableCellDecls,
+  tableHeaderCellDecls,
   textDecls,
   textTag,
+  TOOL_ICON_LABEL,
+  TOOLBAR_ICON_INNER,
+  toolBarDecls,
+  toolButtonDecls,
 } from './leaf-style';
 
 function dash(prop: string): string {
@@ -107,6 +128,73 @@ const angularEmitter: Emitter<string, void> = {
       const ol = `<ol style="${inlineStyle(breadcrumbListDecls(node.style))}">\n${indent(items, '  ')}\n</ol>`;
       return `<nav aria-label="Breadcrumb">\n${indent(ol, '  ')}\n</nav>`;
     },
+    // A semantic navigation bar (this ADR), NOT role="menubar" — see html.ts MenuBar for why.
+    MenuBar(node, children) {
+      const items = children
+        .map(
+          (rendered) =>
+            `<li style="${inlineStyle(menuItemDecls())}">\n${indent(rendered, '  ')}\n</li>`,
+        )
+        .join('\n');
+      const ul = `<ul style="${inlineStyle(menuBarListDecls(node.style))}">\n${indent(items, '  ')}\n</ul>`;
+      return `<nav aria-label="Menu">\n${indent(ul, '  ')}\n</nav>`;
+    },
+    // The connector is its OWN aria-hidden <li> so the <ol> holds only <li> children — see html.ts Stepper.
+    Stepper(node, children) {
+      const last = children.length - 1;
+      const items = children
+        .map((rendered, i) => {
+          const connector =
+            i < last
+              ? `\n<li aria-hidden="true" style="${inlineStyle(stepperConnectorDecls(node.props.orientation))}"></li>`
+              : '';
+          return `<li style="${inlineStyle(stepItemDecls())}">\n${indent(rendered, '  ')}\n</li>${connector}`;
+        })
+        .join('\n');
+      return `<ol style="${inlineStyle(stepperListDecls(node.props.orientation, node.style))}">\n${indent(items, '  ')}\n</ol>`;
+    },
+    ToolBar(node, children) {
+      const inner = children.join('\n');
+      return `<div role="toolbar" aria-label="${escAttr(node.props.label)}" style="${inlineStyle(toolBarDecls(node.style))}">\n${indent(inner, '  ')}\n</div>`;
+    },
+    // DataTable → a semantic <table>; rows partition into <thead>/<tbody> by their `header` flag (ADR-0021).
+    DataTable(node, children) {
+      const header = children.filter((_, i) => node.children[i]?.props.header).join('\n');
+      const body = children.filter((_, i) => !node.children[i]?.props.header).join('\n');
+      const parts: string[] = [];
+      if (node.props.caption) {
+        parts.push(
+          `<caption style="${inlineStyle(tableCaptionDecls())}">${escText(node.props.caption)}</caption>`,
+        );
+      }
+      if (header) parts.push(`<thead>\n${indent(header, '  ')}\n</thead>`);
+      if (body) parts.push(`<tbody>\n${indent(body, '  ')}\n</tbody>`);
+      const inner = parts.join('\n');
+      return `<table style="${inlineStyle(dataTableDecls(node.style))}">\n${indent(inner, '  ')}\n</table>`;
+    },
+    // TableRow → a <tr> wrapping each rendered cell in <th scope="col"> (header row) or <td> (body row).
+    TableRow(node, children) {
+      const cellStyle = inlineStyle(node.props.header ? tableHeaderCellDecls() : tableCellDecls());
+      const cells = children
+        .map((c) =>
+          node.props.header
+            ? `<th scope="col" style="${cellStyle}">${c}</th>`
+            : `<td style="${cellStyle}">${c}</td>`,
+        )
+        .join('\n');
+      return `<tr>\n${indent(cells, '  ')}\n</tr>`;
+    },
+    // Pagination → <nav aria-label="Pagination"><ul> of boxed <li> page links (reuses NavLink). See html.ts.
+    Pagination(node, children) {
+      const items = children
+        .map(
+          (rendered) =>
+            `<li style="${inlineStyle(paginationItemDecls())}">\n${indent(rendered, '  ')}\n</li>`,
+        )
+        .join('\n');
+      const ul = `<ul style="${inlineStyle(paginationListDecls(node.style))}">\n${indent(items, '  ')}\n</ul>`;
+      return `<nav aria-label="Pagination">\n${indent(ul, '  ')}\n</nav>`;
+    },
   },
   leaf: {
     Text(node) {
@@ -128,6 +216,30 @@ const angularEmitter: Emitter<string, void> = {
     NavLink(node) {
       const current = node.props.active ? ' aria-current="page"' : '';
       return `<a href="${escAttr(node.props.href)}"${current} style="${inlineStyle(navLinkDecls(node))}">${escText(node.props.label)}</a>`;
+    },
+    Step(node) {
+      const { status, label } = node.props;
+      const current = status === 'current' ? ' aria-current="step"' : '';
+      const badge = `<span style="${inlineStyle(stepBadgeDecls(status))}">${status === 'complete' ? '✓' : ''}</span>`;
+      const text = `<span style="${inlineStyle(stepLabelDecls(status))}">${escText(label)}</span>`;
+      return `<div${current} style="${inlineStyle(stepDecls())}">${badge}${text}</div>`;
+    },
+    ToolButton(node) {
+      const { icon, label } = node.props;
+      const svg = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="${inlineStyle(ICON_SVG_STYLE)}">${TOOLBAR_ICON_INNER[icon]}</svg>`;
+      const text = label ? `<span>${escText(label)}</span>` : '';
+      const name = label ? '' : ` aria-label="${escAttr(TOOL_ICON_LABEL[icon])}"`;
+      return `<button type="button"${name} style="${inlineStyle(toolButtonDecls())}">${svg}${text}</button>`;
+    },
+    Divider() {
+      return `<hr style="${inlineStyle(dividerDecls())}">`;
+    },
+    Spacer() {
+      return `<div aria-hidden="true" style="${inlineStyle(spacerDecls())}"></div>`;
+    },
+    // TableCell → just its escaped text; the parent TableRow wraps it in <th>/<td> (ADR-0021).
+    TableCell(node) {
+      return escText(node.props.content);
     },
   },
   descend() {

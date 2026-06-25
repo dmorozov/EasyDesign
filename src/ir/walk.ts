@@ -51,7 +51,15 @@ export type ComponentContainerType =
   | 'AppBar'
   | 'TopNav'
   | 'SideNav'
-  | 'Breadcrumb';
+  | 'Breadcrumb'
+  | 'MenuBar'
+  | 'Stepper'
+  | 'ToolBar'
+  // ADR-0021: DataTable renders a bespoke <table>; TableRow a <tr> wrapping its cells in <th>/<td>;
+  // Pagination a <nav aria-label="Pagination"><ul>. None go through a layout shape. (TableCell is a leaf.)
+  | 'DataTable'
+  | 'TableRow'
+  | 'Pagination';
 export type ComponentContainerNode = Extract<Node, { type: ComponentContainerType }>;
 export type LayoutContainerNode = Exclude<ContainerNode, ComponentContainerNode>;
 export type LayoutContainerType = LayoutContainerNode['type'];
@@ -67,6 +75,17 @@ export const COMPONENT_CONTAINERS: Record<ComponentContainerType, true> = {
   TopNav: true,
   SideNav: true,
   Breadcrumb: true,
+  // A MenuBar renders a bespoke <nav><ul role="menubar">; a Stepper an <ol> of steps; a ToolBar a
+  // <div role="toolbar">. None go through a layout shape (the common design components, this ADR).
+  MenuBar: true,
+  Stepper: true,
+  ToolBar: true,
+  // A DataTable renders a bespoke <table> (caption + thead/tbody); a TableRow a <tr> wrapping its cells
+  // in <th>/<td>; a Pagination a <nav aria-label="Pagination"><ul> of page links. None go through a
+  // layout shape (the complex compound components, ADR-0021).
+  DataTable: true,
+  TableRow: true,
+  Pagination: true,
 };
 
 /** A container that renders via a layout shape (Stack/Row/Column/Grid), not as a Component. A real type
@@ -129,8 +148,11 @@ export interface Emitter<T, C> {
  *  bypass this — they render via `emit.component`, not a layout shape.) */
 export function shapeOf(node: LayoutContainerNode): ContainerShape {
   switch (node.type) {
+    // Stack/Column are flow columns; Paper is a surface Stack — the same flow-column shape, just different
+    // default styling (its create()), so it shares this arm.
     case 'Stack':
     case 'Column':
+    case 'Paper':
       return {
         kind: 'flow',
         axis: 'column',

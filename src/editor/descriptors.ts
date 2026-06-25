@@ -99,6 +99,57 @@ export function makeAppShell(areas: readonly RegionArea[]): NodeOf<'AppShell'> {
   };
 }
 
+/** Build a Stepper with the same seeded steps in either orientation. Shared by the descriptor `create()`
+ *  and the palette's horizontal/vertical presets — so "(vertical, horizontal)" is two tiles over one
+ *  seed (the parenthetical = palette variant pattern, like the two Buttons), not an Inspector control. */
+export function makeStepper(orientation: 'horizontal' | 'vertical'): NodeOf<'Stepper'> {
+  return {
+    type: 'Stepper',
+    props: { orientation },
+    children: [
+      { type: 'Step', props: { label: 'Account', status: 'complete' } },
+      { type: 'Step', props: { label: 'Profile', status: 'current' } },
+      { type: 'Step', props: { label: 'Done', status: 'upcoming' } },
+    ],
+  };
+}
+
+/** Build a Data Table seeded with a header row + two body rows (the realistic starter). Shared by the
+ *  descriptor `create()` (ADR-0021). Cells are plain text — exactly what survives to email's mj-table. */
+export function makeDataTable(): NodeOf<'DataTable'> {
+  const row = (header: boolean, cells: readonly string[]): NodeOf<'TableRow'> => ({
+    type: 'TableRow',
+    props: { header },
+    children: cells.map(
+      (content): NodeOf<'TableCell'> => ({ type: 'TableCell', props: { content } }),
+    ),
+  });
+  return {
+    type: 'DataTable',
+    props: { caption: 'Team members' },
+    children: [
+      row(true, ['Name', 'Role', 'Status']),
+      row(false, ['Ada Lovelace', 'Engineer', 'Active']),
+      row(false, ['Alan Turing', 'Researcher', 'Active']),
+    ],
+  };
+}
+
+/** Build a Pagination bar seeded with Prev, three pages (page 2 current), and Next — the realistic
+ *  starter. Reuses the NavLink leaf; the current page is the NavLink marked `active` (ADR-0021). */
+export function makePagination(): NodeOf<'Pagination'> {
+  return {
+    type: 'Pagination',
+    children: [
+      { type: 'NavLink', props: { label: '‹ Prev', href: '#' } },
+      { type: 'NavLink', props: { label: '1', href: '#' } },
+      { type: 'NavLink', props: { label: '2', href: '#', active: true } },
+      { type: 'NavLink', props: { label: '3', href: '#' } },
+      { type: 'NavLink', props: { label: 'Next ›', href: '#' } },
+    ],
+  };
+}
+
 export const DESCRIPTORS: Descriptors = {
   Stack: {
     label: 'Stack',
@@ -140,6 +191,27 @@ export const DESCRIPTORS: Descriptors = {
     }),
     styleKeys: CONTAINER_STYLE_KEYS,
     controls: ['justify', 'align'], // no wrap, no distribute
+  },
+  // A surface container (this ADR) — a flow column like Stack, distinguished by surface default styling.
+  // It shares the layout shape/container path (no bespoke renderer), so it exposes the same controls as
+  // Stack. Web-only (emailSafe:false): the MJML flattener can't nest a surface section (like Grid).
+  Paper: {
+    label: 'Paper',
+    icon: 'copy',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'Paper',
+      style: {
+        background: 'color.surface',
+        padding: 'space.lg',
+        borderRadius: 'radius.lg',
+        gap: 'space.md',
+      },
+      children: [],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: ['justify', 'align', 'wrap'],
   },
   Text: {
     label: 'Text',
@@ -331,6 +403,171 @@ export const DESCRIPTORS: Descriptors = {
       { key: 'label', label: 'Label' },
       { key: 'href', label: 'Link URL' },
     ],
+  },
+  // The common design components (this ADR). MenuBar is a COMPONENT container constrained to NavLink (it
+  // reuses the nav slot leaf), rendered as a semantic <nav><ul role="menubar"> application bar — distinct
+  // from TopNav's bare inline links. Web-only; a fresh one seeds a File/Edit/View/Help menu.
+  MenuBar: {
+    label: 'Menu bar',
+    icon: 'stack',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'MenuBar',
+      style: { background: 'color.surface', padding: 'space.sm', borderRadius: 'radius.lg' },
+      children: [
+        { type: 'NavLink', props: { label: 'File', href: '#', active: true } },
+        { type: 'NavLink', props: { label: 'Edit', href: '#' } },
+        { type: 'NavLink', props: { label: 'View', href: '#' } },
+        { type: 'NavLink', props: { label: 'Help', href: '#' } },
+      ],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['NavLink'],
+  },
+  // Stepper + Step. Stepper is a COMPONENT container constrained to Step, rendered as a semantic <ol> of
+  // status badges + connectors; `orientation` (horizontal/vertical) is set at creation via the two
+  // palette presets (like the two Buttons). Web-only. Step's `status` drives its badge + aria-current;
+  // like NavLink.active, editing it is a deferred follow-up — the editable prop is its `label`.
+  Stepper: {
+    label: 'Stepper',
+    icon: 'grip',
+    group: 'layout',
+    emailSafe: false,
+    create: () => makeStepper('horizontal'),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['Step'],
+  },
+  Step: {
+    label: 'Step',
+    icon: 'check',
+    group: 'content',
+    emailSafe: false,
+    create: () => ({ type: 'Step', props: { label: 'Step', status: 'upcoming' } }),
+    styleKeys: [],
+    controls: [],
+    textFields: [{ key: 'label', label: 'Label' }],
+  },
+  // ToolBar + ToolButton. ToolBar is a COMPONENT container constrained to ToolButton; `label` is the
+  // toolbar's accessible name. Web-only. A ToolButton shows its icon plus the label when non-empty —
+  // clearing the label gives an icon-only button ("buttons with/without labels"); the icon picker is a
+  // deferred follow-up. A fresh ToolBar seeds two labeled + two icon-only buttons to show both.
+  ToolBar: {
+    label: 'Tool bar',
+    icon: 'sliders',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'ToolBar',
+      props: { label: 'Toolbar' },
+      style: {
+        background: 'color.surface',
+        padding: 'space.sm',
+        borderRadius: 'radius.lg',
+        gap: 'space.sm',
+      },
+      children: [
+        { type: 'ToolButton', props: { icon: 'undo', label: 'Undo' } },
+        { type: 'ToolButton', props: { icon: 'redo', label: 'Redo' } },
+        { type: 'ToolButton', props: { icon: 'image', label: '' } },
+        { type: 'ToolButton', props: { icon: 'code', label: '' } },
+      ],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['ToolButton'],
+    textFields: [{ key: 'label', label: 'Label' }],
+  },
+  ToolButton: {
+    label: 'Tool button',
+    icon: 'button',
+    group: 'content',
+    emailSafe: false,
+    create: () => ({ type: 'ToolButton', props: { icon: 'undo', label: 'Action' } }),
+    styleKeys: [],
+    controls: [],
+    textFields: [{ key: 'label', label: 'Label' }],
+  },
+  // The complex compound components (ADR-0021). DataTable is a THREE-level compound: a COMPONENT
+  // container constrained to TableRow, each TableRow a COMPONENT container constrained to TableCell, and
+  // TableCell the text leaf. The whole trio is email-SAFE — it exports through MJML's <mj-table> (the 2nd
+  // email-safe Component after Divider). `caption` is the editable accessible title; a TableRow's
+  // `header` flag (header vs body) is set at creation, editing it is a deferred follow-up (like
+  // Step.status). A fresh DataTable seeds a header row + two body rows so it reads as a real table.
+  DataTable: {
+    label: 'Data table',
+    icon: 'grid',
+    group: 'content',
+    emailSafe: true,
+    create: () => makeDataTable(),
+    styleKeys: [],
+    controls: [],
+    allowedChildren: ['TableRow'],
+    textFields: [{ key: 'caption', label: 'Caption' }],
+  },
+  TableRow: {
+    label: 'Table row',
+    icon: 'row',
+    group: 'content',
+    emailSafe: true,
+    create: () => ({
+      type: 'TableRow',
+      props: { header: false },
+      children: [
+        { type: 'TableCell', props: { content: 'Cell' } },
+        { type: 'TableCell', props: { content: 'Cell' } },
+        { type: 'TableCell', props: { content: 'Cell' } },
+      ],
+    }),
+    styleKeys: [],
+    controls: [],
+    allowedChildren: ['TableCell'],
+  },
+  TableCell: {
+    label: 'Table cell',
+    icon: 'text',
+    group: 'content',
+    emailSafe: true,
+    create: () => ({ type: 'TableCell', props: { content: 'Cell' } }),
+    styleKeys: [],
+    controls: [],
+    textFields: [{ key: 'content', label: 'Content' }],
+  },
+  // Pagination is a COMPONENT container constrained to NavLink (it REUSES the nav slot leaf), rendered as
+  // a semantic <nav aria-label="Pagination"><ul> of boxed page links. Web-only (a page nav has no MJML
+  // equivalent). A fresh one seeds Prev, three pages (page 2 current), Next.
+  Pagination: {
+    label: 'Pagination',
+    icon: 'chevronRight',
+    group: 'layout',
+    emailSafe: false,
+    create: () => makePagination(),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['NavLink'],
+  },
+  // Display-only leaves (the Capability-A exercise): NO props, NO editing half (no textFields, controls,
+  // or styleKeys). Divider is the one email-SAFE new Component — a semantic <hr> / <mj-divider>, so it
+  // reaches all four targets; Spacer is a flexible flex:1 gap, web-only (flex has no email equivalent).
+  Divider: {
+    label: 'Divider',
+    icon: 'alignJ',
+    group: 'content',
+    emailSafe: true,
+    create: () => ({ type: 'Divider' }),
+    styleKeys: [],
+    controls: [],
+  },
+  Spacer: {
+    label: 'Spacer',
+    icon: 'fit',
+    group: 'content',
+    emailSafe: false,
+    create: () => ({ type: 'Spacer' }),
+    styleKeys: [],
+    controls: [],
   },
 };
 

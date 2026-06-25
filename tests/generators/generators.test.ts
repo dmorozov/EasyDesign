@@ -304,3 +304,267 @@ describe('TopNav + NavLink (ADR-0019) — semantic navigation on every web targe
     }
   });
 });
+
+// This ADR — the common design components: Paper (layout surface), Stepper/ToolBar/MenuBar (component
+// containers), and the display-only Divider/Spacer leaves. Semantic markup + the email-safety boundary.
+describe('common design components (this ADR) — semantic markup on every web target', () => {
+  const WEB = [
+    { name: 'html', emit: emitHTML },
+    { name: 'react', emit: emitReactSource },
+    { name: 'angular', emit: emitAngularSource },
+  ] as const;
+  const lit = catalog.withOverrides({});
+
+  it('ToolBar is a <div role="toolbar"> of icon buttons; an empty label → an icon-only button', () => {
+    const toolbar: Frame = {
+      target: 'web',
+      root: {
+        type: 'ToolBar',
+        props: { label: 'Formatting' },
+        children: [
+          { type: 'ToolButton', props: { icon: 'undo', label: 'Undo' } },
+          { type: 'ToolButton', props: { icon: 'image', label: '' } },
+        ],
+      },
+    };
+    for (const { emit } of WEB) {
+      const out = emit(toolbar);
+      expect(out).toContain('role="toolbar"');
+      expect(out).toContain('aria-label="Formatting"');
+      expect(out).toContain('<svg'); // the inlined icon glyph
+      expect(out).toContain('Undo'); // the labeled button shows its text
+      // the icon-only button takes the icon's HUMAN name (not the developer key 'image').
+      expect(out).toContain('aria-label="Insert image"');
+      expect(out).not.toContain('aria-label="image"');
+    }
+  });
+
+  it('MenuBar is a semantic <nav aria-label><ul> nav bar of links — distinct from TopNav, NOT role=menubar', () => {
+    const menu: Frame = {
+      target: 'web',
+      root: {
+        type: 'MenuBar',
+        children: [
+          { type: 'NavLink', props: { label: 'File', href: '#', active: true } },
+          { type: 'NavLink', props: { label: 'Edit', href: '#' } },
+        ],
+      },
+    };
+    for (const { emit } of WEB) {
+      const out = emit(menu);
+      expect(out).toContain('aria-label="Menu"');
+      expect(out).toContain('<ul');
+      expect(out).toContain('File');
+      expect(out).not.toContain('<button'); // a menu of links, never buttons (the flagship gate)
+      // NOT the menubar widget pattern: that requires role=menuitem children + keyboard handling, wrong
+      // for real <a href> nav links — so the links stay links, the current one carrying aria-current=page.
+      expect(out).not.toContain('role="menubar"');
+      expect(out).toContain('aria-current="page"');
+    }
+  });
+
+  it('Stepper is an <ol> of <li> (steps + aria-hidden connectors); one current step carries aria-current', () => {
+    const stepper: Frame = {
+      target: 'web',
+      root: {
+        type: 'Stepper',
+        props: { orientation: 'horizontal' },
+        children: [
+          { type: 'Step', props: { label: 'A', status: 'complete' } },
+          { type: 'Step', props: { label: 'B', status: 'current' } },
+          { type: 'Step', props: { label: 'C', status: 'upcoming' } },
+        ],
+      },
+    };
+    for (const { emit } of WEB) {
+      const out = emit(stepper);
+      expect(out).toContain('<ol');
+      // valid list markup: the <ol> holds ONLY <li> — three step <li> + two aria-hidden connector <li>.
+      expect(out.split('<li').length - 1).toBe(5);
+      expect(out.split('aria-hidden="true"').length - 1).toBe(2); // the two connectors
+      expect(out.split('aria-current="step"').length - 1).toBe(1); // only the current one
+      expect(out).toContain('✓'); // the complete step's check badge
+    }
+    expect(emitHTML(stepper)).toContain('flex-direction:row');
+    const vertical: Frame = {
+      target: 'web',
+      root: { ...stepper.root, props: { orientation: 'vertical' } } as Node,
+    };
+    expect(emitHTML(vertical)).toContain('flex-direction:column');
+  });
+
+  it('Paper is a surface flow container — a styled <div> column like Stack, carrying its token style', () => {
+    const paper: Frame = {
+      target: 'web',
+      root: {
+        type: 'Paper',
+        style: { background: 'color.surface', padding: 'space.lg' },
+        children: [{ type: 'Text', props: { content: 'hi', variant: 'body' } }],
+      },
+    };
+    expect(emitHTML(paper)).toContain('flex-direction:column');
+    expect(emitHTML(paper)).toContain('background:var(--color-surface)');
+    for (const { emit } of WEB) expect(emit(paper)).toContain('hi');
+  });
+
+  it('Divider is the email-SAFE display-only leaf: <hr> on web AND <mj-divider> in email (all four targets)', () => {
+    const web: Frame = { target: 'web', root: { type: 'Stack', children: [{ type: 'Divider' }] } };
+    expect(emitHTML(web)).toContain('<hr');
+    expect(emitReactSource(web)).toContain('<hr');
+    expect(emitAngularSource(web)).toContain('<hr');
+    const email: Frame = {
+      target: 'email',
+      root: {
+        type: 'Stack',
+        children: [{ type: 'Text', props: { content: 'x', variant: 'body' } }, { type: 'Divider' }],
+      },
+    };
+    expect(emitMJML(email, lit)).toContain('<mj-divider');
+  });
+
+  it('Spacer is a flexible flex:1 leaf, web-only (rejected in email — flex has no email model)', () => {
+    const web: Frame = { target: 'web', root: { type: 'Row', children: [{ type: 'Spacer' }] } };
+    expect(emitHTML(web)).toContain('flex:1 1 auto');
+    expect(emitReactSource(web)).toContain("flex: '1 1 auto'");
+    const email: Frame = {
+      target: 'email',
+      root: { type: 'Stack', children: [{ type: 'Spacer' }] },
+    };
+    expect(() => emitMJML(email, lit)).toThrow(/Spacer/);
+  });
+
+  it('the web-only containers (Paper/Stepper/ToolBar/MenuBar) classify unsupported + are rejected in email', () => {
+    const containers: Node[] = [
+      { type: 'Paper', children: [] },
+      { type: 'Stepper', props: { orientation: 'horizontal' }, children: [] },
+      { type: 'ToolBar', props: { label: 'x' }, children: [] },
+      { type: 'MenuBar', children: [] },
+    ];
+    for (const node of containers) {
+      expect(classifyCardChild(node).role).toBe('unsupported');
+      const email: Frame = { target: 'email', root: { type: 'Stack', children: [node] } };
+      expect(() => emitMJML(email, lit)).toThrow(new RegExp(node.type));
+    }
+  });
+});
+
+// ADR-0021 — the complex compound components. A DataTable is a semantic <table> (caption + thead/tbody)
+// and the 2nd email-SAFE Component (→ mj-table); a Pagination is a <nav aria-label="Pagination"><ul> of
+// NavLinks, web-only. Header lives on the ROW (the single source of truth → <th scope="col"> vs <td>).
+describe('Data Table + Pagination (ADR-0021)', () => {
+  const WEB = [
+    { name: 'html', emit: emitHTML },
+    { name: 'react', emit: emitReactSource },
+    { name: 'angular', emit: emitAngularSource },
+  ] as const;
+  const lit = catalog.withOverrides({});
+
+  const dataTable: Node = {
+    type: 'DataTable',
+    props: { caption: 'People' },
+    children: [
+      {
+        type: 'TableRow',
+        props: { header: true },
+        children: [
+          { type: 'TableCell', props: { content: 'Name' } },
+          { type: 'TableCell', props: { content: 'Role' } },
+        ],
+      },
+      {
+        type: 'TableRow',
+        props: { header: false },
+        children: [
+          { type: 'TableCell', props: { content: 'Ada' } },
+          { type: 'TableCell', props: { content: 'Engineer' } },
+        ],
+      },
+    ],
+  };
+
+  it('a semantic <table>: caption + a <thead> of <th scope="col"> cells + a <tbody> of <td> cells', () => {
+    for (const { emit } of WEB) {
+      const out = emit({ target: 'web', root: dataTable });
+      expect(out).toContain('<table');
+      expect(out).toContain('<caption');
+      expect(out).toContain('People'); // the caption
+      expect(out).toContain('<thead');
+      expect(out).toContain('<tbody');
+      expect(out).toContain('Name'); // a header cell
+      expect(out).toContain('Engineer'); // a body cell
+      // header lives on the ROW: exactly the one header row's two cells are <th scope="col"> (not <td>).
+      expect(out.split('<th scope="col"').length - 1).toBe(2);
+    }
+  });
+
+  it('reaches EMAIL through MJML <mj-table> (the 2nd email-safe Component) — caption + th/td', () => {
+    const email: Frame = {
+      target: 'email',
+      root: {
+        type: 'Stack',
+        children: [{ type: 'Text', props: { content: 'x', variant: 'body' } }, dataTable],
+      },
+    };
+    const out = emitMJML(email, lit);
+    expect(out).toContain('<mj-table');
+    // structurally identical to the three web targets: caption + <thead> of header rows + <tbody> of body.
+    expect(out).toContain('<thead');
+    expect(out).toContain('<tbody');
+    expect(out).toContain('<th scope="col"');
+    expect(out).toContain('<td');
+    expect(out).toContain('People'); // the caption
+    expect(out).toContain('Ada'); // a body cell
+    expect(out).not.toContain('NaN');
+  });
+
+  it('a Data Table inside an email Row renders an <mj-table> in its column — not a crash (ADR-0021)', () => {
+    // A DataTable is email-safe, so the editor lets it sit in a Row beside other content; the Row
+    // flattener emits its mj-table into that column instead of hitting the non-leaf guard.
+    const email: Frame = {
+      target: 'email',
+      root: {
+        type: 'Stack',
+        children: [
+          {
+            type: 'Row',
+            children: [dataTable, { type: 'Text', props: { content: 'beside', variant: 'body' } }],
+          },
+        ],
+      },
+    };
+    const out = emitMJML(email, lit);
+    expect(out).toContain('<mj-table');
+    expect(out).toContain('<th scope="col"');
+    expect(out).toContain('beside'); // the sibling leaf column still renders
+  });
+
+  it('classifyCardChild maps a DataTable to the email "table" role; a bare TableRow is unsupported', () => {
+    expect(classifyCardChild(dataTable).role).toBe('table');
+    expect(
+      classifyCardChild({ type: 'TableRow', props: { header: false }, children: [] }).role,
+    ).toBe('unsupported');
+  });
+
+  it('Pagination is a <nav aria-label="Pagination"><ul> of NavLink pages — one current, never a <button>', () => {
+    const pagination: Node = {
+      type: 'Pagination',
+      children: [
+        { type: 'NavLink', props: { label: 'Prev', href: '#' } },
+        { type: 'NavLink', props: { label: '1', href: '#' } },
+        { type: 'NavLink', props: { label: '2', href: '#', active: true } },
+      ],
+    };
+    for (const { emit } of WEB) {
+      const out = emit({ target: 'web', root: pagination });
+      expect(out).toContain('aria-label="Pagination"');
+      expect(out).toContain('<ul');
+      expect(out.split('<li').length - 1).toBe(3); // one <li> per page
+      expect(out.split('aria-current="page"').length - 1).toBe(1); // only the current page
+      expect(out).not.toContain('<button'); // links, never buttons (the flagship gate)
+    }
+    // web-only: classifies unsupported and is rejected in an email Frame.
+    expect(classifyCardChild(pagination).role).toBe('unsupported');
+    const email: Frame = { target: 'email', root: { type: 'Stack', children: [pagination] } };
+    expect(() => emitMJML(email, lit)).toThrow(/Pagination/);
+  });
+});

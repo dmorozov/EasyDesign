@@ -10,6 +10,26 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
       <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='180'%3E%3Crect width='560' height='180' fill='%234f46e5'/%3E%3Ctext x='280' y='104' font-family='Helvetica,Arial,sans-serif' font-size='30' fill='white' text-anchor='middle'%3EEasyDesign%3C/text%3E%3C/svg%3E" alt="Welcome to EasyDesign" style="display:block; width:100%; max-width:560px; height:auto; border-radius:var(--radius-lg)">
       <h2 style="margin:0; font-family:var(--font-family); font-size:var(--font-size-2xl); line-height:var(--font-line-height-tight); color:var(--color-text); font-weight:var(--font-weight-bold)">Welcome aboard</h2>
       <p style="margin:0; font-family:var(--font-family); font-size:var(--font-size-base); line-height:var(--font-line-height-normal); color:var(--color-text); font-weight:var(--font-weight-regular)">Your account is ready. Start building your first design in minutes.</p>
+      <table style="width:100%; border-collapse:collapse; font-family:var(--font-family); font-size:var(--font-size-base); color:var(--color-text)">
+        <caption style="text-align:left; font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text); padding-bottom:var(--space-sm)">Your plan</caption>
+        <thead>
+          <tr>
+            <th scope="col" style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:2px solid var(--color-muted); font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text)">Feature</th>
+            <th scope="col" style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:2px solid var(--color-muted); font-family:var(--font-family); font-weight:var(--font-weight-semibold); color:var(--color-text)">Included</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Projects</td>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Unlimited</td>
+          </tr>
+          <tr>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">Seats</td>
+            <td style="text-align:left; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--color-muted); color:var(--color-text)">5</td>
+          </tr>
+        </tbody>
+      </table>
+      <hr style="border:none; border-top:1px solid var(--color-muted); margin:var(--space-md) 0">
       <div style="display:flex; flex-direction:row; gap:var(--space-md)">
         <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:var(--color-brand); color:var(--color-on-brand)">Get started</a>
         <a href="#" style="display:inline-block; text-align:center; text-decoration:none; padding:var(--space-sm) var(--space-md); border-radius:var(--radius-lg); font-family:var(--font-family); font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); background:transparent; color:var(--color-brand); border:1px solid var(--color-brand)">Learn more</a>
