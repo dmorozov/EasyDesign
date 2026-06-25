@@ -141,6 +141,23 @@ const checks: [string, boolean][] = [
     appLayoutCanvasHtml.includes('role="toolbar"') &&
       appLayoutCanvasHtml.includes('aria-label="Menu"'),
   ],
+  // ADR-0022 — the interactive compounds. On the web, Tabs exports as a static role="tablist" snapshot
+  // (first tab selected) and Accordion as native <details>/<summary>; the canvas is interactive (a React
+  // Aria <Tabs> + native <details>). Both are web-only — in the app-layout export + live canvas only.
+  ['app-layout html has the tab strip (role=tablist)', appLayoutHtml.includes('role="tablist"')],
+  ['app-layout html has tab buttons (role=tab)', appLayoutHtml.includes('role="tab"')],
+  [
+    'app-layout html selects the first tab (aria-selected=true)',
+    appLayoutHtml.includes('aria-selected="true"'),
+  ],
+  [
+    'app-layout html has accordion sections (<details> + <summary>)',
+    appLayoutHtml.includes('<details') && appLayoutHtml.includes('<summary'),
+  ],
+  [
+    'app-layout canvas rendered the tab strip + accordion',
+    appLayoutCanvasHtml.includes('role="tablist"') && appLayoutCanvasHtml.includes('<details'),
+  ],
 ];
 let ok = true;
 for (const [label, passed] of checks) {

@@ -198,11 +198,17 @@ export function classifyCardChild(node: Node): CardChild {
     case 'ToolBar':
     case 'TableRow':
     case 'Pagination':
+    case 'Tabs':
+    case 'TabPanel':
+    case 'Accordion':
+    case 'AccordionItem':
       // Stack/Column/Grid/Paper don't flatten (a nested surface has no email section model); the rest are
       // web-only (emailSafe:false) — Grid/RadioGroup/AppShell/Region, the application chrome
-      // (AppBar/TopNav/SideNav/Breadcrumb/MenuBar), the common design components (Stepper/ToolBar), and
-      // the web-only Pagination. A bare TableRow at card level is invalid (it only lives inside a
-      // DataTable, which owns its rows wholesale). The arms keep the switch compile-exhaustive.
+      // (AppBar/TopNav/SideNav/Breadcrumb/MenuBar), the common design components (Stepper/ToolBar), the
+      // web-only Pagination, and the interactive compounds (Tabs/TabPanel/Accordion/AccordionItem — tabs
+      // and disclosure have no email model, ADR-0022). A bare TableRow at card level is invalid (it only
+      // lives inside a DataTable, which owns its rows wholesale); likewise a bare TabPanel/AccordionItem
+      // only lives inside its Tabs/Accordion. The arms keep the switch compile-exhaustive.
       return { role: 'unsupported', type: node.type };
     default:
       // Exhaustiveness: `node` is `never` here. A new container type makes it non-never → a compile

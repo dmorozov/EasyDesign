@@ -59,7 +59,14 @@ export type ComponentContainerType =
   // Pagination a <nav aria-label="Pagination"><ul>. None go through a layout shape. (TableCell is a leaf.)
   | 'DataTable'
   | 'TableRow'
-  | 'Pagination';
+  | 'Pagination'
+  // ADR-0022: Tabs renders a bespoke <div role="tablist"> + tabpanels; a TabPanel its panel body;
+  // Accordion a stack of native <details>; an AccordionItem one <details>/<summary>. The panels are OPEN
+  // containers (arbitrary body content) but still dispatch through `emit.component`, not a layout shape.
+  | 'Tabs'
+  | 'TabPanel'
+  | 'Accordion'
+  | 'AccordionItem';
 export type ComponentContainerNode = Extract<Node, { type: ComponentContainerType }>;
 export type LayoutContainerNode = Exclude<ContainerNode, ComponentContainerNode>;
 export type LayoutContainerType = LayoutContainerNode['type'];
@@ -86,6 +93,14 @@ export const COMPONENT_CONTAINERS: Record<ComponentContainerType, true> = {
   DataTable: true,
   TableRow: true,
   Pagination: true,
+  // Tabs renders a bespoke <div role="tablist"> + <div role="tabpanel"> per panel; a TabPanel its panel
+  // body; an Accordion a stack of native <details>; an AccordionItem one <details>/<summary>. The panels
+  // are OPEN containers but still render bespoke, not via a layout shape (the interactive compounds,
+  // ADR-0022).
+  Tabs: true,
+  TabPanel: true,
+  Accordion: true,
+  AccordionItem: true,
 };
 
 /** A container that renders via a layout shape (Stack/Row/Column/Grid), not as a Component. A real type

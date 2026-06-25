@@ -126,6 +126,29 @@ export interface TableRowNode {
   children: TableCellNode[];
 }
 
+/** One panel inside a Tabs Component (ADR-0022). A COMPONENT container that is OPEN — its body holds any
+ *  content, so it omits `allowedChildren` (the AppBar/Region precedent) — yet RESTRICTED to live only
+ *  inside Tabs (compile half: `Tabs.children: TabPanelNode[]`; runtime half: Tabs' `allowedChildren` +
+ *  canContain). `label` is the editable tab title: the Tabs renderer reads each panel's `label` to build
+ *  the `<div role="tablist">`, exactly as DataTable reads each row's `header`. Web-only (interactive tabs
+ *  have no MJML model). */
+export interface TabPanelNode {
+  type: 'TabPanel';
+  props: { label: string };
+  style?: StyleMap;
+  children: Node[];
+}
+
+/** One collapsible section inside an Accordion (ADR-0022). Like TabPanel, an OPEN container (arbitrary
+ *  body content) that is RESTRICTED to live only inside Accordion. Renders as a native `<details>`:
+ *  `title` is the `<summary>`, `open` seeds the expanded state. Web-only. */
+export interface AccordionItemNode {
+  type: 'AccordionItem';
+  props: { title: string; open: boolean };
+  style?: StyleMap;
+  children: Node[];
+}
+
 export type Node =
   | { type: 'Stack'; props?: FlowProps; style?: StyleMap; children: Node[] }
   | { type: 'Row'; props?: RowProps; style?: StyleMap; children: Node[] }
@@ -198,6 +221,30 @@ export type Node =
   | { type: 'DataTable'; props: { caption: string }; style?: StyleMap; children: TableRowNode[] }
   | TableRowNode
   | TableCellNode
+  // Tabs / Accordion (ADR-0022) — the first INTERACTIVE compounds. Each is a COMPONENT container
+  // CONSTRAINED to its panel slot (compile half: the narrowed `children` below; runtime half:
+  // allowedChildren + canContain); the panels are themselves OPEN containers holding arbitrary body
+  // content (the AppBar/Region precedent). Both are web-only (emailSafe:false): the canvas is interactive
+  // (Tabs via a React Aria <Tabs>, Accordion via native <details>), the exports are static-but-semantic,
+  // and email has no interactive model. Tabs renders a `<div role="tablist">` of `<button role="tab">`
+  // plus one `<div role="tabpanel">` per panel (the first selected); `orientation` lays the tablist out
+  // horizontally or vertically (set at creation via the two palette presets, like Stepper). Accordion
+  // renders a stack of native `<details>/<summary>`; `exclusive` switches to single-open via the native
+  // `<details name>` grouping (also set via a palette preset).
+  | {
+      type: 'Tabs';
+      props: { orientation: 'horizontal' | 'vertical' };
+      style?: StyleMap;
+      children: TabPanelNode[];
+    }
+  | TabPanelNode
+  | {
+      type: 'Accordion';
+      props: { exclusive: boolean };
+      style?: StyleMap;
+      children: AccordionItemNode[];
+    }
+  | AccordionItemNode
   | { type: 'Text'; props: { content: string; variant: TextStyle }; style?: StyleMap }
   | {
       type: 'Button';

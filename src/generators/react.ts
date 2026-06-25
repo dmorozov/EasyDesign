@@ -7,6 +7,10 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  accordionDecls,
+  accordionItemDecls,
+  accordionPanelDecls,
+  accordionSummaryDecls,
   appBarDecls,
   appShellDecls,
   breadcrumbItemDecls,
@@ -37,9 +41,13 @@ import {
   stepperConnectorDecls,
   stepperListDecls,
   structuralDecls,
+  tabButtonDecls,
   tableCaptionDecls,
   tableCellDecls,
   tableHeaderCellDecls,
+  tabListDecls,
+  tabPanelDecls,
+  tabsDecls,
   textDecls,
   textTag,
   TOOL_ICON_LABEL,
@@ -86,6 +94,11 @@ function jsxText(s: string): string {
 function jsxAttr(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
+
+// Document-unique ids wiring each tab to its panel (aria-controls/aria-labelledby) + the exclusive-
+// Accordion <details name> group; reset per emit invocation (in emitReactSource) for determinism (ADR-0022).
+let tabsSeq = 0;
+let accSeq = 0;
 
 const reactEmitter: Emitter<string, number> = {
   container(node, shape, children, depth) {
@@ -225,6 +238,60 @@ const reactEmitter: Emitter<string, number> = {
         .join('\n');
       return `${p}<nav aria-label="Pagination">\n${ip}<ul style={${styleLiteral(paginationListDecls(node.style))}}>\n${items}\n${ip}</ul>\n${p}</nav>`;
     },
+    // Tabs → the static accessible snapshot (ADR-0022): a <div role="tablist"> of <button role="tab">
+    // (from each panel's `label`) + one <div role="tabpanel"> per rendered panel body; first tab selected,
+    // the rest `hidden`. See html.ts Tabs. The panel body is already walked one level deeper, so it nests
+    // directly under the tabpanel <div>.
+    Tabs(node, children, depth) {
+      const { orientation } = node.props;
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const bp = pad(depth + 2);
+      const base = `tabs-${String(tabsSeq++)}`;
+      const tabs = node.children
+        .map((panel, i) => {
+          const selected = i === 0;
+          const roving = selected ? '' : ' tabIndex={-1}';
+          return `${bp}<button type="button" role="tab" id="${base}-tab-${String(i)}" aria-selected="${selected ? 'true' : 'false'}" aria-controls="${base}-panel-${String(i)}"${roving} style={${styleLiteral(tabButtonDecls(selected, orientation))}}>${jsxText(panel.props.label)}</button>`;
+        })
+        .join('\n');
+      const ariaOrient = orientation === 'vertical' ? ' aria-orientation="vertical"' : '';
+      const tablist = `${ip}<div role="tablist"${ariaOrient} style={${styleLiteral(tabListDecls(orientation))}}>\n${tabs}\n${ip}</div>`;
+      const panels = children
+        .map((body, i) => {
+          const hidden = i === 0 ? '' : ' hidden';
+          return `${ip}<div role="tabpanel" id="${base}-panel-${String(i)}" aria-labelledby="${base}-tab-${String(i)}"${hidden} style={${styleLiteral(tabPanelDecls(node.children[i]?.style))}}>\n${body}\n${ip}</div>`;
+        })
+        .join('\n');
+      return `${p}<div style={${styleLiteral(tabsDecls(orientation, node.style))}}>\n${tablist}\n${panels}\n${p}</div>`;
+    },
+    // TabPanel → just its rendered body (already at the right depth); the parent Tabs wraps it. See html.ts.
+    TabPanel(_node, children) {
+      return children.join('\n');
+    },
+    // Accordion → a stack of native <details>/<summary> sections (ADR-0022); each reads its title/open/
+    // style from the AccordionItem child, `exclusive` adds a shared <details name>. See html.ts Accordion.
+    Accordion(node, children, depth) {
+      const p = pad(depth);
+      const ip = pad(depth + 1);
+      const bp = pad(depth + 2);
+      const group = node.props.exclusive ? `acc-${String(accSeq++)}` : '';
+      const items = children
+        .map((body, i) => {
+          const item = node.children[i];
+          const open = item?.props.open ? ' open' : '';
+          const name = group ? ` name="${group}"` : '';
+          const summary = `${bp}<summary style={${styleLiteral(accordionSummaryDecls())}}>${jsxText(item?.props.title ?? '')}</summary>`;
+          const panel = `${bp}<div style={${styleLiteral(accordionPanelDecls())}}>\n${reindent(body, 1)}\n${bp}</div>`;
+          return `${ip}<details${open}${name} style={${styleLiteral(accordionItemDecls(item?.style))}}>\n${summary}\n${panel}\n${ip}</details>`;
+        })
+        .join('\n');
+      return `${p}<div style={${styleLiteral(accordionDecls(node.style))}}>\n${items}\n${p}</div>`;
+    },
+    // AccordionItem → just its rendered body; the parent Accordion wraps it in the <details>. See html.ts.
+    AccordionItem(_node, children) {
+      return children.join('\n');
+    },
   },
   leaf: {
     Text(node, depth) {
@@ -278,6 +345,8 @@ const reactEmitter: Emitter<string, number> = {
 
 /** Emit the full .tsx component source for a Frame. */
 export function emitReactSource(frame: Frame): string {
+  tabsSeq = 0;
+  accSeq = 0;
   const body = walkNode<string, number>(frame.root, 2, reactEmitter);
   return (
     `// AUTO-GENERATED by EasyDesign — do not edit by hand.\n` +

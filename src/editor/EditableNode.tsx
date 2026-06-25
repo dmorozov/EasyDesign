@@ -7,6 +7,7 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { type CSSProperties, Fragment, type ReactElement, type ReactNode } from 'react';
 
+import { Accordion, AccordionItem } from '../components/Accordion';
 import { AppShell } from '../components/AppShell';
 import { Button } from '../components/Button';
 import { DataTable, TableRow } from '../components/DataTable';
@@ -23,6 +24,7 @@ import {
 import { Divider, Image, Spacer, Text } from '../components/primitives';
 import { Radio, RadioGroup } from '../components/RadioGroup';
 import { Step, Stepper } from '../components/Stepper';
+import { Tabs } from '../components/Tabs';
 import { ToolBar, ToolButton } from '../components/ToolBar';
 import { Icon } from '../design-system';
 import { type Node } from '../ir/types';
@@ -361,6 +363,84 @@ function makeEditableEmitter(frameId: string): Emitter<ReactElement, NodePath> {
         return (
           <EditableShell frameId={frameId} path={ctx} node={node}>
             <Pagination style={node.style}>{body}</Pagination>
+          </EditableShell>
+        );
+      },
+      // Tabs → a real React-Aria <Tabs> (ADR-0022). The tablist is built from each panel's `label`; each
+      // rendered TabPanel (which carries its OWN shell + drop zone) becomes a tab's content. An empty Tabs
+      // shows the drop hint so a "Tab panel" tile can be dropped onto it.
+      Tabs(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop a Tab panel here…</div>
+          ) : (
+            <Tabs
+              orientation={node.props.orientation}
+              style={node.style}
+              panels={node.children.map((panel, i) => ({
+                label: panel.props.label,
+                style: panel.style,
+                content: children[i],
+              }))}
+            />
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            {body}
+          </EditableShell>
+        );
+      },
+      // A TabPanel carries its own shell (drop target + selection); the parent Tabs places it inside the
+      // React-Aria tabpanel for the active tab. React Aria unmounts inactive panels — click a tab to
+      // reveal and edit its panel (ADR-0022; tree-driven reveal is a deferred follow-up).
+      TabPanel(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop into panel…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            {body}
+          </EditableShell>
+        );
+      },
+      // Accordion → native <details>/<summary> sections; `exclusive` shares a <details name> group so
+      // only one opens at a time (ADR-0022). An empty Accordion shows the drop hint for an "Accordion
+      // section" tile.
+      Accordion(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop an Accordion section here…</div>
+          ) : (
+            <Accordion exclusive={node.props.exclusive} style={node.style}>
+              {children.map((c, i) => (
+                <Fragment key={i}>{c}</Fragment>
+              ))}
+            </Accordion>
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            {body}
+          </EditableShell>
+        );
+      },
+      // An AccordionItem carries its own shell wrapping a native <details>; its panel body is an open drop
+      // zone. The shell <div> sits OUTSIDE the <details>, so it is legal chrome. Expand a section (click
+      // the summary) to drop into it — a collapsed <details> hides its body (ADR-0022).
+      AccordionItem(node, children, ctx) {
+        const body =
+          children.length === 0 ? (
+            <div className="ed-empty-hint">Drop into section…</div>
+          ) : (
+            children.map((c, i) => <Fragment key={i}>{c}</Fragment>)
+          );
+        return (
+          <EditableShell frameId={frameId} path={ctx} node={node}>
+            <AccordionItem title={node.props.title} open={node.props.open} style={node.style}>
+              {body}
+            </AccordionItem>
           </EditableShell>
         );
       },

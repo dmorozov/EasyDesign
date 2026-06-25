@@ -1,7 +1,7 @@
 import { type IconName } from '../design-system';
 import { type Node } from '../ir/types';
 
-import { DESCRIPTORS, makeAppShell, makeStepper } from './descriptors';
+import { DESCRIPTORS, makeAccordion, makeAppShell, makeStepper, makeTabs } from './descriptors';
 
 /** A draggable Component Palette entry. `create()` mints a fresh IR node. */
 export interface PaletteItem {
@@ -120,6 +120,26 @@ const PALETTE_SPECS: readonly PaletteSpec[] = [
     }),
   },
   'Pagination',
+  // The interactive compounds (ADR-0022). Tabs ships as two orientation presets over one seed (makeTabs);
+  // Accordion as a multi-open default + a single-open preset (makeAccordion). A TabPanel lands ONLY in a
+  // Tabs, an AccordionItem ONLY in an Accordion — the same allowed-children rule as Radio/NavLink — but
+  // unlike a TableRow, their container IS a canvas drop target, so the slot tiles are genuinely droppable.
+  { type: 'Tabs', id: 'tabs', label: 'Tabs' },
+  {
+    type: 'Tabs',
+    id: 'tabs-vertical',
+    label: 'Tabs (vertical)',
+    create: () => makeTabs('vertical'),
+  },
+  'TabPanel',
+  { type: 'Accordion', id: 'accordion', label: 'Accordion' },
+  {
+    type: 'Accordion',
+    id: 'accordion-single',
+    label: 'Accordion (single-open)',
+    create: () => makeAccordion(true),
+  },
+  'AccordionItem',
   // Display-only leaves (this ADR): droppable into any open container.
   'Divider',
   'Spacer',

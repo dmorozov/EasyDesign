@@ -565,3 +565,121 @@ export function paginationItemDecls(): Decl[] {
     { prop: 'borderRadius', value: 'var(--radius-lg)' },
   ];
 }
+
+// Tabs / TabPanel (ADR-0022) β — the static-export side of a tab strip: a `<div role="tablist">` of
+// `<button role="tab">` plus one `<div role="tabpanel">` per panel (the first selected, the rest carry
+// `hidden`). The CANVAS uses a real React Aria <Tabs> (components/Tabs); this is shared by the three
+// string targets. `orientation` lays the tablist across the top (horizontal) or down the side (vertical).
+
+/** The Tabs outer box: a flex column (tablist over panels) or row (tablist beside panels). */
+export function tabsDecls(
+  orientation: 'horizontal' | 'vertical',
+  style: StyleMap | undefined,
+): Decl[] {
+  return dedupeDecls([
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: orientation === 'horizontal' ? 'column' : 'row' },
+    { prop: 'gap', value: catalog.resolveVar('space.md') },
+    ...containerDecls(style),
+  ]);
+}
+
+/** The `<div role="tablist">`: a flex row of tabs with a bottom rule (horizontal) or a flex column with a
+ *  right rule (vertical) — the rule sits on the edge facing the panels. */
+export function tabListDecls(orientation: 'horizontal' | 'vertical'): Decl[] {
+  return orientation === 'horizontal'
+    ? [
+        { prop: 'display', value: 'flex' },
+        { prop: 'flexDirection', value: 'row' },
+        { prop: 'gap', value: catalog.resolveVar('space.sm') },
+        { prop: 'borderBottom', value: '1px solid var(--color-muted)' },
+      ]
+    : [
+        { prop: 'display', value: 'flex' },
+        { prop: 'flexDirection', value: 'column' },
+        { prop: 'gap', value: catalog.resolveVar('space.sm') },
+        { prop: 'borderRight', value: '1px solid var(--color-muted)' },
+      ];
+}
+
+/** One `<button role="tab">`: the selected tab reads brand with a brand indicator rule on the edge facing
+ *  the panels (bottom for horizontal, right for vertical); the rest are plain text with no indicator. */
+export function tabButtonDecls(selected: boolean, orientation: 'horizontal' | 'vertical'): Decl[] {
+  const indicator = selected ? 'var(--color-brand)' : 'transparent';
+  const edge: Decl =
+    orientation === 'horizontal'
+      ? { prop: 'borderBottom', value: `2px solid ${indicator}` }
+      : { prop: 'borderRight', value: `2px solid ${indicator}` };
+  return [
+    { prop: 'display', value: 'inline-flex' },
+    { prop: 'alignItems', value: 'center' },
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+    { prop: 'background', value: 'transparent' },
+    { prop: 'border', value: 'none' },
+    edge,
+    { prop: 'cursor', value: 'pointer' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
+    {
+      prop: 'fontWeight',
+      value: catalog.resolveVar(selected ? 'font.weight.semibold' : 'font.weight.medium'),
+    },
+    { prop: 'color', value: selected ? 'var(--color-brand)' : 'var(--color-text)' },
+  ];
+}
+
+/** The `<div role="tabpanel">`: padded content that grows to fill. Deliberately sets NO `display` — an
+ *  inline `display` would override the `hidden` attribute on inactive panels, leaving them visible. */
+export function tabPanelDecls(style: StyleMap | undefined): Decl[] {
+  return dedupeDecls([
+    { prop: 'flex', value: '1' },
+    { prop: 'padding', value: catalog.resolveVar('space.md') },
+    ...containerDecls(style),
+  ]);
+}
+
+// Accordion / AccordionItem (ADR-0022) β — a stack of native `<details>/<summary>` sections. Used by BOTH
+// the canvas (components/Accordion renders the same native <details>) and the three string targets, so the
+// accordion is canvas == export. Single-open (`exclusive`) is expressed in the markup via the native
+// `<details name>` grouping, not here.
+
+/** The Accordion outer box: a vertical stack of `<details>` sections with a small gap. */
+export function accordionDecls(style: StyleMap | undefined): Decl[] {
+  return dedupeDecls([
+    { prop: 'display', value: 'flex' },
+    { prop: 'flexDirection', value: 'column' },
+    { prop: 'gap', value: catalog.resolveVar('space.sm') },
+    ...containerDecls(style),
+  ]);
+}
+
+/** One section (`<details>`): a bordered, rounded card whose corners clip the summary/panel. */
+export function accordionItemDecls(style: StyleMap | undefined): Decl[] {
+  return dedupeDecls([
+    { prop: 'border', value: '1px solid var(--color-muted)' },
+    { prop: 'borderRadius', value: catalog.resolveVar('radius.lg') },
+    { prop: 'overflow', value: 'hidden' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    ...containerDecls(style),
+  ]);
+}
+
+/** The `<summary>` header: a clickable, semibold row (keeping the native disclosure marker). */
+export function accordionSummaryDecls(): Decl[] {
+  return [
+    { prop: 'padding', value: 'var(--space-sm) var(--space-md)' },
+    { prop: 'cursor', value: 'pointer' },
+    { prop: 'fontFamily', value: 'var(--font-family)' },
+    { prop: 'fontSize', value: catalog.resolveVar('font.size.base') },
+    { prop: 'fontWeight', value: catalog.resolveVar('font.weight.semibold') },
+    { prop: 'color', value: 'var(--color-text)' },
+  ];
+}
+
+/** The panel body inside a section (the content revealed below the summary). */
+export function accordionPanelDecls(): Decl[] {
+  return [
+    { prop: 'padding', value: catalog.resolveVar('space.md') },
+    { prop: 'color', value: 'var(--color-text)' },
+  ];
+}

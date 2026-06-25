@@ -271,6 +271,61 @@ export const sampleAppLayout: Frame = {
               { type: 'NavLink', props: { label: 'Next ›', href: '#' } },
             ],
           },
+          // The interactive compounds (ADR-0022): a Tabs strip (its panels hold arbitrary content —
+          // text + a button) and a multi-open Accordion of native <details> sections. Web-only.
+          {
+            type: 'Tabs',
+            props: { orientation: 'horizontal' },
+            children: [
+              {
+                type: 'TabPanel',
+                props: { label: 'Overview' },
+                children: [
+                  {
+                    type: 'Text',
+                    props: { content: 'A quick summary of the project.', variant: 'body' },
+                  },
+                ],
+              },
+              {
+                type: 'TabPanel',
+                props: { label: 'Activity' },
+                children: [
+                  {
+                    type: 'Text',
+                    props: { content: 'Recent activity shows up here.', variant: 'body' },
+                  },
+                  { type: 'Button', props: { content: 'View all', variant: 'secondary' } },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'Accordion',
+            props: { exclusive: false },
+            children: [
+              {
+                type: 'AccordionItem',
+                props: { title: 'What is included?', open: true },
+                children: [
+                  {
+                    type: 'Text',
+                    props: { content: 'Everything in the Pro plan.', variant: 'body' },
+                  },
+                ],
+              },
+              {
+                type: 'AccordionItem',
+                props: { title: 'How do I cancel?', open: false },
+                children: [
+                  {
+                    type: 'Text',
+                    props: { content: 'Cancel anytime from Settings.', variant: 'body' },
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
       {

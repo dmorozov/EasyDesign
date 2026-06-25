@@ -436,6 +436,57 @@ const FIXTURES: readonly GoldenFixture[] = [
     },
   },
   {
+    // ADR-0022 — Tabs: a static accessible snapshot on export (a role="tablist" of role="tab" buttons +
+    // one role="tabpanel" per panel; the first selected, the rest hidden). Web-only; panels hold any
+    // content. The canvas is interactive (React Aria); this locks the static-export markup.
+    name: 'tabs',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Tabs',
+        props: { orientation: 'horizontal' },
+        children: [
+          {
+            type: 'TabPanel',
+            props: { label: 'Overview' },
+            children: [{ type: 'Text', props: { content: 'Overview content', variant: 'body' } }],
+          },
+          {
+            type: 'TabPanel',
+            props: { label: 'Settings' },
+            children: [{ type: 'Button', props: { content: 'Save', variant: 'primary' } }],
+          },
+        ],
+      },
+    },
+  },
+  {
+    // ADR-0022 — Accordion: native <details>/<summary> sections (multi-open default; the first open).
+    // Web-only; sections hold any content. (The single-open <details name> variant is a palette preset.)
+    name: 'accordion',
+    emailSafe: false,
+    frame: {
+      target: 'web',
+      root: {
+        type: 'Accordion',
+        props: { exclusive: false },
+        children: [
+          {
+            type: 'AccordionItem',
+            props: { title: 'Shipping', open: true },
+            children: [{ type: 'Text', props: { content: 'Ships in 3 days.', variant: 'body' } }],
+          },
+          {
+            type: 'AccordionItem',
+            props: { title: 'Returns', open: false },
+            children: [{ type: 'Text', props: { content: '30-day returns.', variant: 'body' } }],
+          },
+        ],
+      },
+    },
+  },
+  {
     // This ADR — Spacer: a flexible flex:1 gap pushing siblings apart. Web-only (flex has no email model).
     name: 'spacer',
     emailSafe: false,

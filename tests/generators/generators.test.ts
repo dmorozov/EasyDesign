@@ -568,3 +568,116 @@ describe('Data Table + Pagination (ADR-0021)', () => {
     expect(() => emitMJML(email, lit)).toThrow(/Pagination/);
   });
 });
+
+// ADR-0022 — the interactive compounds. On export, Tabs is a static accessible snapshot (role="tablist" +
+// role="tab"/role="tabpanel", the first tab selected, the rest hidden); Accordion is native
+// <details>/<summary>. Both are web-only (no email model). The panels hold arbitrary content.
+describe('Tabs + Accordion (ADR-0022)', () => {
+  const WEB = [
+    { name: 'html', emit: emitHTML },
+    { name: 'react', emit: emitReactSource },
+    { name: 'angular', emit: emitAngularSource },
+  ] as const;
+  const lit = catalog.withOverrides({});
+
+  const tabs: Node = {
+    type: 'Tabs',
+    props: { orientation: 'horizontal' },
+    children: [
+      {
+        type: 'TabPanel',
+        props: { label: 'Overview' },
+        children: [{ type: 'Text', props: { content: 'Overview body', variant: 'body' } }],
+      },
+      {
+        type: 'TabPanel',
+        props: { label: 'Settings' },
+        children: [{ type: 'Button', props: { content: 'Save', variant: 'primary' } }],
+      },
+    ],
+  };
+
+  it('a static accessible tablist: role=tablist/tab/tabpanel, the FIRST tab selected, the rest hidden', () => {
+    for (const { emit } of WEB) {
+      const out = emit({ target: 'web', root: tabs });
+      expect(out).toContain('role="tablist"');
+      // one <button role="tab"> per panel, built from each panel's label...
+      expect(out.split('role="tab"').length - 1).toBe(2);
+      expect(out).toContain('Overview'); // a tab label
+      expect(out).toContain('Settings');
+      // ...one tabpanel per panel, carrying the panel body.
+      expect(out.split('role="tabpanel"').length - 1).toBe(2);
+      expect(out).toContain('Overview body');
+      expect(out).toContain('Save');
+      // exactly ONE selected tab (the first); exactly ONE inactive panel hidden.
+      expect(out.split('aria-selected="true"').length - 1).toBe(1);
+      expect(out.split('aria-selected="false"').length - 1).toBe(1);
+      expect(out.split(' hidden').length - 1).toBe(1); // only the 2nd (inactive) panel
+    }
+  });
+
+  it('wires each tab to its panel with matching, document-unique ids', () => {
+    for (const { emit } of WEB) {
+      const out = emit({ target: 'web', root: tabs });
+      expect(out).toContain('id="tabs-0-tab-0"');
+      expect(out).toContain('aria-controls="tabs-0-panel-0"');
+      expect(out).toContain('id="tabs-0-panel-0"');
+      expect(out).toContain('aria-labelledby="tabs-0-tab-0"');
+    }
+  });
+
+  it('two Tabs on one page get DISTINCT id bases (no duplicate ids)', () => {
+    const two: Frame = { target: 'web', root: { type: 'Stack', children: [tabs, tabs] } };
+    for (const { emit } of WEB) {
+      const out = emit(two);
+      expect(out).toContain('tabs-0-tab-0');
+      expect(out).toContain('tabs-1-tab-0'); // the 2nd Tabs minted its own id base
+    }
+  });
+
+  const makeAccordion = (exclusive: boolean): Node => ({
+    type: 'Accordion',
+    props: { exclusive },
+    children: [
+      {
+        type: 'AccordionItem',
+        props: { title: 'First', open: true },
+        children: [{ type: 'Text', props: { content: 'First body', variant: 'body' } }],
+      },
+      {
+        type: 'AccordionItem',
+        props: { title: 'Second', open: false },
+        children: [{ type: 'Text', props: { content: 'Second body', variant: 'body' } }],
+      },
+    ],
+  });
+
+  it('native <details>/<summary> sections; the first open; the multi-open default has NO name group', () => {
+    for (const { emit } of WEB) {
+      const out = emit({ target: 'web', root: makeAccordion(false) });
+      expect(out.split('<details').length - 1).toBe(2);
+      expect(out.split('<summary').length - 1).toBe(2);
+      expect(out).toContain('First'); // a summary title
+      expect(out).toContain('Second body'); // a panel body
+      expect(out.split('<details open').length - 1).toBe(1); // only the first section is open
+      expect(out).not.toContain('name='); // multi-open: independent <details>, no exclusive group
+    }
+  });
+
+  it('the single-open (exclusive) variant groups the sections with a shared <details name>', () => {
+    for (const { emit } of WEB) {
+      const out = emit({ target: 'web', root: makeAccordion(true) });
+      const names = [...out.matchAll(/name="(acc-\d+)"/g)].map((m) => m[1]);
+      expect(names).toHaveLength(2); // both <details> carry the group name...
+      expect(new Set(names).size).toBe(1); // ...and it is the SAME name (only one opens at a time)
+    }
+  });
+
+  it('both compounds are web-only: classifyCardChild unsupported + a throw in an email Frame', () => {
+    for (const node of [tabs, makeAccordion(false)]) {
+      expect(classifyCardChild(node).role).toBe('unsupported');
+      const email: Frame = { target: 'email', root: { type: 'Stack', children: [node] } };
+      expect(() => emitMJML(email, lit)).toThrow(new RegExp(node.type));
+    }
+  });
+});

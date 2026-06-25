@@ -6,6 +6,10 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  accordionDecls,
+  accordionItemDecls,
+  accordionPanelDecls,
+  accordionSummaryDecls,
   appBarDecls,
   appShellDecls,
   breadcrumbItemDecls,
@@ -36,9 +40,13 @@ import {
   stepperConnectorDecls,
   stepperListDecls,
   structuralDecls,
+  tabButtonDecls,
   tableCaptionDecls,
   tableCellDecls,
   tableHeaderCellDecls,
+  tabListDecls,
+  tabPanelDecls,
+  tabsDecls,
   textDecls,
   textTag,
   TOOL_ICON_LABEL,
@@ -75,6 +83,11 @@ function indent(html: string, pad: string): string {
     .map((line) => (line.length ? pad + line : line))
     .join('\n');
 }
+
+// Document-unique ids wiring each tab to its panel + the exclusive-Accordion <details name>; reset per
+// emit invocation (in emitAngularSource) so the template stays deterministic for a given tree (ADR-0022).
+let tabsSeq = 0;
+let accSeq = 0;
 
 // C = void: Angular indentation is built bottom-up via indent(), not depth-threaded.
 const angularEmitter: Emitter<string, void> = {
@@ -195,6 +208,55 @@ const angularEmitter: Emitter<string, void> = {
       const ul = `<ul style="${inlineStyle(paginationListDecls(node.style))}">\n${indent(items, '  ')}\n</ul>`;
       return `<nav aria-label="Pagination">\n${indent(ul, '  ')}\n</nav>`;
     },
+    // Tabs → the static accessible snapshot (ADR-0022): a <div role="tablist"> of <button role="tab">
+    // (from each panel's `label`) + one <div role="tabpanel"> per rendered panel body; first tab selected,
+    // the rest `hidden`. See html.ts Tabs.
+    Tabs(node, children) {
+      const { orientation } = node.props;
+      const base = `tabs-${String(tabsSeq++)}`;
+      const tabs = node.children
+        .map((panel, i) => {
+          const selected = i === 0;
+          const roving = selected ? '' : ' tabindex="-1"';
+          return `<button type="button" role="tab" id="${base}-tab-${String(i)}" aria-selected="${selected ? 'true' : 'false'}" aria-controls="${base}-panel-${String(i)}"${roving} style="${inlineStyle(tabButtonDecls(selected, orientation))}">${escText(panel.props.label)}</button>`;
+        })
+        .join('\n');
+      const ariaOrient = orientation === 'vertical' ? ' aria-orientation="vertical"' : '';
+      const tablist = `<div role="tablist"${ariaOrient} style="${inlineStyle(tabListDecls(orientation))}">\n${indent(tabs, '  ')}\n</div>`;
+      const panels = children
+        .map((body, i) => {
+          const hidden = i === 0 ? '' : ' hidden';
+          return `<div role="tabpanel" id="${base}-panel-${String(i)}" aria-labelledby="${base}-tab-${String(i)}"${hidden} style="${inlineStyle(tabPanelDecls(node.children[i]?.style))}">\n${indent(body, '  ')}\n</div>`;
+        })
+        .join('\n');
+      const inner = `${tablist}\n${panels}`;
+      return `<div style="${inlineStyle(tabsDecls(orientation, node.style))}">\n${indent(inner, '  ')}\n</div>`;
+    },
+    // TabPanel → just its rendered body; the parent Tabs wraps it in the <div role="tabpanel">. See html.ts.
+    TabPanel(_node, children) {
+      return children.join('\n');
+    },
+    // Accordion → a stack of native <details>/<summary> sections (ADR-0022); each reads its title/open/
+    // style from the AccordionItem child, `exclusive` adds a shared <details name>. See html.ts Accordion.
+    Accordion(node, children) {
+      const group = node.props.exclusive ? `acc-${String(accSeq++)}` : '';
+      const items = children
+        .map((body, i) => {
+          const item = node.children[i];
+          const open = item?.props.open ? ' open' : '';
+          const name = group ? ` name="${group}"` : '';
+          const summary = `<summary style="${inlineStyle(accordionSummaryDecls())}">${escText(item?.props.title ?? '')}</summary>`;
+          const panel = `<div style="${inlineStyle(accordionPanelDecls())}">\n${indent(body, '  ')}\n</div>`;
+          const detailsInner = `${summary}\n${panel}`;
+          return `<details${open}${name} style="${inlineStyle(accordionItemDecls(item?.style))}">\n${indent(detailsInner, '  ')}\n</details>`;
+        })
+        .join('\n');
+      return `<div style="${inlineStyle(accordionDecls(node.style))}">\n${indent(items, '  ')}\n</div>`;
+    },
+    // AccordionItem → just its rendered body; the parent Accordion wraps it in the <details>. See html.ts.
+    AccordionItem(_node, children) {
+      return children.join('\n');
+    },
   },
   leaf: {
     Text(node) {
@@ -249,6 +311,8 @@ const angularEmitter: Emitter<string, void> = {
 
 /** Emit ONE standalone Angular component source as a string. */
 export function emitAngularSource(frame: Frame): string {
+  tabsSeq = 0;
+  accSeq = 0;
   const indentedTemplate = indent(
     walkNode<string, void>(frame.root, undefined, angularEmitter),
     '    ',

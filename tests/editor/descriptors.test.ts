@@ -41,6 +41,11 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
       'ToolButton',
       'Spacer', // flex has no email equivalent
       'Pagination', // a page nav has no email equivalent (web-only, ADR-0021)
+      // The interactive compounds (ADR-0022): tabs + disclosure have no email model.
+      'Tabs',
+      'TabPanel',
+      'Accordion',
+      'AccordionItem',
       // NB: Divider (→ mj-divider) AND the Data Table (DataTable/TableRow/TableCell → mj-table) are
       // email-SAFE — the Components that reach all four targets.
     ]);
@@ -59,11 +64,13 @@ describe('DESCRIPTORS — the single source of node-type facts (RP-2)', () => {
         expect(d.controls).not.toContain('content');
       } else if ('children' in node) {
         // component container: renders as a Component, so no LAYOUT controls (justify/align). Most carry
-        // a slot rule (allowedChildren) — RadioGroup→Radio, AppShell→Region, the nav menus→NavLink; the
-        // AppBar is the one OPEN component container, composed freely (ADR-0016 / ADR-0017 / ADR-0019).
+        // a slot rule (allowedChildren) — RadioGroup→Radio, AppShell→Region, the nav menus→NavLink. The
+        // OPEN component containers carry none: the AppBar, and the Tabs/Accordion panels (TabPanel/
+        // AccordionItem hold arbitrary content) — ADR-0016 / ADR-0017 / ADR-0019 / ADR-0022.
         expect(d.controls).not.toContain('justify');
         expect(d.controls).not.toContain('align');
-        if (type !== 'AppBar') expect(d.allowedChildren).toBeDefined();
+        const openContainers = new Set<Node['type']>(['AppBar', 'TabPanel', 'AccordionItem']);
+        if (!openContainers.has(type)) expect(d.allowedChildren).toBeDefined();
       } else {
         expect(d.controls).not.toContain('justify');
       }
@@ -146,6 +153,12 @@ describe('PALETTE — projects per-type facts from the descriptor', () => {
       'table-row',
       'table-row-header',
       'pagination',
+      'tabs',
+      'tabs-vertical',
+      'tabpanel',
+      'accordion',
+      'accordion-single',
+      'accordionitem',
       'divider',
       'spacer',
     ]);
@@ -227,6 +240,27 @@ describe('canContain — the allowed-children rule (RP-10)', () => {
     expect(RESTRICTED_CHILD_TYPES.has('TableRow')).toBe(true);
     expect(RESTRICTED_CHILD_TYPES.has('TableCell')).toBe(true);
     expect(RESTRICTED_CHILD_TYPES.has('DataTable')).toBe(false);
+  });
+  it('the interactive-compound slot rules: TabPanel ONLY in Tabs, AccordionItem ONLY in Accordion, panels are OPEN (ADR-0022)', () => {
+    // Tabs/Accordion are constrained to their panel slot...
+    expect(canContain('Tabs', 'TabPanel')).toBe(true);
+    expect(canContain('Tabs', 'Text')).toBe(false);
+    expect(canContain('Accordion', 'AccordionItem')).toBe(true);
+    expect(canContain('Accordion', 'Text')).toBe(false);
+    // ...but each panel is itself an OPEN container holding arbitrary content (the AppBar/Region combo).
+    expect(canContain('TabPanel', 'Text')).toBe(true);
+    expect(canContain('TabPanel', 'Stack')).toBe(true);
+    expect(canContain('TabPanel', 'Radio')).toBe(false); // still rejects slot-restricted children
+    expect(canContain('AccordionItem', 'Button')).toBe(true);
+    expect(canContain('AccordionItem', 'DataTable')).toBe(true);
+    // The panels are slot-restricted to their compound; a Tabs/Accordion is a free (open-droppable) node.
+    expect(canContain('Stack', 'TabPanel')).toBe(false);
+    expect(canContain('Stack', 'AccordionItem')).toBe(false);
+    expect(canContain('Stack', 'Tabs')).toBe(true);
+    expect(canContain('Stack', 'Accordion')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('TabPanel')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('AccordionItem')).toBe(true);
+    expect(RESTRICTED_CHILD_TYPES.has('Tabs')).toBe(false);
   });
   it('Paper is an OPEN surface container; Divider/Spacer are unrestricted display-only leaves (this ADR)', () => {
     expect(canContain('Paper', 'Text')).toBe(true);

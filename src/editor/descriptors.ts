@@ -150,6 +150,43 @@ export function makePagination(): NodeOf<'Pagination'> {
   };
 }
 
+/** Build a Tabs component seeded with two panels, each holding a Text — the realistic starter. Shared by
+ *  the descriptor `create()` and the horizontal/vertical palette presets (the parenthetical = palette
+ *  variant pattern, like Stepper). Web-only; each panel is an OPEN container holding arbitrary content
+ *  (ADR-0022). */
+export function makeTabs(orientation: 'horizontal' | 'vertical'): NodeOf<'Tabs'> {
+  const panel = (label: string, body: string): NodeOf<'TabPanel'> => ({
+    type: 'TabPanel',
+    props: { label },
+    children: [{ type: 'Text', props: { content: body, variant: 'body' } }],
+  });
+  return {
+    type: 'Tabs',
+    props: { orientation },
+    children: [panel('Overview', 'Overview content'), panel('Details', 'Details content')],
+  };
+}
+
+/** Build an Accordion seeded with two sections (the first open) — the realistic starter. Shared by the
+ *  descriptor `create()` and the multi-/single-open palette presets. `exclusive` is the single-open
+ *  (<details name>) variant; web-only, each section is an OPEN container holding arbitrary content
+ *  (ADR-0022). */
+export function makeAccordion(exclusive: boolean): NodeOf<'Accordion'> {
+  const section = (title: string, body: string, open: boolean): NodeOf<'AccordionItem'> => ({
+    type: 'AccordionItem',
+    props: { title, open },
+    children: [{ type: 'Text', props: { content: body, variant: 'body' } }],
+  });
+  return {
+    type: 'Accordion',
+    props: { exclusive },
+    children: [
+      section('Section one', 'First section content', true),
+      section('Section two', 'Second section content', false),
+    ],
+  };
+}
+
 export const DESCRIPTORS: Descriptors = {
   Stack: {
     label: 'Stack',
@@ -547,6 +584,64 @@ export const DESCRIPTORS: Descriptors = {
     styleKeys: CONTAINER_STYLE_KEYS,
     controls: [],
     allowedChildren: ['NavLink'],
+  },
+  // The interactive compounds (ADR-0022). Tabs is a COMPONENT container constrained to TabPanel; each
+  // TabPanel is an OPEN container (any body content, so NO allowedChildren — the AppBar precedent) that is
+  // RESTRICTED to live only inside Tabs (it appears in Tabs' allowedChildren → RESTRICTED_CHILD_TYPES, the
+  // Region ⊂ AppShell precedent). The canvas uses a real React-Aria <Tabs>; the exports emit a static
+  // role="tablist" snapshot. Web-only. `orientation` is set at creation via the two palette presets (like
+  // Stepper). A fresh Tabs seeds two panels; drop a "Tab panel" tile onto it to add more.
+  Tabs: {
+    label: 'Tabs',
+    icon: 'layout',
+    group: 'layout',
+    emailSafe: false,
+    create: () => makeTabs('horizontal'),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['TabPanel'],
+  },
+  TabPanel: {
+    label: 'Tab panel',
+    icon: 'stack',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'TabPanel',
+      props: { label: 'Tab' },
+      children: [{ type: 'Text', props: { content: 'Panel content', variant: 'body' } }],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    textFields: [{ key: 'label', label: 'Tab label' }],
+  },
+  // Accordion is a COMPONENT container constrained to AccordionItem; each AccordionItem is an OPEN +
+  // RESTRICTED container (as TabPanel), rendered as a native <details>/<summary> (interactive with zero
+  // JS, canvas == export). Web-only. `exclusive` (single-open via the native <details name>) is set at
+  // creation via the two palette presets. A fresh Accordion seeds two sections (the first open).
+  Accordion: {
+    label: 'Accordion',
+    icon: 'layers',
+    group: 'layout',
+    emailSafe: false,
+    create: () => makeAccordion(false),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    allowedChildren: ['AccordionItem'],
+  },
+  AccordionItem: {
+    label: 'Accordion section',
+    icon: 'chevronRight',
+    group: 'layout',
+    emailSafe: false,
+    create: () => ({
+      type: 'AccordionItem',
+      props: { title: 'Section', open: false },
+      children: [{ type: 'Text', props: { content: 'Section content', variant: 'body' } }],
+    }),
+    styleKeys: CONTAINER_STYLE_KEYS,
+    controls: [],
+    textFields: [{ key: 'title', label: 'Title' }],
   },
   // Display-only leaves (the Capability-A exercise): NO props, NO editing half (no textFields, controls,
   // or styleKeys). Divider is the one email-SAFE new Component — a semantic <hr> / <mj-divider>, so it

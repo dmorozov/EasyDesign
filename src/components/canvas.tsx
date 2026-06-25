@@ -3,6 +3,7 @@ import { Fragment, type ReactElement } from 'react';
 import { type Frame, type Node } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
+import { Accordion, AccordionItem } from './Accordion';
 import { AppShell } from './AppShell';
 import { Button } from './Button';
 import { DataTable, TableRow } from './DataTable';
@@ -11,6 +12,7 @@ import { AppBar, Breadcrumb, MenuBar, NavLink, Pagination, SideNav, TopNav } fro
 import { Divider, Image, Spacer, Text } from './primitives';
 import { Radio, RadioGroup } from './RadioGroup';
 import { Step, Stepper } from './Stepper';
+import { Tabs } from './Tabs';
 import { ToolBar, ToolButton } from './ToolBar';
 
 /**
@@ -122,6 +124,44 @@ const canvasEmitter: Emitter<ReactElement, void> = {
           <Fragment key={i}>{c}</Fragment>
         ))}
       </Pagination>
+    ),
+    // Tabs → a real React-Aria <Tabs> (interactive switching). The emitter (holding the IR) supplies each
+    // panel's label/style + its rendered body; React Aria handles selection + keyboard a11y (ADR-0022).
+    Tabs: (node, children) => (
+      <Tabs
+        orientation={node.props.orientation}
+        style={node.style}
+        panels={node.children.map((panel, i) => ({
+          label: panel.props.label,
+          style: panel.style,
+          content: children[i],
+        }))}
+      />
+    ),
+    TabPanel: (_node, children) => (
+      <>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </>
+    ),
+    // Accordion → native <details>/<summary> sections (canvas == export). The emitter builds each item
+    // from its title/open/style + rendered body; `exclusive` shares a <details name> group (ADR-0022).
+    Accordion: (node, children) => (
+      <Accordion exclusive={node.props.exclusive} style={node.style}>
+        {node.children.map((item, i) => (
+          <AccordionItem key={i} title={item.props.title} open={item.props.open} style={item.style}>
+            {children[i]}
+          </AccordionItem>
+        ))}
+      </Accordion>
+    ),
+    AccordionItem: (_node, children) => (
+      <>
+        {children.map((c, i) => (
+          <Fragment key={i}>{c}</Fragment>
+        ))}
+      </>
     ),
   },
   leaf: {

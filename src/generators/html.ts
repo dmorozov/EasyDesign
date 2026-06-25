@@ -6,6 +6,10 @@ import { type Frame } from '../ir/types';
 import { type Emitter, walkNode } from '../ir/walk';
 
 import {
+  accordionDecls,
+  accordionItemDecls,
+  accordionPanelDecls,
+  accordionSummaryDecls,
   appBarDecls,
   appShellDecls,
   breadcrumbItemDecls,
@@ -36,9 +40,13 @@ import {
   stepperConnectorDecls,
   stepperListDecls,
   structuralDecls,
+  tabButtonDecls,
   tableCaptionDecls,
   tableCellDecls,
   tableHeaderCellDecls,
+  tabListDecls,
+  tabPanelDecls,
+  tabsDecls,
   textDecls,
   textTag,
   TOOL_ICON_LABEL,
@@ -63,6 +71,12 @@ function escapeAttr(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+// Tabs need document-unique DOM ids to wire each tab to its panel (aria-controls/aria-labelledby), and an
+// exclusive Accordion needs a shared <details name>. These counters mint those ids; they are reset per
+// emit invocation (in emitHTML) so the output stays deterministic for a given tree (ADR-0022).
+let tabsSeq = 0;
+let accSeq = 0;
 
 // C = void: html has no pretty-printing, so there is no context to thread.
 const htmlEmitter: Emitter<string, void> = {
@@ -185,6 +199,57 @@ const htmlEmitter: Emitter<string, void> = {
         .join('');
       return `<nav aria-label="Pagination"><ul style="${inlineStyle(paginationListDecls(node.style))}">${items}</ul></nav>`;
     },
+    // Tabs → a static accessible snapshot (ADR-0022): a <div role="tablist"> of <button role="tab"> built
+    // from each panel's `label` (the DataTable "read your children's props" pattern) + one <div
+    // role="tabpanel"> per rendered panel body. The FIRST tab is selected; the rest carry `hidden` and
+    // tabindex="-1" (roving). Ids wire each tab↔panel. The canvas is interactive (React Aria); switching
+    // in this static export is a deferred enhancement.
+    Tabs(node, children) {
+      const { orientation } = node.props;
+      const base = `tabs-${String(tabsSeq++)}`;
+      const tabs = node.children
+        .map((panel, i) => {
+          const selected = i === 0;
+          const roving = selected ? '' : ' tabindex="-1"';
+          return `<button type="button" role="tab" id="${base}-tab-${String(i)}" aria-selected="${selected ? 'true' : 'false'}" aria-controls="${base}-panel-${String(i)}"${roving} style="${inlineStyle(tabButtonDecls(selected, orientation))}">${escapeText(panel.props.label)}</button>`;
+        })
+        .join('');
+      const ariaOrient = orientation === 'vertical' ? ' aria-orientation="vertical"' : '';
+      const tablist = `<div role="tablist"${ariaOrient} style="${inlineStyle(tabListDecls(orientation))}">${tabs}</div>`;
+      const panels = children
+        .map((body, i) => {
+          const hidden = i === 0 ? '' : ' hidden';
+          return `<div role="tabpanel" id="${base}-panel-${String(i)}" aria-labelledby="${base}-tab-${String(i)}"${hidden} style="${inlineStyle(tabPanelDecls(node.children[i]?.style))}">${body}</div>`;
+        })
+        .join('');
+      return `<div style="${inlineStyle(tabsDecls(orientation, node.style))}">${tablist}${panels}</div>`;
+    },
+    // TabPanel → just its rendered body content; the parent Tabs wraps it in the <div role="tabpanel">
+    // (which owns the id/aria/hidden), exactly as TableRow's cells are wrapped by their DataTable.
+    TabPanel(_node, children) {
+      return children.join('');
+    },
+    // Accordion → a stack of native <details>/<summary> sections (ADR-0022) — interactive with zero JS,
+    // identical on the canvas and in all three web targets. Each section reads its title/open/style from
+    // the AccordionItem child; `exclusive` adds a shared <details name> so opening one closes the others.
+    Accordion(node, children) {
+      const group = node.props.exclusive ? `acc-${String(accSeq++)}` : '';
+      const items = children
+        .map((body, i) => {
+          const item = node.children[i];
+          const open = item?.props.open ? ' open' : '';
+          const name = group ? ` name="${group}"` : '';
+          const summary = `<summary style="${inlineStyle(accordionSummaryDecls())}">${escapeText(item?.props.title ?? '')}</summary>`;
+          const panel = `<div style="${inlineStyle(accordionPanelDecls())}">${body}</div>`;
+          return `<details${open}${name} style="${inlineStyle(accordionItemDecls(item?.style))}">${summary}${panel}</details>`;
+        })
+        .join('');
+      return `<div style="${inlineStyle(accordionDecls(node.style))}">${items}</div>`;
+    },
+    // AccordionItem → just its rendered body content; the parent Accordion wraps it in the <details>.
+    AccordionItem(_node, children) {
+      return children.join('');
+    },
   },
   leaf: {
     Text(node) {
@@ -245,5 +310,7 @@ const htmlEmitter: Emitter<string, void> = {
 
 /** Walk a Frame's root node and return the rendered HTML fragment. */
 export function emitHTML(frame: Frame): string {
+  tabsSeq = 0;
+  accSeq = 0;
   return walkNode<string, void>(frame.root, undefined, htmlEmitter);
 }

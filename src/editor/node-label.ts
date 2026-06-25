@@ -21,9 +21,18 @@ export function nodeLabel(node: Node, path: NodePath): string {
   // A Table row reads as "header" or a plain body row, so the tree distinguishes the two (ADR-0021).
   if (node.type === 'TableRow')
     return node.props.header ? `${where}${label}: header` : `${where}${label}`;
-  // The labelled slot/leaf types surface their label as the distinguishing detail (this ADR + ADR-0019).
-  if (node.type === 'NavLink' || node.type === 'Step' || node.type === 'ToolButton') {
+  // The labelled slot/leaf types surface their label as the distinguishing detail (ADR-0019 + the Tabs
+  // panel, ADR-0022).
+  if (
+    node.type === 'NavLink' ||
+    node.type === 'Step' ||
+    node.type === 'ToolButton' ||
+    node.type === 'TabPanel'
+  ) {
     return node.props.label ? `${where}${label}: ${node.props.label}` : `${where}${label}`;
   }
+  // An Accordion section reads by its title (ADR-0022).
+  if (node.type === 'AccordionItem')
+    return node.props.title ? `${where}${label}: ${node.props.title}` : `${where}${label}`;
   return `${where}${label}`;
 }
